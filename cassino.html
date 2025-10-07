@@ -6,18 +6,9 @@
 <title>🎰 Cassino IVAD</title>
 <style>
   :root{--card-bg: rgba(0,0,0,0.62);--btn-gradient: linear-gradient(90deg,#ffd54f,#ffb300);}
-  html,body{height:100%;margin:0;font-family:Arial,Helvetica,sans-serif;color:#fff;background:#000}
-  body{overflow-x:hidden}
-  .bg3d{
-    position:fixed;inset:0;background:url('/* COLE AQUI LINK RAW DE IMAGEM DE FUNDO */') no-repeat center center;
-    background-size:cover;z-index:-2;filter:contrast(0.92) saturate(0.95) brightness(0.9);
-    transform-origin:center center;animation:float3d 18s ease-in-out infinite alternate;
-  }
-  @keyframes float3d{
-    0%{transform:translateZ(0px) rotateY(0deg) rotateX(0deg) scale(1)}
-    50%{transform:translateZ(12px) rotateY(2deg) rotateX(1deg) scale(1.01)}
-    100%{transform:translateZ(0px) rotateY(-1deg) rotateX(-1deg) scale(1)}
-  }
+  html,body{height:100%;margin:0;font-family:Arial,Helvetica,sans-serif;color:#fff;background:#000;}
+  body{overflow-x:hidden;}
+  .bg3d{position:fixed;inset:0;background:#111;z-index:-2;filter:contrast(0.92) saturate(0.95) brightness(0.9);}
   .overlay{position:fixed;inset:0;z-index:-1;background:linear-gradient(135deg, rgba(0,0,0,0.55), rgba(0,0,0,0.35))}
   header{background:rgba(0,0,0,0.6);padding:1rem;text-align:center;position:relative;z-index:2}
   header h1{margin:.2rem;font-size:1.4rem}
@@ -69,6 +60,7 @@
       <div style="display:flex;gap:.5rem">
         <button id="btnSignup" class="btn" style="background:linear-gradient(90deg,#90caf9,#42a5f5)">Criar conta</button>
         <button id="btnLogin" class="btn">Entrar</button>
+        <button id="btnLogout" class="btn" style="background:#f44336;color:#fff;display:none">Sair</button>
       </div>
       <p class="small">Nome único — se já existir, escolha outro.</p>
     </div>
@@ -82,35 +74,35 @@
         <div class="game" style="margin-bottom:1rem">
           <h4>🎰 Slot Machine</h4>
           <input type="number" id="slotBet" placeholder="Quanto apostar?" min="1">
-          <button class="btn" onclick="playSlot()">Jogar Slot</button>
+          <button class="btn" id="btnSlot">Jogar Slot</button>
           <span id="slotMsg" class="small"></span>
         </div>
 
         <div class="game" style="margin-bottom:1rem">
           <h4>🎲 Dice Roll (1-6)</h4>
           <input type="number" id="diceBet" placeholder="Quanto apostar?" min="1">
-          <button class="btn" onclick="playDice()">Rolar dado</button>
+          <button class="btn" id="btnDice">Rolar dado</button>
           <span id="diceMsg" class="small"></span>
         </div>
 
         <div class="game" style="margin-bottom:1rem">
           <h4>🃏 Card Flip</h4>
           <input type="number" id="cardBet" placeholder="Quanto apostar?" min="1">
-          <button class="btn" onclick="playCard()">Virar Carta</button>
+          <button class="btn" id="btnCard">Virar Carta</button>
           <span id="cardMsg" class="small"></span>
         </div>
 
         <div class="game" style="margin-bottom:1rem">
           <h4>🎯 Coin Flip</h4>
           <input type="number" id="coinBet" placeholder="Quanto apostar?" min="1">
-          <button class="btn" onclick="playCoin()">Cara ou Coroa</button>
+          <button class="btn" id="btnCoin">Cara ou Coroa</button>
           <span id="coinMsg" class="small"></span>
         </div>
 
         <div class="game" style="margin-bottom:1rem">
           <h4>🔮 Lucky Spin</h4>
           <input type="number" id="spinBet" placeholder="Quanto apostar?" min="1">
-          <button class="btn" onclick="playSpin()">Girar</button>
+          <button class="btn" id="btnSpin">Girar</button>
           <span id="spinMsg" class="small"></span>
         </div>
       </div>
@@ -134,55 +126,6 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-
-<script>
-/********** CONFIG **********/
-const firebaseConfig = /* COLE AQUI */;
-const OWNER_UID = "COLE_AQUI_SEU_UID";
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db = firebase.firestore();
-
-// TABS
-function showTab(id){
-  ['loginTab','jogoTab','rankTab'].forEach(t=>document.getElementById(t).style.display=(t===id?'block':'none'));
-}
-document.querySelectorAll('.tabbtn').forEach(b=>{
-  b.addEventListener('click',e=>{
-    document.querySelectorAll('.tabbtn').forEach(x=>x.classList.remove('active'));
-    e.currentTarget.classList.add('active');
-    showTab(e.currentTarget.dataset.tab);
-  });
-});
-showTab('loginTab');
-
-// HELPER USERNAME -> EMAIL SINTÉTICO
-function usernameToEmail(u){ return `${u}@ivad.local`; }
-function validUsername(u){ return /^[a-zA-Z0-9_]{3,20}$/.test(u); }
-
-// SIGNUP
-document.getElementById('btnSignup').onclick = async ()=>{
-  const uname = document.getElementById('username').value.trim();
-  const pw = document.getElementById('pwd').value;
-  if(!validUsername(uname)){ alert('Nome inválido'); return; }
-  if(pw.length<6){ alert('Senha precisa ≥6'); return; }
-
-  try{
-    const q = await db.collection('users').where('displayName','==',uname).limit(1).get();
-    if(!q.empty){ alert('Nome já existe'); return; }
-    const syntheticEmail = usernameToEmail(uname);
-    const cred = await auth.createUserWithEmailAndPassword(syntheticEmail,pw);
-    const user = cred.user;
-    await db.collection('users').doc(user.uid).set({uid:user.uid,email:syntheticEmail,displayName:uname,gold:1000,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
-    alert('Conta criada! Você já está logado.');
-  }catch(err){ console.error(err); alert('Erro: '+err.message); }
-};
-
-// LOGIN
-document.getElementById('btnLogin').onclick = async ()=>{
-  const uname = document.getElementById('username').value.trim();
-  const pw = document.getElementById('pwd').value;
-  if(!validUsername(uname)){ alert('Nome inválido'); return; }
-  if(pw.length<6){ alert('Senha precisa ≥6'); return; }
-  try{
-    const email = usernameToEmail(un
+<script src="script.js"></script>
+</body>
+</html>

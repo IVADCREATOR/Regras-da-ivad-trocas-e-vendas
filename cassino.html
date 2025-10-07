@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>🎰 Cassino IVAD</title>
+<style>
+  :root{--card-bg: rgba(0,0,0,0.62);--btn-gradient: linear-gradient(90deg,#ffd54f,#ffb300);}
+  html,body{height:100%;margin:0;font-family:Arial,Helvetica,sans-serif;color:#fff;background:#000}
+  body{overflow-x:hidden}
+  .bg3d{
+    position:fixed;inset:0;background:url('/* COLE AQUI LINK RAW DE IMAGEM DE FUNDO */') no-repeat center center;
+    background-size:cover;z-index:-2;filter:contrast(0.92) saturate(0.95) brightness(0.9);
+    transform-origin:center center;animation:float3d 18s ease-in-out infinite alternate;
+  }
+  @keyframes float3d{
+    0%{transform:translateZ(0px) rotateY(0deg) rotateX(0deg) scale(1)}
+    50%{transform:translateZ(12px) rotateY(2deg) rotateX(1deg) scale(1.01)}
+    100%{transform:translateZ(0px) rotateY(-1deg) rotateX(-1deg) scale(1)}
+  }
+  .overlay{position:fixed;inset:0;z-index:-1;background:linear-gradient(135deg, rgba(0,0,0,0.55), rgba(0,0,0,0.35))}
+  header{background:rgba(0,0,0,0.6);padding:1rem;text-align:center;position:relative;z-index:2}
+  header h1{margin:.2rem;font-size:1.4rem}
+  header p{margin:.1rem;color:#ddd;font-size:.85rem}
+  .container{max-width:1000px;margin:1rem auto;padding:1rem;display:grid;grid-template-columns:280px 1fr;gap:1rem}
+  .card{background:var(--card-bg);padding:1rem;border-radius:10px;box-shadow:0 6px 18px rgba(0,0,0,0.5)}
+  .menu button{display:block;width:100%;margin-bottom:.8rem;padding:.8rem 1rem;border-radius:8px;border:none;background:#fff;color:#111;font-weight:700;cursor:pointer;transition:transform .15s,box-shadow .15s}
+  .menu button:hover{transform:translateY(-3px);box-shadow:0 8px 20px rgba(0,0,0,0.35)}
+  .menu button.active{background:linear-gradient(90deg,#fff,#f0f0f0);color:#000}
+  input[type=text], input[type=password], input[type=number]{width:100%;padding:.6rem;margin:.45rem 0;border-radius:8px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.04);color:#fff}
+  .btn{display:inline-block;padding:.6rem 1rem;border-radius:8px;border:none;background:var(--btn-gradient);color:#111;font-weight:700;cursor:pointer;margin:.25rem 0}
+  .small{font-size:.85rem;color:#ddd}
+  .rank-list{max-height:420px;overflow:auto}
+  footer{padding:1rem;text-align:center;color:#ccc}
+  @media(max-width:880px){ .container{grid-template-columns:1fr; padding:.5rem} .menu{order:2} }
+</style>
+</head>
+<body>
+<div class="bg3d" aria-hidden="true"></div>
+<div class="overlay" aria-hidden="true"></div>
+
+<header>
+  <h1>🎰 Cassino IVAD</h1>
+  <p>Criado por IVADCREATOR</p>
+</header>
+
+<main class="container">
+  <aside class="card menu">
+    <button class="tabbtn active" data-tab="loginTab">Login / Signup</button>
+    <button class="tabbtn" data-tab="jogoTab">🎲 Joguinhos</button>
+    <button class="tabbtn" data-tab="rankTab">🏆 Rank Global</button>
+    <hr style="border:none;height:1px;background:rgba(255,255,255,0.06);margin:10px 0">
+    <div id="ownerPanel" style="display:none">
+      <h4>Painel do Dono</h4>
+      <input id="adminName" placeholder="nome do usuário (exact)">
+      <input id="adminAmount" type="number" placeholder="gold (positivo/negativo)">
+      <button id="btnGive" class="btn">Dar/Remover gold</button>
+      <button id="btnReset" class="btn" style="background:linear-gradient(90deg,#ef9a9a,#e57373)">Resetar ranking</button>
+      <p class="small">Somente OWNER_UID pode usar</p>
+    </div>
+  </aside>
+
+  <section class="card content">
+    <!-- LOGIN/SIGNUP -->
+    <div id="loginTab">
+      <h2>Login / Cadastro</h2>
+      <input id="username" type="text" placeholder="Escolha um nome (sem espaços)">
+      <input id="pwd" type="password" placeholder="Senha (≥6)">
+      <div style="display:flex;gap:.5rem">
+        <button id="btnSignup" class="btn" style="background:linear-gradient(90deg,#90caf9,#42a5f5)">Criar conta</button>
+        <button id="btnLogin" class="btn">Entrar</button>
+      </div>
+      <p class="small">Nome único — se já existir, escolha outro.</p>
+    </div>
+
+    <!-- JOGUINHOS -->
+    <div id="jogoTab" style="display:none">
+      <h2>🎲 Joguinhos de Cassino</h2>
+      <p class="small">Você começa com <strong>1000 Gold</strong>. Escolha quanto apostar!</p>
+
+      <div id="games">
+        <div class="game" style="margin-bottom:1rem">
+          <h4>🎰 Slot Machine</h4>
+          <input type="number" id="slotBet" placeholder="Quanto apostar?" min="1">
+          <button class="btn" onclick="playSlot()">Jogar Slot</button>
+          <span id="slotMsg" class="small"></span>
+        </div>
+
+        <div class="game" style="margin-bottom:1rem">
+          <h4>🎲 Dice Roll (1-6)</h4>
+          <input type="number" id="diceBet" placeholder="Quanto apostar?" min="1">
+          <button class="btn" onclick="playDice()">Rolar dado</button>
+          <span id="diceMsg" class="small"></span>
+        </div>
+
+        <div class="game" style="margin-bottom:1rem">
+          <h4>🃏 Card Flip</h4>
+          <input type="number" id="cardBet" placeholder="Quanto apostar?" min="1">
+          <button class="btn" onclick="playCard()">Virar Carta</button>
+          <span id="cardMsg" class="small"></span>
+        </div>
+
+        <div class="game" style="margin-bottom:1rem">
+          <h4>🎯 Coin Flip</h4>
+          <input type="number" id="coinBet" placeholder="Quanto apostar?" min="1">
+          <button class="btn" onclick="playCoin()">Cara ou Coroa</button>
+          <span id="coinMsg" class="small"></span>
+        </div>
+
+        <div class="game" style="margin-bottom:1rem">
+          <h4>🔮 Lucky Spin</h4>
+          <input type="number" id="spinBet" placeholder="Quanto apostar?" min="1">
+          <button class="btn" onclick="playSpin()">Girar</button>
+          <span id="spinMsg" class="small"></span>
+        </div>
+      </div>
+
+      <div id="playerInfo" style="margin-top:1rem;display:none">
+        <p>Jogador: <strong id="playerName"></strong> — Gold: <strong id="playerGold">0</strong></p>
+      </div>
+    </div>
+
+    <!-- RANK -->
+    <div id="rankTab" style="display:none">
+      <h2>🏆 Rank Global</h2>
+      <div class="rank-list card" id="rankList"></div>
+    </div>
+  </section>
+</main>
+
+<footer>© 2025 IVAD TROCAS E VENDAS | IVADCREATOR</footer>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<script>
+/********** CONFIG **********/
+const firebaseConfig = /* COLE AQUI */;
+const OWNER_UID = "COLE_AQUI_SEU_UID";
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+// TABS
+function showTab(id){
+  ['loginTab','jogoTab','rankTab'].forEach(t=>document.getElementById(t).style.display=(t===id?'block':'none'));
+}
+document.querySelectorAll('.tabbtn').forEach(b=>{
+  b.addEventListener('click',e=>{
+    document.querySelectorAll('.tabbtn').forEach(x=>x.classList.remove('active'));
+    e.currentTarget.classList.add('active');
+    showTab(e.currentTarget.dataset.tab);
+  });
+});
+showTab('loginTab');
+
+// HELPER USERNAME -> EMAIL SINTÉTICO
+function usernameToEmail(u){ return `${u}@ivad.local`; }
+function validUsername(u){ return /^[a-zA-Z0-9_]{3,20}$/.test(u); }
+
+// SIGNUP
+document.getElementById('btnSignup').onclick = async ()=>{
+  const uname = document.getElementById('username').value.trim();
+  const pw = document.getElementById('pwd').value;
+  if(!validUsername(uname)){ alert('Nome inválido'); return; }
+  if(pw.length<6){ alert('Senha precisa ≥6'); return; }
+
+  try{
+    const q = await db.collection('users').where('displayName','==',uname).limit(1).get();
+    if(!q.empty){ alert('Nome já existe'); return; }
+    const syntheticEmail = usernameToEmail(uname);
+    const cred = await auth.createUserWithEmailAndPassword(syntheticEmail,pw);
+    const user = cred.user;
+    await db.collection('users').doc(user.uid).set({uid:user.uid,email:syntheticEmail,displayName:uname,gold:1000,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+    alert('Conta criada! Você já está logado.');
+  }catch(err){ console.error(err); alert('Erro: '+err.message); }
+};
+
+// LOGIN
+document.getElementById('btnLogin').onclick = async ()=>{
+  const uname = document.getElementById('username').value.trim();
+  const pw = document.getElementById('pwd').value;
+  if(!validUsername(uname)){ alert('Nome inválido'); return; }
+  if(pw.length<6){ alert('Senha precisa ≥6'); return; }
+  try{
+    const email = usernameToEmail(un

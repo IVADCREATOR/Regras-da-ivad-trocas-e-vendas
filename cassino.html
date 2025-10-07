@@ -3,27 +3,39 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>🎰 Cassino IVAD</title>
+<title>Cassino - IVAD TROCAS E VENDAS</title>
 <style>
-  :root{--card-bg: rgba(0,0,0,0.62);--btn-gradient: linear-gradient(90deg,#ffd54f,#ffb300);}
-  html,body{height:100%;margin:0;font-family:Arial,Helvetica,sans-serif;color:#fff;background:#000;}
-  body{overflow-x:hidden;}
-  .bg3d{position:fixed;inset:0;background:#111;z-index:-2;filter:contrast(0.92) saturate(0.95) brightness(0.9);}
-  .overlay{position:fixed;inset:0;z-index:-1;background:linear-gradient(135deg, rgba(0,0,0,0.55), rgba(0,0,0,0.35))}
-  header{background:rgba(0,0,0,0.6);padding:1rem;text-align:center;position:relative;z-index:2}
-  header h1{margin:.2rem;font-size:1.4rem}
-  header p{margin:.1rem;color:#ddd;font-size:.85rem}
-  .container{max-width:1000px;margin:1rem auto;padding:1rem;display:grid;grid-template-columns:280px 1fr;gap:1rem}
-  .card{background:var(--card-bg);padding:1rem;border-radius:10px;box-shadow:0 6px 18px rgba(0,0,0,0.5)}
-  .menu button{display:block;width:100%;margin-bottom:.8rem;padding:.8rem 1rem;border-radius:8px;border:none;background:#fff;color:#111;font-weight:700;cursor:pointer;transition:transform .15s,box-shadow .15s}
-  .menu button:hover{transform:translateY(-3px);box-shadow:0 8px 20px rgba(0,0,0,0.35)}
-  .menu button.active{background:linear-gradient(90deg,#fff,#f0f0f0);color:#000}
-  input[type=text], input[type=password], input[type=number]{width:100%;padding:.6rem;margin:.45rem 0;border-radius:8px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.04);color:#fff}
-  .btn{display:inline-block;padding:.6rem 1rem;border-radius:8px;border:none;background:var(--btn-gradient);color:#111;font-weight:700;cursor:pointer;margin:.25rem 0}
-  .small{font-size:.85rem;color:#ddd}
-  .rank-list{max-height:420px;overflow:auto}
-  footer{padding:1rem;text-align:center;color:#ccc}
-  @media(max-width:880px){ .container{grid-template-columns:1fr; padding:.5rem} .menu{order:2} }
+:root{--card-bg: rgba(0,0,0,0.62);--btn-gradient: linear-gradient(90deg,#ffd54f,#ffb300);}
+html,body{height:100%;margin:0;font-family:Arial,Helvetica,sans-serif;color:#fff;background:#000}
+body{perspective:1000px;overflow-x:hidden}
+.bg3d{
+  position:fixed;inset:0;background:url('/* LINK DA IMAGEM DE FUNDO */') no-repeat center center;
+  background-size:cover;z-index:-2;filter:contrast(0.92) saturate(0.95) brightness(0.9);
+  transform-origin:center center;animation:float3d 18s ease-in-out infinite alternate;
+}
+@keyframes float3d{
+  0%{transform:translateZ(0px) rotateY(0deg) rotateX(0deg) scale(1)}
+  50%{transform:translateZ(12px) rotateY(2deg) rotateX(1deg) scale(1.01)}
+  100%{transform:translateZ(0px) rotateY(-1deg) rotateX(-1deg) scale(1)}
+}
+.overlay{position:fixed;inset:0;z-index:-1;background:linear-gradient(135deg, rgba(0,0,0,0.55), rgba(0,0,0,0.35))}
+header{background:rgba(0,0,0,0.6);padding:1rem;text-align:center;position:relative;z-index:2}
+header h1{margin:.2rem;font-size:1.4rem}
+header p{margin:.1rem;color:#ddd;font-size:.85rem}
+.container{max-width:1000px;margin:1rem auto;padding:1rem;display:grid;grid-template-columns:280px 1fr;gap:1rem}
+.card{background:var(--card-bg);padding:1rem;border-radius:10px;box-shadow:0 6px 18px rgba(0,0,0,0.5)}
+.menu button{display:block;width:100%;margin-bottom:.8rem;padding:.8rem 1rem;border-radius:8px;border:none;background:#fff;color:#111;font-weight:700;cursor:pointer;transition:transform .15s,box-shadow .15s}
+.menu button:hover{transform:translateY(-3px);box-shadow:0 8px 20px rgba(0,0,0,0.35)}
+.menu button.active{background:linear-gradient(90deg,#fff,#f0f0f0);color:#000}
+.content h2{margin-top:0}
+ul{padding-left:1.25rem}
+.btn{display:inline-block;padding:.6rem 1rem;border-radius:8px;border:none;background:var(--btn-gradient);color:#111;font-weight:700;cursor:pointer;margin:.25rem 0}
+.small{font-size:.85rem;color:#ddd}
+input[type="text"],input[type="password"],input[type=number],select{width:100%;padding:.6rem;margin:.45rem 0;border-radius:8px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.04);color:#fff}
+.rank-list{max-height:420px;overflow:auto}
+footer{padding:1rem;text-align:center;color:#ccc}
+.hidden{display:none;}
+@media(max-width:880px){ .container{grid-template-columns:1fr; padding:.5rem} .menu{order:2} }
 </style>
 </head>
 <body>
@@ -31,80 +43,75 @@
 <div class="overlay" aria-hidden="true"></div>
 
 <header>
-  <h1>🎰 Cassino IVAD</h1>
+  <h1>Cassino - IVAD TROCAS E VENDAS</h1>
   <p>Criado por IVADCREATOR</p>
 </header>
 
 <main class="container">
   <aside class="card menu">
-    <button class="tabbtn active" data-tab="loginTab">Login / Signup</button>
-    <button class="tabbtn" data-tab="jogoTab">🎲 Joguinhos</button>
+    <button class="tabbtn active" data-tab="cassinoTab">🎲 Cassino</button>
     <button class="tabbtn" data-tab="rankTab">🏆 Rank Global</button>
+
+    <hr style="border:none;height:1px;background:rgba(255,255,255,0.06);margin:10px 0">
+
+    <!-- LOGIN / SIGNUP -->
+    <div id="authArea" class="small">
+      <div id="signedOutUI">
+        <input id="username" type="text" placeholder="Escolha um nome (sem espaços)">
+        <input id="pwd" type="password" placeholder="Senha (≥6)">
+        <div style="display:flex;gap:.5rem">
+          <button id="btnSignup" class="btn" style="background:linear-gradient(90deg,#90caf9,#42a5f5)">Criar conta</button>
+          <button id="btnLogin" class="btn">Entrar</button>
+        </div>
+        <p class="small">Nome único — se já existir, escolha outro.</p>
+      </div>
+
+      <div id="signedInUI" style="display:none">
+        <p><strong id="userLabel"></strong></p>
+        <div style="display:flex;gap:.5rem;align-items:center">
+          <button id="btnLogout" class="btn" style="background:linear-gradient(90deg,#ef9a9a,#e57373)">Sair</button>
+          <div style="margin-left:auto"><span class="small">Gold: </span><strong id="myGold">0</strong></div>
+        </div>
+      </div>
+    </div>
+
     <hr style="border:none;height:1px;background:rgba(255,255,255,0.06);margin:10px 0">
     <div id="ownerPanel" style="display:none">
-      <h4>Painel do Dono</h4>
+      <h4 style="margin:.3rem 0">Painel do Dono</h4>
       <input id="adminName" placeholder="nome do usuário (exact)">
       <input id="adminAmount" type="number" placeholder="gold (positivo/negativo)">
       <button id="btnGive" class="btn">Dar/Remover gold</button>
-      <button id="btnReset" class="btn" style="background:linear-gradient(90deg,#ef9a9a,#e57373)">Resetar ranking</button>
+      <button id="btnReset" class="btn" style="background:linear-gradient(90deg,#ef9a9a,#e57373);margin-top:.5rem">Resetar ranking</button>
       <p class="small">Somente OWNER_UID pode usar</p>
     </div>
   </aside>
 
   <section class="card content">
-    <!-- LOGIN/SIGNUP -->
-    <div id="loginTab">
-      <h2>Login / Cadastro</h2>
-      <input id="username" type="text" placeholder="Escolha um nome (sem espaços)">
-      <input id="pwd" type="password" placeholder="Senha (≥6)">
-      <div style="display:flex;gap:.5rem">
-        <button id="btnSignup" class="btn" style="background:linear-gradient(90deg,#90caf9,#42a5f5)">Criar conta</button>
-        <button id="btnLogin" class="btn">Entrar</button>
-        <button id="btnLogout" class="btn" style="background:#f44336;color:#fff;display:none">Sair</button>
+    <div id="cassinoTab">
+      <h2>🎲 Cassino</h2>
+      <p class="small">Aposte seu gold e tente a sorte!</p>
+
+      <div style="margin:1rem 0">
+        <h3>Roleta (Aposta: 1 gold)</h3>
+        <button id="btnRoulette" class="btn">Girar Roleta</button>
+        <span id="rouletteMsg" class="small"></span>
       </div>
-      <p class="small">Nome único — se já existir, escolha outro.</p>
-    </div>
 
-    <!-- JOGUINHOS -->
-    <div id="jogoTab" style="display:none">
-      <h2>🎲 Joguinhos de Cassino</h2>
-      <p class="small">Você começa com <strong>1000 Gold</strong>. Escolha quanto apostar!</p>
+      <div style="margin:1rem 0">
+        <h3>Slot (Aposta: 1 gold)</h3>
+        <button id="btnSlot" class="btn">Jogar Slot</button>
+        <span id="slotMsg" class="small"></span>
+      </div>
 
-      <div id="games">
-        <div class="game" style="margin-bottom:1rem">
-          <h4>🎰 Slot Machine</h4>
-          <input type="number" id="slotBet" placeholder="Quanto apostar?" min="1">
-          <button class="btn" id="btnSlot">Jogar Slot</button>
-          <span id="slotMsg" class="small"></span>
-        </div>
-
-        <div class="game" style="margin-bottom:1rem">
-          <h4>🎲 Dice Roll (1-6)</h4>
-          <input type="number" id="diceBet" placeholder="Quanto apostar?" min="1">
-          <button class="btn" id="btnDice">Rolar dado</button>
-          <span id="diceMsg" class="small"></span>
-        </div>
-
-        <div class="game" style="margin-bottom:1rem">
-          <h4>🃏 Card Flip</h4>
-          <input type="number" id="cardBet" placeholder="Quanto apostar?" min="1">
-          <button class="btn" id="btnCard">Virar Carta</button>
-          <span id="cardMsg" class="small"></span>
-        </div>
-
-        <div class="game" style="margin-bottom:1rem">
-          <h4>🎯 Coin Flip</h4>
-          <input type="number" id="coinBet" placeholder="Quanto apostar?" min="1">
-          <button class="btn" id="btnCoin">Cara ou Coroa</button>
-          <span id="coinMsg" class="small"></span>
-        </div>
-
-        <div class="game" style="margin-bottom:1rem">
-          <h4>🔮 Lucky Spin</h4>
-          <input type="number" id="spinBet" placeholder="Quanto apostar?" min="1">
-          <button class="btn" id="btnSpin">Girar</button>
-          <span id="spinMsg" class="small"></span>
-        </div>
+      <div style="margin:1rem 0">
+        <h3>Aposta Simples</h3>
+        <input id="betAmount" type="number" placeholder="Gold a apostar" min="1">
+        <select id="betChoice">
+          <option value="1">Cara</option>
+          <option value="0">Coroa</option>
+        </select>
+        <button id="btnBet" class="btn">Apostar</button>
+        <span id="betMsg" class="small"></span>
       </div>
 
       <div id="playerInfo" style="margin-top:1rem;display:none">
@@ -112,10 +119,10 @@
       </div>
     </div>
 
-    <!-- RANK -->
     <div id="rankTab" style="display:none">
       <h2>🏆 Rank Global</h2>
-      <div class="rank-list card" id="rankList"></div>
+      <p class="small">Top jogadores (atualiza automaticamente)</p>
+      <div class="rank-list card" id="rankList" style="margin-top:1rem"></div>
     </div>
   </section>
 </main>
@@ -126,6 +133,184 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-<script src="script.js"></script>
-</body>
-</html>
+<script>
+// ==== CONFIG ====
+// Cole seu firebaseConfig abaixo
+const firebaseConfig = /* COLE AQUI */;
+const OWNER_UID = "COLE_AQUI_SEU_UID";
+
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+// UI refs
+const signedOutUI = document.getElementById('signedOutUI');
+const signedInUI = document.getElementById('signedInUI');
+const userLabel = document.getElementById('userLabel');
+const myGold = document.getElementById('myGold');
+const playerName = document.getElementById('playerName');
+const playerGold = document.getElementById('playerGold');
+const playerInfo = document.getElementById('playerInfo');
+
+// tabs
+function showTab(id){
+  ['cassinoTab','rankTab'].forEach(t=>document.getElementById(t).style.display=(t===id?'block':'none'));
+}
+document.querySelectorAll('.tabbtn').forEach(b=>{
+  b.addEventListener('click',e=>{
+    document.querySelectorAll('.tabbtn').forEach(x=>x.classList.remove('active'));
+    e.currentTarget.classList.add('active');
+    showTab(e.currentTarget.dataset.tab);
+  });
+});
+showTab('cassinoTab');
+
+// helper username -> synthetic email
+function usernameToEmail(u){ return `${u}@ivad.local`; }
+function validUsername(u){ return /^[a-zA-Z0-9_]{3,20}$/.test(u); }
+
+// SIGNUP
+document.getElementById('btnSignup').onclick = async ()=>{
+  const uname = document.getElementById('username').value.trim();
+  const pw = document.getElementById('pwd').value;
+  if(!validUsername(uname)){ alert('Nome inválido'); return; }
+  if(pw.length<6){ alert('Senha precisa ≥6'); return; }
+
+  try{
+    const q = await db.collection('users').where('displayName','==',uname).limit(1).get();
+    if(!q.empty){ alert('Nome já existe'); return; }
+    const syntheticEmail = usernameToEmail(uname);
+    const cred = await auth.createUserWithEmailAndPassword(syntheticEmail,pw);
+    const user = cred.user;
+    await db.collection('users').doc(user.uid).set({uid:user.uid,email:syntheticEmail,displayName:uname,gold:0,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+    alert('Conta criada! Você já está logado.');
+  }catch(err){ console.error(err); alert('Erro: '+err.message); }
+};
+
+// LOGIN
+document.getElementById('btnLogin').onclick = async ()=>{
+  const uname = document.getElementById('username').value.trim();
+  const pw = document.getElementById('pwd').value;
+  if(!validUsername(uname)){ alert('Nome inválido'); return; }
+  if(pw.length<6){ alert('Senha precisa ≥6'); return; }
+  try{
+    const email = usernameToEmail(uname);
+    await auth.signInWithEmailAndPassword(email,pw);
+  }catch(err){ console.error(err); alert('Erro ao entrar: '+err.message); }
+};
+
+document.getElementById('btnLogout').onclick = ()=>auth.signOut();
+
+// auth state
+auth.onAuthStateChanged(async user=>{
+  if(user){
+    signedOutUI.style.display='none';
+    signedInUI.style.display='block';
+    userLabel.textContent = 'Conectado: '+(user.email?user.email.split('@')[0]:user.uid);
+    if(user.uid === OWNER_UID) document.getElementById('ownerPanel').style.display='block';
+    else document.getElementById('ownerPanel').style.display='none';
+    updateMyInfo(user.uid);
+  }else{
+    signedOutUI.style.display='block';
+    signedInUI.style.display='none';
+    document.getElementById('ownerPanel').style.display='none';
+    myGold.textContent='0';
+    playerInfo.style.display='none';
+  }
+});
+
+async function updateMyInfo(uid){
+  const doc = await db.collection('users').doc(uid).get();
+  if(doc.exists){
+    const data = doc.data();
+    myGold.textContent = data.gold||0;
+    playerName.textContent = data.displayName;
+    playerGold.textContent = data.gold||0;
+    playerInfo.style.display='block';
+  }
+}
+
+// CASINO LOGIC
+function addGold(uid,amount){
+  const userRef = db.collection('users').doc(uid);
+  return db.runTransaction(async tx=>{
+    const d = await tx.get(userRef);
+    if(!d.exists) throw 'Usuário não encontrado';
+    const newGold = (d.data().gold||0)+amount;
+    if(newGold<0) throw 'Gold insuficiente';
+    tx.update(userRef,{gold:newGold});
+    return newGold;
+  });
+}
+
+// Roleta
+document.getElementById('btnRoulette').onclick = async ()=>{
+  const user = auth.currentUser;
+  if(!user){ alert('Faça login'); return; }
+  try{
+    const goldAfter = await addGold(user.uid,-1);
+    const win = Math.random()<0.5; // 50% chance
+    const delta = win ? 2 : 0;
+    if(win) await addGold(user.uid,delta);
+    document.getElementById('rouletteMsg').textContent = win ? `🎉 Você ganhou +${delta} gold!` : '💀 Perdeu 1 gold.';
+    updateMyInfo(user.uid);
+  }catch(err){ alert(err); }
+};
+
+// Slot
+document.getElementById('btnSlot').onclick = async ()=>{
+  const user = auth.currentUser;
+  if(!user){ alert('Faça login'); return; }
+  try{
+    const goldAfter = await addGold(user.uid,-1);
+    const symbols = ['🍒','🍋','🔔','💎'];
+    const s = [symbols[Math.floor(Math.random()*4)],symbols[Math.floor(Math.random()*4)],symbols[Math.floor(Math.random()*4)]];
+    let msg = s.join(' ');
+    let win = (s[0]===s[1] && s[1]===s[2]);
+    if(win) await addGold(user.uid,5);
+    document.getElementById('slotMsg').textContent = win ? msg+' 🎉 Ganhou 5 gold!' : msg+' 💀 Perdeu 1 gold.';
+    updateMyInfo(user.uid);
+  }catch(err){ alert(err); }
+};
+
+// Coin flip bet
+document.getElementById('btnBet').onclick = async ()=>{
+  const user = auth.currentUser;
+  if(!user){ alert('Faça login'); return; }
+  const amt = Number(document.getElementById('betAmount').value);
+  const choice = Number(document.getElementById('betChoice').value);
+  if(!amt || amt<=0){ alert('Valor inválido'); return; }
+  try{
+    await addGold(user.uid,-amt);
+    const result = Math.random()<0.5?1:0;
+    const win = (result===choice);
+    if(win) await addGold(user.uid,amt*2);
+    document.getElementById('betMsg').textContent = win ? `🎉 Ganhou ${amt*2} gold!` : `💀 Perdeu ${amt} gold.`;
+    updateMyInfo(user.uid);
+  }catch(err){ alert(err); }
+};
+
+// rank
+async function reloadRank(){
+  const list=document.getElementById('rankList');
+  list.innerHTML='<p class="small">Carregando...</p>';
+  try{
+    const snap=await db.collection('users').orderBy('gold','desc').limit(50).get();
+    if(snap.empty){ list.innerHTML='<p class="small">Nenhum jogador ainda.</p>'; return; }
+    let html='<ol>';
+    snap.forEach(doc=>{const d=doc.data(); html+=`<li style="margin:.4rem 0"><strong>${escapeHtml(d.displayName||d.email||'user')}</strong> — ${Number(d.gold||0)} gold</li>`;});
+    html+='</ol>'; list.innerHTML=html;
+  }catch(err){ console.error(err); list.innerHTML='<p class="small">Erro ao carregar ranking</p>';}
+}
+reloadRank(); setInterval(reloadRank,10000);
+
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+
+// owner actions
+document.getElementById('btnGive').onclick=async ()=>{
+  const user = auth.currentUser; if(!user||user.uid!==OWNER_UID){ alert('Somente dono'); return; }
+  const name=document.getElementById('adminName').value.trim(); const amt=Number(document.getElementById('adminAmount').value||0);
+  if(!name||!amt){ alert('Nome e quantidade necessários'); return; }
+  const q=await db.collection('users').where('displayName','==',name).limit(1).get();
+  if(q.empty){ alert('Usuário não encontrado'); return; }
+  const doc=q

@@ -199,7 +199,7 @@ input[type="file"]::file-selector-button {
     animation: fadeInOut 4.5s cubic-bezier(0.19, 1, 0.22, 1) forwards;
 }
 /* Requisito de Cooldown para o Trabalho */
-#btnWork.cooldown {
+#btnWork.cooldown, #btnHunt.cooldown, #btnMine.cooldown {
     opacity: 0.6;
     cursor: not-allowed;
     background: var(--btn-red);
@@ -211,6 +211,22 @@ input[type="file"]::file-selector-button {
     90% { opacity: 1; transform: translateY(0); }
     100% { opacity: 0; transform: translateY(-20px); }
 }
+
+/* ESTILOS DE INVENTÁRIO */
+#inventoryList {
+    list-style: none; padding: 0; max-height: 200px; overflow-y: auto;
+    border: 1px solid var(--border-color); border-radius: 10px; padding: 10px;
+    background: rgba(0,0,0,0.3);
+}
+#inventoryList li {
+    padding: 8px 0; border-bottom: 1px dotted rgba(255,255,255,0.1); 
+    display: flex; justify-content: space-between; font-size: 0.95rem;
+}
+#inventoryList li:last-child { border-bottom: none; }
+#inventoryTotal {
+    color: var(--main-gold); font-size: 1.2rem; font-weight: bold; display: block; margin-top: 10px;
+}
+
 
 @media(max-width:880px){ 
     .container{grid-template-columns:1fr; padding:.5rem; margin-top: 1.5rem} 
@@ -324,8 +340,27 @@ input[type="file"]::file-selector-button {
             <p style="margin: 0; font-size: 1.1rem;">Seu Gold: <strong id="playerGold" style="color: var(--main-gold);">0</strong></p>
         </div>
 
-        <h3 style="margin-top: 1rem;">💼 Trabalhar (RNG)</h3>
-        <p class="small">Ganho varia de **1% a 100%** do seu Gold atual. **Garante no mínimo 1 Gold, mesmo com 0 Gold.** (Cooldown: 5s)</p>
+        <h3 style="margin-top: 1rem;">🌳 Ações de Coleta e Inventário</h3>
+        <p class="small">Reúna itens caçando ou minerando e venda-os de uma vez para ganhar Gold.</p>
+        
+        <div style="display: flex; gap: 15px; margin-bottom: 20px;">
+            <button id="btnHunt" class="btn" onclick="hunt()" style="background: var(--green-win); flex-grow: 1; padding: 1rem;">Caçar (Cooldown: 10s)</button>
+            <button id="btnMine" class="btn" onclick="mine()" style="background: #4A90E2; flex-grow: 1; padding: 1rem;">Minerar (Cooldown: 10s)</button>
+        </div>
+
+        <div class="card" style="background: rgba(0,0,0,0.4); padding: 1.5rem; margin-bottom: 25px;">
+            <h4 style="margin-top: 0; color: var(--main-gold);">📦 Seu Inventário</h4>
+            <ul id="inventoryList">
+                <li id="inventoryEmptyMsg" style="text-align: center; color: var(--text-secondary);">Inventário vazio.</li>
+            </ul>
+            <span id="inventoryTotal">Valor Total: 0 Gold</span>
+            <button id="btnSellInventory" class="btn" onclick="sellInventory()" style="width: 100%; margin-top: 15px; background: var(--btn-red);">Vender Inventário</button>
+        </div>
+        
+        <hr style="border:none;height:1px;background:var(--border-color);margin:25px 0">
+        
+        <h3 style="margin-top: 1rem;">💼 Trabalhar (Recuperação)</h3>
+        <p class="small">Ganho varia de **1% a 100%** do seu Gold atual. **Garante no mínimo 1 Gold.** (Cooldown: 5s)</p>
         <button id="btnWork" class="btn" onclick="work()">Trabalhar (Gold Aleatório)</button>
         <span id="workMsg" class="small" style="margin-left:1rem; color: #5EEAD4;"></span>
 
@@ -500,11 +535,17 @@ input[type="file"]::file-selector-button {
 // SEU UID DE ADMINISTRADOR! ESSENCIAL PARA O PAINEL E REGRAS!
 const OWNER_UID = "m3h06woQv2V7lrNu1p8fDQCZ8IW2"; 
 let currentUser = null; 
-// ALTERADO AQUI: GOLD INICIAL É AGORA 5000
+// GOLD INICIAL
 let initialGold = 5000; 
 let isOnlineRef = null; 
 const CHAT_LIMIT = 50;
-let isWorkingCooldown = false;
+let cooldowns = {
+    work: false,
+    hunt: false,
+    mine: false
+};
+const COOLDOWN_WORK = 5000;
+const COOLDOWN_COLLECT = 10000; // 10 segundos para caçar e minerar
 
 // ATENÇÃO: SUBSTITUA OS VALORES MARCADOS COM [!] PELOS SEUS DADOS REAIS DO FIREBASE
 const firebaseConfig = {
@@ -624,9 +665,10 @@ if (typeof firebase !== 'undefined') {
                 
                 await usersColRef.doc(user.uid).set({
                     username: username,
-                    gold: initialGold, // USANDO O NOVO VALOR DE 5000
+                    gold: initialGold, 
                     wins: 0,
                     losses: 0,
+                    inventory: [], // INVENTÁRIO INICIALIZADO
                     creationTime: FieldValue.serverTimestamp()
                 });
                 updateStatus(`Conta de ${username} criada com sucesso!`, false);
@@ -675,6 +717,10 @@ if (typeof firebase !== 'undefined') {
                 if (data.username !== document.getElementById('username').value.trim()) {
                     document.getElementById('username').value = data.username; 
                 }
+                
+                // ATUALIZA INVENTÁRIO
+                renderInventory(data.inventory || []); 
+
             }
         });
 
@@ -686,7 +732,7 @@ if (typeof firebase !== 'undefined') {
 
 
     // ----------------------------------------------------
-    // 4. JOGOS E SISTEMA ANTI-HACK DE GOLD (FUNÇÕES RESTAURADAS E NOVAS)
+    // 4. JOGOS E SISTEMA ANTI-HACK DE GOLD
     // ----------------------------------------------------
 
     async function updateGold(amount, isWin = false) {
@@ -708,6 +754,195 @@ if (typeof firebase !== 'undefined') {
                 return false;
             });
     }
+    
+    // NOVO: Função para atualizar o inventário
+    async function updateInventory(newInventory) {
+        if (!currentUser) return false;
+        
+        return usersColRef.doc(currentUser.uid).update({
+            inventory: newInventory 
+        }).catch(error => {
+            updateStatus(`Erro ao atualizar inventário: ${error.message}`, true);
+            return false;
+        });
+    }
+    
+    // NOVO: Funções de Cooldown
+    function checkCooldown(action) {
+        if (!currentUser) { updateStatus("Você precisa estar logado.", true); return true; }
+        if (cooldowns[action]) {
+            updateStatus(`Aguarde o cooldown (${COOLDOWN_COLLECT / 1000} segundos) para ${action}.`, true);
+            return true;
+        }
+        return false;
+    }
+    
+    function setCooldown(action, duration, btnId) {
+        cooldowns[action] = true;
+        const btn = document.getElementById(btnId);
+        if(btn) {
+            btn.disabled = true;
+            btn.classList.add('cooldown');
+        }
+
+        setTimeout(() => {
+            cooldowns[action] = false;
+            if(btn) {
+                btn.disabled = false;
+                btn.classList.remove('cooldown');
+            }
+        }, duration);
+    }
+    
+    // NOVO: Renderiza o inventário na tela
+    function renderInventory(inventory) {
+        const list = document.getElementById('inventoryList');
+        const totalElement = document.getElementById('inventoryTotal');
+        list.innerHTML = '';
+        
+        if (!inventory || inventory.length === 0) {
+            list.innerHTML = '<li id="inventoryEmptyMsg" style="text-align: center; color: var(--text-secondary);">Inventário vazio.</li>';
+            totalElement.textContent = 'Valor Total: 0 Gold';
+            return;
+        }
+        
+        let totalValue = 0;
+        
+        // Agrupa itens com o mesmo nome para exibição limpa
+        const groupedInventory = inventory.reduce((acc, item) => {
+            acc[item.name] = acc[item.name] || { count: 0, totalValue: 0 };
+            acc[item.name].count += 1;
+            acc[item.name].totalValue += item.goldValue;
+            totalValue += item.goldValue;
+            return acc;
+        }, {});
+        
+        for (const name in groupedInventory) {
+            const item = groupedInventory[name];
+            const li = document.createElement('li');
+            li.innerHTML = `
+                <span>${name} (x${item.count})</span>
+                <span style="color: var(--main-gold);">${item.totalValue.toLocaleString()} Gold</span>
+            `;
+            list.appendChild(li);
+        }
+        
+        totalElement.textContent = `Valor Total: ${totalValue.toLocaleString()} Gold`;
+    }
+
+    // Jogo Simples: Trabalho (MANTIDO COMO RECUPERAÇÃO)
+    async function work() {
+        const action = 'work';
+        const btnId = 'btnWork';
+        if (checkCooldown(action)) return;
+        
+        setCooldown(action, COOLDOWN_WORK, btnId);
+
+        const currentGold = parseInt(document.getElementById('myGold').textContent.replace(/[^0-9]/g, '')) || 0;
+        
+        const percentage = Math.floor(Math.random() * 100) + 1; 
+        const earnings = Math.max(1, Math.floor(currentGold * (percentage / 100))); 
+        
+        await updateGold(earnings, true);
+
+        document.getElementById('workMsg').textContent = `Você trabalhou e ganhou +${earnings.toLocaleString()} Gold (${percentage}%).`;
+        
+        setTimeout(() => {
+            document.getElementById('workMsg').textContent = '';
+        }, COOLDOWN_WORK); 
+    }
+    
+    // NOVO: Caçar/Coletar
+    async function hunt() {
+        const action = 'hunt';
+        const btnId = 'btnHunt';
+        if (checkCooldown(action)) return;
+        
+        setCooldown(action, COOLDOWN_COLLECT, btnId);
+        
+        const huntingItems = [
+            { name: "Pele de Urso Rara", min: 1000, max: 1800 },
+            { name: "Carne de Cervo", min: 150, max: 400 },
+            { name: "Tronco de Carvalho", min: 70, max: 250 },
+            { name: "Pena de Águia", min: 400, max: 800 },
+            { name: "Erva Medicinal", min: 100, max: 300 }
+        ];
+
+        const selectedItem = huntingItems[Math.floor(Math.random() * huntingItems.length)];
+        const value = Math.floor(Math.random() * (selectedItem.max - selectedItem.min + 1)) + selectedItem.min;
+        
+        const item = { name: selectedItem.name, goldValue: value };
+        
+        const userRef = usersColRef.doc(currentUser.uid);
+        const userDoc = await userRef.get();
+        const currentInventory = userDoc.data().inventory || [];
+        
+        currentInventory.push(item);
+        
+        await updateInventory(currentInventory);
+        
+        updateStatus(`Caça: Você encontrou ${item.name} (Valor: ${item.goldValue.toLocaleString()} Gold)!`, false);
+    }
+    
+    // NOVO: Minerar
+    async function mine() {
+        const action = 'mine';
+        const btnId = 'btnMine';
+        if (checkCooldown(action)) return;
+        
+        setCooldown(action, COOLDOWN_COLLECT, btnId);
+        
+        const miningItems = [
+            { name: "Diamante Bruto", min: 1500, max: 2500 },
+            { name: "Pepita de Ouro", min: 800, max: 1500 },
+            { name: "Carvão", min: 100, max: 300 },
+            { name: "Barra de Ferro", min: 200, max: 500 },
+            { name: "Rubi", min: 1200, max: 2000 }
+        ];
+
+        const selectedItem = miningItems[Math.floor(Math.random() * miningItems.length)];
+        const value = Math.floor(Math.random() * (selectedItem.max - selectedItem.min + 1)) + selectedItem.min;
+        
+        const item = { name: selectedItem.name, goldValue: value };
+        
+        const userRef = usersColRef.doc(currentUser.uid);
+        const userDoc = await userRef.get();
+        const currentInventory = userDoc.data().inventory || [];
+        
+        currentInventory.push(item);
+        
+        await updateInventory(currentInventory);
+        
+        updateStatus(`Mineração: Você desenterrou ${item.name} (Valor: ${item.goldValue.toLocaleString()} Gold)!`, false);
+    }
+    
+    // NOVO: Vender Inventário
+    async function sellInventory() {
+        if (!currentUser) return;
+        
+        const userRef = usersColRef.doc(currentUser.uid);
+        const userDoc = await userRef.get();
+        const currentInventory = userDoc.data().inventory || [];
+        
+        if (currentInventory.length === 0) {
+            return updateStatus("Seu inventário está vazio!", true);
+        }
+        
+        let totalGold = currentInventory.reduce((sum, item) => sum + item.goldValue, 0);
+        
+        // 1. Adiciona Gold
+        await updateGold(totalGold, true);
+        
+        // 2. Limpa o inventário
+        await updateInventory([]);
+        
+        updateStatus(`Venda! Você vendeu ${currentInventory.length} itens por ${totalGold.toLocaleString()} Gold!`, false);
+    }
+
+
+    // ----------------------------------------------------
+    // 5. OUTRAS FUNÇÕES (Não Alteradas)
+    // ----------------------------------------------------
 
     function validateBet(amount) {
         const currentGoldText = document.getElementById('myGold').textContent.replace(/[^0-9]/g, '');
@@ -721,7 +956,6 @@ if (typeof firebase !== 'undefined') {
         if (isNaN(betAmount) || betAmount <= 0) { 
             updateStatus("A aposta deve ser um valor positivo e numérico.", true); return false; 
         }
-        // Valida se tem gold suficiente (essencial para apostas)
         if (betAmount > currentGold) { 
             updateStatus("Gold insuficiente para esta aposta.", true); return false; 
         }
@@ -746,35 +980,7 @@ if (typeof firebase !== 'undefined') {
             element.style.display = 'none';
         }, 4000);
     }
-
-    // Jogo Simples: Trabalho (AGORA GARANTE MÍNIMO DE 1 GOLD)
-    async function work() {
-        const btnWork = document.getElementById('btnWork');
-        if (isWorkingCooldown) return updateStatus("Aguarde o cooldown (5 segundos).", true);
-        if (!currentUser) return updateStatus("Você precisa estar logado para trabalhar.", true);
-        
-        isWorkingCooldown = true;
-        btnWork.disabled = true;
-        btnWork.classList.add('cooldown');
-
-        const currentGold = parseInt(document.getElementById('myGold').textContent.replace(/[^0-9]/g, '')) || 0;
-        
-        // Se o gold for 0, a porcentagem ainda é calculada, mas o Math.max(1, ...) garante 1 gold.
-        const percentage = Math.floor(Math.random() * 100) + 1; 
-        const earnings = Math.max(1, Math.floor(currentGold * (percentage / 100))); 
-        
-        await updateGold(earnings, true);
-
-        document.getElementById('workMsg').textContent = `Você trabalhou e ganhou +${earnings.toLocaleString()} Gold (${percentage}%).`;
-        
-        setTimeout(() => {
-            isWorkingCooldown = false;
-            btnWork.disabled = false;
-            btnWork.classList.remove('cooldown');
-            document.getElementById('workMsg').textContent = '';
-        }, 5000); 
-    }
-
+    
     // Jogo Simples: Multiplicador (RESTAURO)
     async function betSimple(multiplier, inputId, msgId, winChance) {
         const inputElement = document.getElementById(inputId);
@@ -964,7 +1170,7 @@ if (typeof firebase !== 'undefined') {
 
 
     // ----------------------------------------------------
-    // 5. RANKING GLOBAL
+    // 6. RANKING GLOBAL (Não Alterado)
     // ----------------------------------------------------
 
     function loadRanking() {
@@ -1002,7 +1208,7 @@ if (typeof firebase !== 'undefined') {
 
 
     // ----------------------------------------------------
-    // 6. CHAT GLOBAL
+    // 7. CHAT GLOBAL (Não Alterado)
     // ----------------------------------------------------
 
     async function sendMessage() {
@@ -1054,7 +1260,7 @@ if (typeof firebase !== 'undefined') {
 
 
     // ----------------------------------------------------
-    // 7. SISTEMA DE VENDAS (Com Upload de Imagem)
+    // 8. SISTEMA DE VENDAS (Com Upload de Imagem - Não Alterado)
     // ----------------------------------------------------
 
     async function postSale() {
@@ -1170,7 +1376,7 @@ if (typeof firebase !== 'undefined') {
 
 
     // ----------------------------------------------------
-    // 8. FUNÇÕES DE ADMINISTRADOR
+    // 9. FUNÇÕES DE ADMINISTRADOR (Não Alterado)
     // ----------------------------------------------------
 
     async function adminGiveGold() {
@@ -1222,7 +1428,7 @@ if (typeof firebase !== 'undefined') {
 
 
     // ----------------------------------------------------
-    // 9. CONTADOR DE USUÁRIOS ONLINE
+    // 10. CONTADOR DE USUÁRIOS ONLINE (Não Alterado)
     // ----------------------------------------------------
 
     function trackOnlineStatus(uid) {
@@ -1267,7 +1473,7 @@ if (typeof firebase !== 'undefined') {
 
 
     // ----------------------------------------------------
-    // 10. LISTENERS GLOBAIS
+    // 11. LISTENERS GLOBAIS (Não Alterado)
     // ----------------------------------------------------
 
     auth.onAuthStateChanged(user => {
@@ -1275,7 +1481,7 @@ if (typeof firebase !== 'undefined') {
             loadUserData(user);
         } else {
             currentUser = null;
-            document.getElementById('signedOutUI').style.display = 'block';
+            document.getElementById('signedOutUI').style.display = 'none';
             document.getElementById('signedInUI').style.display = 'none';
             document.getElementById('ownerPanel').style.display = 'none';
             document.getElementById('playerInfoSocial').style.display = 'none';

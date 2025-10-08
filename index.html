@@ -8,11 +8,9 @@
 :root{
   --card-bg: rgba(0,0,0,0.62);
   --btn-gradient: linear-gradient(90deg,#ffd54f,#ffb300);
-  --btn-work: linear-gradient(90deg,#90caf9,#42a5f5);
-  --btn-logout: linear-gradient(90deg,#ef9a9a,#e57373);
 }
-html,body{height:100%;margin:0;font-family:Arial,sans-serif;color:#fff;background:#000;}
-body{perspective:1000px;overflow-x:hidden;}
+html,body{height:100%;margin:0;font-family:Arial,Helvetica,sans-serif;color:#fff;background:#000}
+body{perspective:1000px;overflow-x:hidden}
 .bg3d{
   position:fixed;inset:0;background:url('/* LINK DA IMAGEM */') no-repeat center center;
   background-size:cover;z-index:-2;filter:contrast(0.92) saturate(0.95) brightness(0.9);
@@ -60,21 +58,21 @@ footer{padding:1rem;text-align:center;color:#ccc}
     <button class="tabbtn" data-tab="rankTab">🏆 RANK GLOBAL</button>
     <hr style="border:none;height:1px;background:rgba(255,255,255,0.06);margin:10px 0">
 
-    <!-- LOGIN / SIGNUP -->
     <div id="authArea" class="small">
       <div id="signedOutUI">
         <input id="username" type="text" placeholder="Escolha um nome (sem espaços)">
         <input id="pwd" type="password" placeholder="Senha (≥6)">
         <div style="display:flex;gap:.5rem">
-          <button id="btnSignup" class="btn" style="background:var(--btn-work)">Criar conta</button>
+          <button id="btnSignup" class="btn" style="background:linear-gradient(90deg,#90caf9,#42a5f5)">Criar conta</button>
           <button id="btnLogin" class="btn">Entrar</button>
         </div>
         <p class="small">Nome único — se já existir, escolha outro.</p>
       </div>
+
       <div id="signedInUI" style="display:none">
         <p><strong id="userLabel"></strong></p>
         <div style="display:flex;gap:.5rem;align-items:center">
-          <button id="btnLogout" class="btn" style="background:var(--btn-logout)">Sair</button>
+          <button id="btnLogout" class="btn" style="background:linear-gradient(90deg,#ef9a9a,#e57373)">Sair</button>
           <div style="margin-left:auto"><span class="small">Gold: </span><strong id="myGold">0</strong></div>
         </div>
       </div>
@@ -86,7 +84,7 @@ footer{padding:1rem;text-align:center;color:#ccc}
       <input id="adminName" placeholder="nome do usuário (exact)">
       <input id="adminAmount" type="number" placeholder="gold (positivo/negativo)">
       <button id="btnGive" class="btn">Dar/Remover gold</button>
-      <button id="btnReset" class="btn" style="background:var(--btn-logout);margin-top:.5rem">Resetar ranking</button>
+      <button id="btnReset" class="btn" style="background:linear-gradient(90deg,#ef9a9a,#e57373);margin-top:.5rem">Resetar ranking</button>
       <p class="small">Somente OWNER_UID pode usar</p>
     </div>
 
@@ -95,54 +93,50 @@ footer{padding:1rem;text-align:center;color:#ccc}
   </aside>
 
   <section class="card content">
-    <!-- REGRAS -->
     <div id="regrasTab">
       <h2>Regras</h2>
       <h3>🚫 Proibido</h3>
       <ul>
         <li>Flodar mensagens (spam).</li>
-        <li>Compartilhar links suspeitos (pornografia, vírus, phishing, etc.).</li>
-        <li>Colocar preço ou valor em contas de outras pessoas.</li>
-        <li>Ofensas, xingamentos ou desrespeito entre membros.</li>
-        <li>Vendas de itens ilegais, roubados ou que violem regras.</li>
+        <li>Compartilhar links suspeitos.</li>
+        <li>Colocar preço em contas de outros.</li>
+        <li>Ofensas, xingamentos ou desrespeito.</li>
+        <li>Itens ilegais ou roubados.</li>
       </ul>
+
       <h3>✅ Permitido</h3>
       <ul>
-        <li>Postar links (não suspeitos).</li>
-        <li>Comprar e vender produtos de forma clara e respeitosa.</li>
-        <li>Negociar e interagir com bom senso.</li>
+        <li>Postar links não suspeitos.</li>
+        <li>Comprar e vender produtos de forma clara.</li>
+        <li>Negociar com bom senso.</li>
       </ul>
+
       <h3>⚠️ Observações</h3>
       <ul>
         <li>Descumprimento pode levar a banimento.</li>
-        <li>Negociações são responsabilidade entre partes.</li>
+        <li>Negociações são responsabilidade dos participantes.</li>
       </ul>
     </div>
 
-    <!-- JOGUINHO -->
     <div id="jogoTab" style="display:none">
       <h2>🎮 Joguinho</h2>
-      <p class="small">Clique <strong>Trabalhar</strong> para ganhar <strong>+1 gold</strong>. (Rate-limit: 5s)</p>
+      <p class="small">Clique <strong>Trabalhar</strong> para ganhar <strong>+1 gold</strong> (5s de cooldown)</p>
       <div style="margin:1rem 0">
         <button id="btnWork" class="btn">Trabalhar (+1 gold)</button>
         <span id="workMsg" class="small" style="margin-left:1rem"></span>
       </div>
-      <div id="playerInfo" style="margin-top:1rem;display:none">
-        <p>Jogador: <strong id="playerName"></strong> — Gold: <strong id="playerGold">0</strong></p>
+    </div>
+
+    <div id="cassinoTab" style="display:none">
+      <h2>🎰 Cassino</h2>
+      <p class="small">Aposte 1 gold, escolha um número de 1 a 6. Acertou? ganha 6x!</p>
+      <div style="margin:1rem 0">
+        <input type="number" id="betNumber" min="1" max="6" placeholder="1-6">
+        <button id="btnBet" class="btn">Apostar</button>
+        <span id="betMsg" class="small" style="margin-left:1rem"></span>
       </div>
     </div>
 
-    <!-- CASSINO -->
-    <div id="cassinoTab" style="display:none">
-      <h2>🎰 Cassino</h2>
-      <p class="small">Aposte seu gold! Escolha um número de 1 a 6. Se acertar, ganha 6x o valor apostado.</p>
-      <input id="betNumber" type="number" placeholder="Número (1-6)" min="1" max="6">
-      <input id="betAmount" type="number" placeholder="Gold a apostar" min="1">
-      <button id="btnBet" class="btn">Apostar</button>
-      <p id="betResult" class="small" style="margin-top:0.5rem"></p>
-    </div>
-
-    <!-- RANK -->
     <div id="rankTab" style="display:none">
       <h2>🏆 Rank Global</h2>
       <p class="small">Top jogadores (atualiza automaticamente)</p>
@@ -158,7 +152,7 @@ footer{padding:1rem;text-align:center;color:#ccc}
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script>
-const firebaseConfig = /* COLE SEU FIREBASE CONFIG */;
+const firebaseConfig = /* COLE AQUI */;
 const OWNER_UID = "COLE_AQUI_SEU_UID";
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
@@ -169,12 +163,9 @@ const signedOutUI = document.getElementById('signedOutUI');
 const signedInUI = document.getElementById('signedInUI');
 const userLabel = document.getElementById('userLabel');
 const myGold = document.getElementById('myGold');
-const playerName = document.getElementById('playerName');
-const playerGold = document.getElementById('playerGold');
-const playerInfo = document.getElementById('playerInfo');
 const betNumber = document.getElementById('betNumber');
-const betAmount = document.getElementById('betAmount');
-const betResult = document.getElementById('betResult');
+const betMsg = document.getElementById('betMsg');
+const workMsg = document.getElementById('workMsg');
 
 // tabs
 function showTab(id){
@@ -189,48 +180,47 @@ document.querySelectorAll('.tabbtn').forEach(b=>{
 });
 showTab('regrasTab');
 
-// username -> email
 function usernameToEmail(u){ return `${u}@ivad.local`; }
 function validUsername(u){ return /^[a-zA-Z0-9_]{3,20}$/.test(u); }
 
 // SIGNUP
-document.getElementById('btnSignup').onclick = async ()=>{
-  const uname = document.getElementById('username').value.trim();
-  const pw = document.getElementById('pwd').value;
+document.getElementById('btnSignup').onclick=async ()=>{
+  const uname=document.getElementById('username').value.trim();
+  const pw=document.getElementById('pwd').value;
   if(!validUsername(uname)){ alert('Nome inválido'); return; }
   if(pw.length<6){ alert('Senha precisa ≥6'); return; }
   try{
     const q = await db.collection('users').where('displayName','==',uname).limit(1).get();
     if(!q.empty){ alert('Nome já existe'); return; }
-    const syntheticEmail = usernameToEmail(uname);
-    const cred = await auth.createUserWithEmailAndPassword(syntheticEmail,pw);
-    const user = cred.user;
-    await db.collection('users').doc(user.uid).set({uid:user.uid,email:syntheticEmail,displayName:uname,gold:0,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+    const email=usernameToEmail(uname);
+    const cred=await auth.createUserWithEmailAndPassword(email,pw);
+    const user=cred.user;
+    await db.collection('users').doc(user.uid).set({uid:user.uid,email:email,displayName:uname,gold:0,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
     alert('Conta criada! Você já está logado.');
   }catch(err){ console.error(err); alert('Erro: '+err.message); }
 };
 
 // LOGIN
-document.getElementById('btnLogin').onclick = async ()=>{
-  const uname = document.getElementById('username').value.trim();
-  const pw = document.getElementById('pwd').value;
+document.getElementById('btnLogin').onclick=async ()=>{
+  const uname=document.getElementById('username').value.trim();
+  const pw=document.getElementById('pwd').value;
   if(!validUsername(uname)){ alert('Nome inválido'); return; }
   if(pw.length<6){ alert('Senha precisa ≥6'); return; }
   try{
-    const email = usernameToEmail(uname);
+    const email=usernameToEmail(uname);
     await auth.signInWithEmailAndPassword(email,pw);
   }catch(err){ console.error(err); alert('Erro ao entrar: '+err.message); }
 };
 
-document.getElementById('btnLogout').onclick = ()=>auth.signOut();
+document.getElementById('btnLogout').onclick=()=>auth.signOut();
 
 // auth state
 auth.onAuthStateChanged(async user=>{
   if(user){
     signedOutUI.style.display='none';
     signedInUI.style.display='block';
-    userLabel.textContent = 'Conectado: '+(user.email?user.email.split('@')[0]:user.uid);
-    if(user.uid === OWNER_UID) document.getElementById('ownerPanel').style.display='block';
+    userLabel.textContent='Conectado: '+(user.email?user.email.split('@')[0]:user.uid);
+    if(user.uid===OWNER_UID) document.getElementById('ownerPanel').style.display='block';
     else document.getElementById('ownerPanel').style.display='none';
     updateMyInfo(user.uid);
   }else{
@@ -238,72 +228,65 @@ auth.onAuthStateChanged(async user=>{
     signedInUI.style.display='none';
     document.getElementById('ownerPanel').style.display='none';
     myGold.textContent='0';
-    playerInfo.style.display='none';
   }
 });
 
 async function updateMyInfo(uid){
   const doc = await db.collection('users').doc(uid).get();
   if(doc.exists){
-    const data = doc.data();
-    myGold.textContent = data.gold||0;
-    playerName.textContent = data.displayName;
-    playerGold.textContent = data.gold||0;
-    playerInfo.style.display='block';
+    const data=doc.data();
+    myGold.textContent=data.gold||0;
   }
 }
 
-// JOGUINHO WORK
+// WORK BUTTON
 let lastWork=0;
 document.getElementById('btnWork').onclick=async ()=>{
-  const user = auth.currentUser;
+  const user=auth.currentUser;
   if(!user){ alert('Faça login'); return; }
-  const now = Date.now();
-  if(now-lastWork<5000){ document.getElementById('workMsg').textContent='Aguarde 5s'; return; }
+  const now=Date.now();
+  if(now-lastWork<5000){ workMsg.textContent='Aguarde 5s'; return; }
   lastWork=now;
   try{
-    const userRef = db.collection('users').doc(user.uid);
+    const ref=db.collection('users').doc(user.uid);
     await db.runTransaction(async tx=>{
-      const d = await tx.get(userRef);
-      if(!d.exists) throw 'Usuário não encontrado';
-      tx.update(userRef,{gold:(d.data().gold||0)+1});
+      const d=await tx.get(ref);
+      tx.update(ref,{gold:(d.data().gold||0)+1});
     });
     updateMyInfo(user.uid);
-    document.getElementById('workMsg').textContent='+1 gold!';
-    setTimeout(()=>document.getElementById('workMsg').textContent='',1200);
+    workMsg.textContent='+1 gold!';
+    setTimeout(()=>workMsg.textContent='',1200);
     reloadRank();
   }catch(err){ console.error(err); alert('Erro: '+err); }
 };
 
 // CASSINO
 document.getElementById('btnBet').onclick=async ()=>{
-  const user = auth.currentUser;
+  const user=auth.currentUser;
   if(!user){ alert('Faça login'); return; }
-  const n = parseInt(betNumber.value);
-  const amt = parseInt(betAmount.value);
-  if(!n || n<1 || n>6){ alert('Número inválido'); return; }
-  if(!amt || amt<1){ alert('Quantidade inválida'); return; }
-  const doc = await db.collection('users').doc(user.uid).get();
-  if(!doc.exists){ alert('Usuário não encontrado'); return; }
-  if(doc.data().gold<amt){ alert('Gold insuficiente'); return; }
-  const roll = Math.floor(Math.random()*6)+1;
-  let resultText='';
-  let newGold=doc.data().gold;
-  if(roll===n){
-    const gain=amt*6;
-    newGold += gain;
-    resultText=`🎉 Acertou! Número: ${roll}. Ganhou ${gain} gold!`;
-  }else{
-    newGold -= amt;
-    resultText=`❌ Errou! Número: ${roll}. Perdeu ${amt} gold.`;
-  }
-  await db.collection('users').doc(user.uid).update({gold:newGold});
-  betResult.textContent=resultText;
-  updateMyInfo(user.uid);
-  reloadRank();
+  const n=Number(betNumber.value);
+  if(!n||n<1||n>6){ alert('Número inválido'); return; }
+  try{
+    const ref=db.collection('users').doc(user.uid);
+    await db.runTransaction(async tx=>{
+      const d=await tx.get(ref);
+      const gold=d.data().gold||0;
+      if(gold<1){ throw 'Gold insuficiente'; }
+      const rnd=Math.floor(Math.random()*6)+1;
+      let msg='';
+      let newGold=gold-1;
+      if(rnd===n){ newGold+=6; msg='🎉 Acertou! +6 gold'; }
+      else msg=`❌ Errou! Saiu ${rnd}`;
+      tx.update(ref,{gold:newGold});
+      betMsg.textContent=msg;
+      setTimeout(()=>betMsg.textContent='',2000);
+    });
+    updateMyInfo(user.uid);
+    reloadRank();
+  }catch(err){ alert('Erro: '+err); }
 };
 
-// rank
+// RANK
 async function reloadRank(){
   const list=document.getElementById('rankList');
   list.innerHTML='<p class="small">Carregando...</p>';
@@ -311,6 +294,23 @@ async function reloadRank(){
     const snap=await db.collection('users').orderBy('gold','desc').limit(50).get();
     if(snap.empty){ list.innerHTML='<p class="small">Nenhum jogador ainda.</p>'; return; }
     let html='<ol>';
-    snap.forEach(doc=>{const d=doc.data(); html+=`<li style="margin:.4rem 0"><strong>${escapeHtml(d.displayName||d.email||'user')}</strong> — ${Number(d.gold||0)} gold</li>`;});
+    snap.forEach(doc=>{ const d=doc.data(); html+=`<li style="margin:.4rem 0"><strong>${d.displayName||d.email}</strong> — ${Number(d.gold||0)} gold</li>`; });
     html+='</ol>'; list.innerHTML=html;
-  }catch(err){ console.error(err); list.innerHTML='<p class="small">Erro ao carregar ranking</p>'
+  }catch(err){ list.innerHTML='<p class="small">Erro ao carregar ranking</p>'; }
+}
+reloadRank(); setInterval(reloadRank,10000);
+
+// OWNER ACTIONS
+document.getElementById('btnGive').onclick=async ()=>{
+  const user=auth.currentUser; if(!user||user.uid!==OWNER_UID){ alert('Somente dono'); return; }
+  const name=document.getElementById('adminName').value.trim();
+  const amt=Number(document.getElementById('adminAmount').value||0);
+  if(!name||!amt){ alert('Nome e quantidade necessários'); return; }
+  const q=await db.collection('users').where('displayName','==',name).limit(1).get();
+  if(q.empty){ alert('Usuário não encontrado'); return; }
+  const doc=q.docs[0];
+  await db.collection('users').doc(doc.id).update({gold:Number(doc.data().gold||0)+amt});
+  alert('Atualizado'); reloadRank();
+};
+document.getElementById('btnReset').onclick=async ()=>{
+  const user=auth.currentUser; if(!user||user.uid!==OWNER_UID){ alert('Somente dono

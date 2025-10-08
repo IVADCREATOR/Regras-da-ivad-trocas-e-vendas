@@ -175,6 +175,11 @@ input[type="file"]{padding: 10px; background: rgba(255,255,255,0.05); border-rad
 </style>
 </head>
 <body>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
+
 <div class="bg3d" aria-hidden="true"></div>
 <div class="overlay" aria-hidden="true"></div>
 
@@ -450,672 +455,712 @@ const firebaseConfig = {
     appId: "SEU_APP_ID"
 };
 
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db = firebase.firestore();
-const FieldValue = firebase.firestore.FieldValue;
-const storage = firebase.storage(); // Adicionando Storage para Vendas (Imagens)
+// Certifica-se de que o Firebase SDK está carregado antes de inicializar
+if (typeof firebase !== 'undefined') {
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+    const FieldValue = firebase.firestore.FieldValue;
+    const storage = firebase.storage(); // Adicionando Storage para Vendas (Imagens)
 
-// Referências Comuns
-const usersColRef = db.collection('users');
-const chatColRef = db.collection('chat');
-const salesColRef = db.collection('sales');
-const onlineUsersColRef = db.collection('onlineUsers');
-const storageRef = storage.ref('sales_images');
+    // Referências Comuns
+    const usersColRef = db.collection('users');
+    const chatColRef = db.collection('chat');
+    const salesColRef = db.collection('sales');
+    const onlineUsersColRef = db.collection('onlineUsers');
+    const storageRef = storage.ref('sales_images');
 
 
-// ----------------------------------------------------
-// 2. FUNÇÕES DE UTILIDADE E UI
-// ----------------------------------------------------
+    // ----------------------------------------------------
+    // 2. FUNÇÕES DE UTILIDADE E UI
+    // ----------------------------------------------------
 
-function updateStatus(message, isError = false) {
-    const statusElement = document.getElementById('globalNotice');
-    statusElement.textContent = message;
-    statusElement.style.backgroundColor = isError ? var(--red-loss) : var(--main-gold);
-    statusElement.style.color = isError ? 'white' : '#111';
-    statusElement.style.display = 'block';
-
-    clearTimeout(window.noticeTimeout);
-    window.noticeTimeout = setTimeout(() => {
-        statusElement.style.display = 'none';
-    }, 4000);
-}
-
-function switchTab(tabId) {
-    // 1. Esconde todos os conteúdos
-    document.querySelectorAll('.content > div').forEach(tab => {
-        tab.style.display = 'none';
-    });
-    // 2. Desativa todos os botões
-    document.querySelectorAll('.tabbtn').forEach(btn => {
-        btn.classList.remove('active');
-    });
-
-    // 3. Mostra o conteúdo da aba selecionada
-    const content = document.getElementById(tabId);
-    if (content) {
-        content.style.display = 'block';
-        // Ajuste para o grid de ranking/chat
-        if (tabId === 'rankTab' || tabId === 'chatTab') {
-            document.querySelector('.content').style.display = 'grid';
-            document.querySelector('.content').style.gridTemplateColumns = tabId === 'rankTab' ? '1fr' : '1fr'; // Ajuste aqui se quiser 2 colunas para rank e chat
+    function updateStatus(message, isError = false) {
+        const statusElement = document.getElementById('globalNotice');
+        statusElement.textContent = message;
+        
+        // Usando style.setProperty para garantir que as variáveis CSS sejam lidas
+        if (isError) {
+             statusElement.style.backgroundColor = 'var(--red-loss)';
+             statusElement.style.color = 'white';
         } else {
-             document.querySelector('.content').style.display = 'block';
+             statusElement.style.backgroundColor = 'var(--main-gold)';
+             statusElement.style.color = '#111';
         }
+
+        statusElement.style.display = 'block';
+
+        clearTimeout(window.noticeTimeout);
+        window.noticeTimeout = setTimeout(() => {
+            statusElement.style.display = 'none';
+        }, 4000);
     }
 
-    // 4. Ativa o botão selecionado
-    document.querySelector(`.tabbtn[data-tab="${tabId}"]`).classList.add('active');
-}
+    function switchTab(tabId) {
+        // 1. Esconde todos os conteúdos
+        document.querySelectorAll('.content > div').forEach(tab => {
+            tab.style.display = 'none';
+        });
+        // 2. Desativa todos os botões
+        document.querySelectorAll('.tabbtn').forEach(btn => {
+            btn.classList.remove('active');
+        });
 
-
-// ----------------------------------------------------
-// 3. AUTENTICAÇÃO E PERFIL (Sincronizado com Regras)
-// ----------------------------------------------------
-
-async function checkUsernameAvailability(username) {
-    const snapshot = await usersColRef.where('username', '==', username).get();
-    return snapshot.empty;
-}
-
-async function signup() {
-    const username = document.getElementById('username').value.trim();
-    const email = document.getElementById('username').value.trim() + "@ivad.com"; // Usando username como parte do email
-    const password = document.getElementById('pwd').value;
-    
-    if (username.length < 3) {
-        return updateStatus("Nome de usuário deve ter no mínimo 3 caracteres.", true);
-    }
-    if (password.length < 6) {
-        return updateStatus("Senha deve ter no mínimo 6 caracteres.", true);
-    }
-
-    // 1. Verifica se o username é único
-    const isAvailable = await checkUsernameAvailability(username);
-    if (!isAvailable) {
-        return updateStatus("Nome de usuário já está em uso.", true);
-    }
-
-    updateStatus("Criando conta...");
-    
-    // 2. Cria usuário no Auth
-    auth.createUserWithEmailAndPassword(email, password)
-        .then(async (userCredential) => {
-            const user = userCredential.user;
-            
-            // 3. Cria documento no Firestore (permitido pelas Regras)
-            await usersColRef.doc(user.uid).set({
-                username: username,
-                gold: initialGold,
-                wins: 0,
-                losses: 0,
-                creationTime: FieldValue.serverTimestamp()
-            });
-            updateStatus(`Conta de ${username} criada com sucesso!`, false);
-        })
-        .catch(error => {
-            // Se o email (username + @ivad.com) já existir
-            if (error.code === 'auth/email-already-in-use') {
-                 updateStatus("Um usuário com este nome já existe. Tente outro nome.", true);
+        // 3. Mostra o conteúdo da aba selecionada
+        const content = document.getElementById(tabId);
+        if (content) {
+            content.style.display = 'block';
+            // Ajuste para o grid de ranking/chat
+            if (tabId === 'rankTab' || tabId === 'chatTab') {
+                document.querySelector('.content').style.display = 'grid';
+                document.querySelector('.content').style.gridTemplateColumns = tabId === 'rankTab' ? '1fr' : '1fr';
             } else {
-                 updateStatus(`Erro no registro: ${error.message}`, true);
-            }
-        });
-}
-
-function login() {
-    const email = document.getElementById('username').value.trim() + "@ivad.com";
-    const password = document.getElementById('pwd').value;
-    
-    auth.signInWithEmailAndPassword(email, password)
-        .catch(error => {
-            updateStatus(`Erro no login: ${error.message}`, true);
-        });
-}
-
-async function loadUserData(user) {
-    currentUser = user;
-    
-    // 1. Troca a UI
-    document.getElementById('signedOutUI').style.display = 'none';
-    document.getElementById('signedInUI').style.display = 'block';
-
-    // 2. Verifica e mostra o Painel do Dono
-    document.getElementById('ownerPanel').style.display = user.uid === OWNER_UID ? 'block' : 'none';
-
-    const userRef = usersColRef.doc(user.uid);
-    
-    // 3. Listener em tempo real para Gold e Username
-    userRef.onSnapshot(docSnapshot => {
-        if (docSnapshot.exists) {
-            const data = docSnapshot.data();
-            document.getElementById('myGold').textContent = data.gold ? data.gold.toLocaleString() : '0';
-            document.getElementById('playerGold').textContent = data.gold ? data.gold.toLocaleString() : '0';
-            document.getElementById('userLabel').textContent = `Bem-vindo, ${data.username}!`;
-            document.getElementById('socialUsername').textContent = data.username;
-            document.getElementById('socialUserId').textContent = user.uid;
-            document.getElementById('playerInfoSocial').style.display = 'block';
-
-            // Atualiza o nome de usuário se o admin mudou
-            if (data.username !== document.getElementById('username').value.trim()) {
-                document.getElementById('username').value = data.username; 
+                 document.querySelector('.content').style.display = 'block';
             }
         }
-    });
 
-    // 4. Ativar funções de tempo real
-    loadRanking(); 
-    loadChat();    
-    loadSales();
-    trackOnlineStatus(user.uid);
-}
-
-
-// ----------------------------------------------------
-// 4. JOGOS E SISTEMA ANTI-HACK DE GOLD
-// ----------------------------------------------------
-
-async function updateGold(amount) {
-    if (!currentUser) return false;
-    // O uso de FieldValue.increment garante que as Regras Anti-Hack sejam respeitadas.
-    return usersColRef.doc(currentUser.uid).update({
-        gold: FieldValue.increment(amount)
-    }).catch(error => {
-        updateStatus(`Erro ao atualizar Gold: ${error.message}`, true);
-        return false;
-    });
-}
-
-function validateBet(amount) {
-    const currentGold = parseInt(document.getElementById('myGold').textContent.replace(/,/g, ''));
-    if (!currentUser) { updateStatus("Faça login para apostar.", true); return false; }
-    if (isNaN(amount) || amount <= 0) { updateStatus("A aposta deve ser um valor positivo.", true); return false; }
-    if (amount > currentGold) { updateStatus("Gold insuficiente para esta aposta.", true); return false; }
-    return true;
-}
-
-function notify(message, isWin) {
-    const element = document.getElementById('globalNotice');
-    element.textContent = message;
-    element.style.backgroundColor = isWin ? var(--green-win) : var(--red-loss);
-    element.style.color = 'white';
-    element.style.display = 'block';
-
-    clearTimeout(window.noticeTimeout);
-    window.noticeTimeout = setTimeout(() => {
-        element.style.display = 'none';
-    }, 4000);
-}
-
-// Jogo Simples: Trabalho
-async function work() {
-    if (isWorkingCooldown) return updateStatus("Aguarde o cooldown (5 segundos).", true);
-    if (!currentUser) return updateStatus("Você precisa estar logado para trabalhar.", true);
-    
-    isWorkingCooldown = true;
-    document.getElementById('btnWork').disabled = true;
-
-    const currentGold = parseInt(document.getElementById('myGold').textContent.replace(/,/g, ''));
-    const percentage = Math.floor(Math.random() * 100) + 1; // 1% a 100%
-    const earnings = Math.max(1, Math.floor(currentGold * (percentage / 100))); // Mínimo de 1 Gold
-    
-    await updateGold(earnings);
-
-    document.getElementById('workMsg').textContent = `Você trabalhou e ganhou +${earnings.toLocaleString()} Gold (${percentage}%).`;
-    
-    setTimeout(() => {
-        isWorkingCooldown = false;
-        document.getElementById('btnWork').disabled = false;
-        document.getElementById('workMsg').textContent = '';
-    }, 5000); // 5 segundos de cooldown
-}
-
-// Jogo Simples: Multiplicador
-async function betSimple(multiplier, inputId, msgId, winChance) {
-    const amount = parseInt(document.getElementById(inputId).value);
-    if (!validateBet(amount)) return;
-    
-    const win = Math.random() * 100 < winChance;
-    const result = win ? amount * (multiplier - 1) : -amount; // Lucro: (Mult - 1) * Aposta
-    
-    await updateGold(result);
-    
-    const msg = win 
-        ? `✅ GANHOU ${multiplier}x! Lucro de ${result.toLocaleString()} Gold.` 
-        : `❌ PERDEU. Menos ${amount.toLocaleString()} Gold.`;
-    
-    document.getElementById(msgId).textContent = msg;
-    notify(msg, win);
-}
-
-// Aposta Avançada: Cor (48% 2x, 4% 4x)
-async function betCor() {
-    const amount = parseInt(document.getElementById('betCorAmount').value);
-    const choice = document.getElementById('betCorColor').value;
-    if (!validateBet(amount)) return;
-
-    const rand = Math.random();
-    let outcome = 'black';
-    let mult = 0;
-
-    if (rand < 0.48) { // 48%
-        outcome = 'red';
-        mult = 2;
-    } else if (rand < 0.96) { // 48%
-        outcome = 'black';
-        mult = 2;
-    } else { // 4%
-        outcome = 'green';
-        mult = 4;
+        // 4. Ativa o botão selecionado
+        document.querySelector(`.tabbtn[data-tab="${tabId}"]`).classList.add('active');
     }
 
-    const win = choice === outcome;
-    const result = win ? amount * (mult - 1) : -amount;
-    
-    await updateGold(result);
-    
-    const msg = win 
-        ? `✅ GANHOU ${mult}x! Sorteado: ${outcome.toUpperCase()}. Lucro: ${result.toLocaleString()} Gold.` 
-        : `❌ PERDEU. Sorteado: ${outcome.toUpperCase()}. Menos ${amount.toLocaleString()} Gold.`;
-    
-    document.getElementById('betCorMsg').textContent = msg;
-    notify(msg, win);
-}
+    // Listener para as abas
+    document.querySelectorAll('.tabbtn').forEach(button => {
+        button.addEventListener('click', () => {
+            switchTab(button.getAttribute('data-tab'));
+        });
+    });
 
-// Aposta Avançada: Moeda (50% 2x)
-async function betCoin() {
-    const amount = parseInt(document.getElementById('betCoinAmount').value);
-    const choice = document.getElementById('betCoinSide').value;
-    if (!validateBet(amount)) return;
 
-    const outcome = Math.random() < 0.5 ? 'cara' : 'coroa';
-    const win = choice === outcome;
-    const result = win ? amount : -amount;
-    
-    await updateGold(result);
-    
-    const msg = win 
-        ? `✅ GANHOU 2x! Deu ${outcome.toUpperCase()}. Lucro: ${result.toLocaleString()} Gold.` 
-        : `❌ PERDEU. Deu ${outcome.toUpperCase()}. Menos ${amount.toLocaleString()} Gold.`;
-    
-    document.getElementById('betCoinMsg').textContent = msg;
-    notify(msg, win);
-}
+    // ----------------------------------------------------
+    // 3. AUTENTICAÇÃO E PERFIL (Sincronizado com Regras)
+    // ----------------------------------------------------
 
-// Aposta Avançada: Dice (12x)
-async function betDice(maxNumber, multiplier, inputAmountId, inputChoiceId, msgId) {
-    const amount = parseInt(document.getElementById(inputAmountId).value);
-    const choice = parseInt(document.getElementById(inputChoiceId).value);
-    
-    if (!validateBet(amount) || isNaN(choice) || choice < 1 || choice > maxNumber) {
-        return updateStatus(`Número de ${maxNumber} lados inválido (1-${maxNumber}).`, true);
+    async function checkUsernameAvailability(username) {
+        const snapshot = await usersColRef.where('username', '==', username).get();
+        return snapshot.empty;
     }
 
-    const outcome = Math.floor(Math.random() * maxNumber) + 1;
-    const win = choice === outcome;
-    const result = win ? amount * (multiplier - 1) : -amount;
-    
-    await updateGold(result);
-    
-    const msg = win 
-        ? `✅ ACERTOU ${outcome}! Lucro de ${result.toLocaleString()} Gold (${multiplier}x).` 
-        : `❌ ERROU ${outcome}. Perdeu ${amount.toLocaleString()} Gold.`;
-    
-    document.getElementById(msgId).textContent = msg;
-    notify(msg, win);
-}
-
-// Aposta Avançada: RNG Mágico (4x)
-async function betRNG(multiplier, fixedAmount, winChance) {
-    const amount = fixedAmount;
-    if (!validateBet(amount)) return; // Valida se o Gold atual é suficiente
-
-    const rand = Math.random() * 100;
-    const win = rand < winChance;
-    const result = win ? amount * (multiplier - 1) : -amount;
-    
-    await updateGold(result);
-    
-    const msg = win 
-        ? `✅ NÚMERO MÁGICO! Lucro de ${result.toLocaleString()} Gold (${multiplier}x).` 
-        : `❌ NÃO FOI DESSA VEZ. Perdeu ${amount.toLocaleString()} Gold.`;
-    
-    document.getElementById('betRNGMsg_4x').textContent = msg;
-    notify(msg, win);
-}
-
-
-// ----------------------------------------------------
-// 5. RANKING GLOBAL
-// ----------------------------------------------------
-
-function loadRanking() {
-    // Leitura permitida pelas regras 'allow read: if true;'
-    usersColRef.orderBy('gold', 'desc').limit(15).onSnapshot(snapshot => {
-        const rankingList = document.getElementById('rankingList');
-        rankingList.innerHTML = ''; 
+    async function signup() {
+        const username = document.getElementById('username').value.trim();
+        const email = document.getElementById('username').value.trim() + "@ivad.com"; // Usando username como parte do email
+        const password = document.getElementById('pwd').value;
         
-        if (snapshot.empty) {
-            rankingList.innerHTML = '<li>Nenhum usuário no ranking ainda.</li>';
-            return;
+        if (username.length < 3) {
+            return updateStatus("Nome de usuário deve ter no mínimo 3 caracteres.", true);
+        }
+        if (password.length < 6) {
+            return updateStatus("Senha deve ter no mínimo 6 caracteres.", true);
         }
 
-        snapshot.forEach((doc, index) => {
-            const data = doc.data();
-            const li = document.createElement('li');
-            li.style.color = doc.id === currentUser.uid ? var(--main-gold) : var(--text-primary);
-            li.style.fontWeight = doc.id === currentUser.uid ? 'bold' : 'normal';
+        // 1. Verifica se o username é único
+        const isAvailable = await checkUsernameAvailability(username);
+        if (!isAvailable) {
+            return updateStatus("Nome de usuário já está em uso.", true);
+        }
 
-            li.innerHTML = `
-                <span style="width: 30px; display: inline-block;">#${index + 1}</span>
-                <span style="color: ${doc.id === OWNER_UID ? '#ff00ff' : 'inherit'};">${data.username}</span>
-                <span style="color: var(--main-gold);">${data.gold ? data.gold.toLocaleString() : '0'} Gold</span>
-            `;
-            rankingList.appendChild(li);
-        });
-    }, error => {
-        updateStatus(`Erro ao carregar ranking: ${error.message}. Verifique as Regras de Segurança.`, true);
-    });
-}
-
-
-// ----------------------------------------------------
-// 6. CHAT GLOBAL
-// ----------------------------------------------------
-
-async function sendMessage() {
-    const input = document.getElementById('chatInput');
-    const message = input.value.trim();
-    if (!message || !currentUser) return;
-    
-    if (message.length > 200) {
-        return document.getElementById('chatError').textContent = "Mensagem muito longa (Máx. 200).";
-    }
-    
-    document.getElementById('chatError').textContent = "";
-    const userData = (await usersColRef.doc(currentUser.uid).get()).data();
-    
-    // A regra verifica se o username enviado é o mesmo do perfil
-    chatColRef.add({
-        username: userData.username,
-        text: message,
-        uid: currentUser.uid,
-        timestamp: FieldValue.serverTimestamp()
-    })
-    .then(() => input.value = '')
-    .catch(error => {
-        document.getElementById('chatError').textContent = `Erro: ${error.message}.`;
-    });
-}
-
-function loadChat() {
-    chatColRef.orderBy('timestamp', 'desc').limit(CHAT_LIMIT).onSnapshot(snapshot => {
-        const chatWindow = document.getElementById('chatWindow');
-        chatWindow.innerHTML = '';
+        updateStatus("Criando conta...");
         
-        const messages = [];
-        snapshot.forEach(doc => messages.push(doc.data()));
-        messages.reverse().forEach(data => {
-            const div = document.createElement('div');
-            div.className = 'chat-message';
-            
-            const usernameSpan = document.createElement('span');
-            usernameSpan.className = 'chat-user';
-            
-            let nameColor = data.uid === OWNER_UID ? '#ff00ff' : var(--text-secondary);
-            let nameDisplay = data.uid === OWNER_UID ? `${data.username} [DONO]:` : `${data.username}:`;
-
-            usernameSpan.textContent = nameDisplay;
-            usernameSpan.style.color = nameColor;
-            
-            const textSpan = document.createElement('span');
-            textSpan.className = 'chat-text';
-            textSpan.textContent = data.text;
-            
-            div.appendChild(usernameSpan);
-            div.appendChild(textSpan);
-            chatWindow.appendChild(div);
-        });
-        
-        chatWindow.scrollTop = chatWindow.scrollHeight;
-    }, error => console.error("Erro ao carregar chat: ", error));
-}
-
-
-// ----------------------------------------------------
-// 7. SISTEMA DE VENDAS (Com Upload de Imagem)
-// ----------------------------------------------------
-
-async function postSale() {
-    if (!currentUser) return updateStatus("Faça login para postar.", true);
-
-    const title = document.getElementById('saleTitle').value.trim();
-    const contact = document.getElementById('saleContact').value.trim();
-    const description = document.getElementById('saleDescription').value.trim();
-    const price = parseFloat(document.getElementById('salePrice').value);
-    const imageFile = document.getElementById('saleImage').files[0];
-
-    if (!title || !contact || !description || isNaN(price) || price <= 0 || !imageFile) {
-        return updateStatus("Preencha todos os campos e anexe uma imagem.", true);
+        // 2. Cria usuário no Auth
+        auth.createUserWithEmailAndPassword(email, password)
+            .then(async (userCredential) => {
+                const user = userCredential.user;
+                
+                // 3. Cria documento no Firestore (permitido pelas Regras)
+                await usersColRef.doc(user.uid).set({
+                    username: username,
+                    gold: initialGold,
+                    wins: 0,
+                    losses: 0,
+                    creationTime: FieldValue.serverTimestamp()
+                });
+                updateStatus(`Conta de ${username} criada com sucesso!`, false);
+            })
+            .catch(error => {
+                // Se o email (username + @ivad.com) já existir
+                if (error.code === 'auth/email-already-in-use') {
+                     updateStatus("Um usuário com este nome já existe. Tente outro nome.", true);
+                } else {
+                     updateStatus(`Erro no registro: ${error.message}`, true);
+                }
+            });
     }
 
-    document.getElementById('btnPostSale').disabled = true;
-    updateStatus("Subindo imagem e postando...");
+    function login() {
+        const email = document.getElementById('username').value.trim() + "@ivad.com";
+        const password = document.getElementById('pwd').value;
+        
+        auth.signInWithEmailAndPassword(email, password)
+            .catch(error => {
+                updateStatus(`Erro no login: ${error.message}`, true);
+            });
+    }
 
-    try {
+    async function loadUserData(user) {
+        currentUser = user;
+        
+        // 1. Troca a UI
+        document.getElementById('signedOutUI').style.display = 'none';
+        document.getElementById('signedInUI').style.display = 'block';
+
+        // 2. Verifica e mostra o Painel do Dono
+        document.getElementById('ownerPanel').style.display = user.uid === OWNER_UID ? 'block' : 'none';
+
+        const userRef = usersColRef.doc(user.uid);
+        
+        // 3. Listener em tempo real para Gold e Username
+        userRef.onSnapshot(docSnapshot => {
+            if (docSnapshot.exists) {
+                const data = docSnapshot.data();
+                // Usa Math.max(0, ...) para evitar gold negativo
+                const currentGold = Math.max(0, data.gold || 0); 
+                
+                document.getElementById('myGold').textContent = currentGold.toLocaleString();
+                document.getElementById('playerGold').textContent = currentGold.toLocaleString();
+                document.getElementById('userLabel').textContent = `Bem-vindo, ${data.username}!`;
+                document.getElementById('socialUsername').textContent = data.username;
+                document.getElementById('socialUserId').textContent = user.uid;
+                document.getElementById('playerInfoSocial').style.display = 'block';
+
+                // Atualiza o nome de usuário se o admin mudou
+                if (data.username !== document.getElementById('username').value.trim()) {
+                    document.getElementById('username').value = data.username; 
+                }
+            }
+        });
+
+        // 4. Ativar funções de tempo real
+        loadRanking(); 
+        loadChat();    
+        loadSales();
+        trackOnlineStatus(user.uid);
+    }
+
+
+    // ----------------------------------------------------
+    // 4. JOGOS E SISTEMA ANTI-HACK DE GOLD
+    // ----------------------------------------------------
+
+    async function updateGold(amount) {
+        if (!currentUser) return false;
+        // O uso de FieldValue.increment garante que as Regras Anti-Hack sejam respeitadas.
+        return usersColRef.doc(currentUser.uid).update({
+            gold: FieldValue.increment(amount)
+        }).catch(error => {
+            updateStatus(`Erro ao atualizar Gold: ${error.message}`, true);
+            return false;
+        });
+    }
+
+    function validateBet(amount) {
+        // Lê o gold atual, removendo vírgulas de formatação. Se não tiver gold, usa 0.
+        const currentGold = parseInt(document.getElementById('myGold').textContent.replace(/,/g, '')) || 0; 
+        
+        if (!currentUser) { 
+            updateStatus("Faça login para apostar.", true); return false; 
+        }
+        if (isNaN(amount) || amount <= 0) { 
+            updateStatus("A aposta deve ser um valor positivo.", true); return false; 
+        }
+        if (amount > currentGold) { 
+            updateStatus("Gold insuficiente para esta aposta.", true); return false; 
+        }
+        return true;
+    }
+
+    function notify(message, isWin) {
+        const element = document.getElementById('globalNotice');
+        element.textContent = message;
+        
+        if (isWin) {
+             element.style.backgroundColor = 'var(--green-win)';
+        } else {
+             element.style.backgroundColor = 'var(--red-loss)';
+        }
+
+        element.style.color = 'white';
+        element.style.display = 'block';
+
+        clearTimeout(window.noticeTimeout);
+        window.noticeTimeout = setTimeout(() => {
+            element.style.display = 'none';
+        }, 4000);
+    }
+
+    // Jogo Simples: Trabalho
+    async function work() {
+        if (isWorkingCooldown) return updateStatus("Aguarde o cooldown (5 segundos).", true);
+        if (!currentUser) return updateStatus("Você precisa estar logado para trabalhar.", true);
+        
+        isWorkingCooldown = true;
+        document.getElementById('btnWork').disabled = true;
+
+        const currentGold = parseInt(document.getElementById('myGold').textContent.replace(/,/g, '')) || 0;
+        const percentage = Math.floor(Math.random() * 100) + 1; // 1% a 100%
+        // O ganho mínimo é 1, para evitar loops infinitos de 0
+        const earnings = Math.max(1, Math.floor(currentGold * (percentage / 100))); 
+        
+        await updateGold(earnings);
+
+        document.getElementById('workMsg').textContent = `Você trabalhou e ganhou +${earnings.toLocaleString()} Gold (${percentage}%).`;
+        
+        setTimeout(() => {
+            isWorkingCooldown = false;
+            document.getElementById('btnWork').disabled = false;
+            document.getElementById('workMsg').textContent = '';
+        }, 5000); // 5 segundos de cooldown
+    }
+
+    // Jogo Simples: Multiplicador (CORRIGIDO)
+    async function betSimple(multiplier, inputId, msgId, winChance) {
+        const amount = parseInt(document.getElementById(inputId).value);
+        if (!validateBet(amount)) return;
+        
+        const win = Math.random() * 100 < winChance;
+        const result = win ? amount * (multiplier - 1) : -amount; // Lucro: (Mult - 1) * Aposta
+        
+        await updateGold(result);
+        
+        const msg = win 
+            ? `✅ GANHOU ${multiplier}x! Lucro de ${result.toLocaleString()} Gold.` 
+            : `❌ PERDEU. Menos ${amount.toLocaleString()} Gold.`;
+        
+        document.getElementById(msgId).textContent = msg;
+        notify(msg, win);
+    }
+
+    // Aposta Avançada: Cor (48% 2x, 4% 4x) - (CORRIGIDO)
+    async function betCor() {
+        const amount = parseInt(document.getElementById('betCorAmount').value);
+        const choice = document.getElementById('betCorColor').value;
+        if (!validateBet(amount)) return;
+
+        const rand = Math.random();
+        let outcome = '';
+        let mult = 0;
+
+        if (rand < 0.48) { // 48%
+            outcome = 'red';
+            mult = 2;
+        } else if (rand < 0.96) { // 48% (0.48 a 0.96)
+            outcome = 'black';
+            mult = 2;
+        } else { // 4% (0.96 a 1.0)
+            outcome = 'green';
+            mult = 4;
+        }
+
+        const win = choice === outcome;
+        const result = win ? amount * (mult - 1) : -amount;
+        
+        await updateGold(result);
+        
+        const msg = win 
+            ? `✅ GANHOU ${mult}x! Sorteado: ${outcome.toUpperCase()}. Lucro: ${result.toLocaleString()} Gold.` 
+            : `❌ PERDEU. Sorteado: ${outcome.toUpperCase()}. Menos ${amount.toLocaleString()} Gold.`;
+        
+        document.getElementById('betCorMsg').textContent = msg;
+        notify(msg, win);
+    }
+
+    // Aposta Avançada: Moeda (50% 2x) - (CORRIGIDO)
+    async function betCoin() {
+        const amount = parseInt(document.getElementById('betCoinAmount').value);
+        const choice = document.getElementById('betCoinSide').value;
+        if (!validateBet(amount)) return;
+
+        const outcome = Math.random() < 0.5 ? 'cara' : 'coroa';
+        const win = choice === outcome;
+        const result = win ? amount : -amount;
+        
+        await updateGold(result);
+        
+        const msg = win 
+            ? `✅ GANHOU 2x! Deu ${outcome.toUpperCase()}. Lucro: ${result.toLocaleString()} Gold.` 
+            : `❌ PERDEU. Deu ${outcome.toUpperCase()}. Menos ${amount.toLocaleString()} Gold.`;
+        
+        document.getElementById('betCoinMsg').textContent = msg;
+        notify(msg, win);
+    }
+
+    // Aposta Avançada: Dice (12x) - (CORRIGIDO)
+    async function betDice(maxNumber, multiplier, inputAmountId, inputChoiceId, msgId) {
+        const amount = parseInt(document.getElementById(inputAmountId).value);
+        const choice = parseInt(document.getElementById(inputChoiceId).value);
+        
+        if (!validateBet(amount) || isNaN(choice) || choice < 1 || choice > maxNumber) {
+            return updateStatus(`Número de ${maxNumber} lados inválido (1-${maxNumber}).`, true);
+        }
+
+        const outcome = Math.floor(Math.random() * maxNumber) + 1;
+        const win = choice === outcome;
+        const result = win ? amount * (multiplier - 1) : -amount;
+        
+        await updateGold(result);
+        
+        const msg = win 
+            ? `✅ ACERTOU ${outcome}! Lucro de ${result.toLocaleString()} Gold (${multiplier}x).` 
+            : `❌ ERROU ${outcome}. Perdeu ${amount.toLocaleString()} Gold.`;
+        
+        document.getElementById(msgId).textContent = msg;
+        notify(msg, win);
+    }
+
+    // Aposta Avançada: RNG Mágico (4x) - (CORRIGIDO)
+    async function betRNG(multiplier, fixedAmount, winChance) {
+        const amount = fixedAmount;
+        if (!validateBet(amount)) return; // Valida se o Gold atual é suficiente
+
+        const rand = Math.random() * 100;
+        const win = rand < winChance;
+        const result = win ? amount * (multiplier - 1) : -amount;
+        
+        await updateGold(result);
+        
+        const msg = win 
+            ? `✅ NÚMERO MÁGICO! Lucro de ${result.toLocaleString()} Gold (${multiplier}x).` 
+            : `❌ NÃO FOI DESSA VEZ. Perdeu ${amount.toLocaleString()} Gold.`;
+        
+        document.getElementById('betRNGMsg_4x').textContent = msg;
+        notify(msg, win);
+    }
+
+
+    // ----------------------------------------------------
+    // 5. RANKING GLOBAL
+    // ----------------------------------------------------
+
+    function loadRanking() {
+        // Leitura permitida pelas regras 'allow read: if true;'
+        usersColRef.orderBy('gold', 'desc').limit(15).onSnapshot(snapshot => {
+            const rankingList = document.getElementById('rankingList');
+            rankingList.innerHTML = ''; 
+            
+            if (snapshot.empty) {
+                rankingList.innerHTML = '<li>Nenhum usuário no ranking ainda.</li>';
+                return;
+            }
+
+            snapshot.forEach((doc, index) => {
+                const data = doc.data();
+                const li = document.createElement('li');
+                li.style.color = doc.id === currentUser.uid ? 'var(--main-gold)' : 'var(--text-primary)';
+                li.style.fontWeight = doc.id === currentUser.uid ? 'bold' : 'normal';
+
+                li.innerHTML = `
+                    <span style="width: 30px; display: inline-block;">#${index + 1}</span>
+                    <span style="color: ${doc.id === OWNER_UID ? '#ff00ff' : 'inherit'};">${data.username}</span>
+                    <span style="color: var(--main-gold);">${data.gold ? data.gold.toLocaleString() : '0'} Gold</span>
+                `;
+                rankingList.appendChild(li);
+            });
+        }, error => {
+            updateStatus(`Erro ao carregar ranking: ${error.message}. Verifique as Regras de Segurança.`, true);
+        });
+    }
+
+
+    // ----------------------------------------------------
+    // 6. CHAT GLOBAL
+    // ----------------------------------------------------
+
+    async function sendMessage() {
+        const input = document.getElementById('chatInput');
+        const message = input.value.trim();
+        if (!message || !currentUser) return;
+        
+        if (message.length > 200) {
+            return document.getElementById('chatError').textContent = "Mensagem muito longa (Máx. 200).";
+        }
+        
+        document.getElementById('chatError').textContent = "";
         const userData = (await usersColRef.doc(currentUser.uid).get()).data();
-        const fileName = `${currentUser.uid}_${Date.now()}_${imageFile.name}`;
-        const imageRef = storageRef.child(fileName);
         
-        // 1. Upload da Imagem
-        const snapshot = await imageRef.put(imageFile);
-        const imageUrl = await snapshot.ref.getDownloadURL();
-
-        // 2. Criação do Documento no Firestore (permitido pelas Regras)
-        await salesColRef.add({
-            title: title,
-            description: description,
-            contact: contact,
-            price: price,
-            imageUrl: imageUrl,
-            sellerUid: currentUser.uid,
-            sellerUsername: userData.username,
+        // A regra verifica se o username enviado é o mesmo do perfil
+        chatColRef.add({
+            username: userData.username,
+            text: message,
+            uid: currentUser.uid,
             timestamp: FieldValue.serverTimestamp()
+        })
+        .then(() => input.value = '')
+        .catch(error => {
+            document.getElementById('chatError').textContent = `Erro: ${error.message}.`;
         });
-
-        updateStatus("Item postado no mercado com sucesso!", false);
-        document.getElementById('saleTitle').value = '';
-        document.getElementById('saleContact').value = '';
-        document.getElementById('saleDescription').value = '';
-        document.getElementById('salePrice').value = '';
-        document.getElementById('saleImage').value = '';
-
-    } catch (error) {
-        updateStatus(`Erro ao postar venda: ${error.message}`, true);
-    } finally {
-        document.getElementById('btnPostSale').disabled = false;
     }
-}
 
-function loadSales() {
-    // Leitura permitida 'allow read: if true;'
-    salesColRef.orderBy('timestamp', 'desc').onSnapshot(snapshot => {
-        const salesList = document.getElementById('salesList');
-        salesList.innerHTML = '';
+    function loadChat() {
+        chatColRef.orderBy('timestamp', 'desc').limit(CHAT_LIMIT).onSnapshot(snapshot => {
+            const chatWindow = document.getElementById('chatWindow');
+            chatWindow.innerHTML = '';
+            
+            const messages = [];
+            snapshot.forEach(doc => messages.push(doc.data()));
+            messages.reverse().forEach(data => {
+                const div = document.createElement('div');
+                div.className = 'chat-message';
+                
+                const usernameSpan = document.createElement('span');
+                usernameSpan.className = 'chat-user';
+                
+                let nameColor = data.uid === OWNER_UID ? '#ff00ff' : 'var(--text-secondary)';
+                let nameDisplay = data.uid === OWNER_UID ? `${data.username} [DONO]:` : `${data.username}:`;
 
-        if (snapshot.empty) {
-            salesList.innerHTML = '<p class="small" style="grid-column: 1 / -1; text-align: center;">Nenhum item à venda no momento.</p>';
-            return;
+                usernameSpan.textContent = nameDisplay;
+                usernameSpan.style.color = nameColor;
+                
+                const textSpan = document.createElement('span');
+                textSpan.className = 'chat-text';
+                textSpan.textContent = data.text;
+                
+                div.appendChild(usernameSpan);
+                div.appendChild(textSpan);
+                chatWindow.appendChild(div);
+            });
+            
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+        }, error => console.error("Erro ao carregar chat: ", error));
+    }
+
+
+    // ----------------------------------------------------
+    // 7. SISTEMA DE VENDAS (Com Upload de Imagem)
+    // ----------------------------------------------------
+
+    async function postSale() {
+        if (!currentUser) return updateStatus("Faça login para postar.", true);
+
+        const title = document.getElementById('saleTitle').value.trim();
+        const contact = document.getElementById('saleContact').value.trim();
+        const description = document.getElementById('saleDescription').value.trim();
+        const price = parseFloat(document.getElementById('salePrice').value);
+        const imageFile = document.getElementById('saleImage').files[0];
+
+        if (!title || !contact || !description || isNaN(price) || price <= 0 || !imageFile) {
+            return updateStatus("Preencha todos os campos e anexe uma imagem.", true);
         }
 
-        snapshot.forEach(doc => {
-            const data = doc.data();
-            const div = document.createElement('div');
-            div.className = 'sale-post';
+        document.getElementById('btnPostSale').disabled = true;
+        updateStatus("Subindo imagem e postando...");
+
+        try {
+            const userData = (await usersColRef.doc(currentUser.uid).get()).data();
+            const fileName = `${currentUser.uid}_${Date.now()}_${imageFile.name}`;
+            const imageRef = storageRef.child(fileName);
             
-            let buttons = `<a href="https://wa.me/?text=Tenho interesse no seu item '${data.title}' no IVAD!" target="_blank" class="sale-contact-btn">CHAMAR NO WHATSAPP</a>`;
-            if (data.contact && data.contact.toLowerCase().includes('discord')) {
-                 buttons = `<a href="#" onclick="updateStatus('Contato: ${data.contact}', false)" class="sale-contact-btn" style="background: #7289da;">VER DISCORD</a>`;
-            } else if (data.contact) {
-                 buttons = `<a href="#" onclick="updateStatus('Contato: ${data.contact}', false)" class="sale-contact-btn" style="background: #4A90E2;">VER CONTATO</a>`;
-            }
-            
-            if (currentUser && (data.sellerUid === currentUser.uid || currentUser.uid === OWNER_UID)) {
-                buttons = `<button onclick="deleteSale('${doc.id}', '${data.imageUrl}')" class="btn" style="background: var(--btn-red); width: 100%;">Excluir Postagem</button>`;
+            // 1. Upload da Imagem
+            const snapshot = await imageRef.put(imageFile);
+            const imageUrl = await snapshot.ref.getDownloadURL();
+
+            // 2. Criação do Documento no Firestore (permitido pelas Regras)
+            await salesColRef.add({
+                title: title,
+                description: description,
+                contact: contact,
+                price: price,
+                imageUrl: imageUrl,
+                sellerUid: currentUser.uid,
+                sellerUsername: userData.username,
+                timestamp: FieldValue.serverTimestamp()
+            });
+
+            updateStatus("Item postado no mercado com sucesso!", false);
+            document.getElementById('saleTitle').value = '';
+            document.getElementById('saleContact').value = '';
+            document.getElementById('saleDescription').value = '';
+            document.getElementById('salePrice').value = '';
+            document.getElementById('saleImage').value = '';
+
+        } catch (error) {
+            updateStatus(`Erro ao postar venda: ${error.message}`, true);
+        } finally {
+            document.getElementById('btnPostSale').disabled = false;
+        }
+    }
+
+    function loadSales() {
+        // Leitura permitida 'allow read: if true;'
+        salesColRef.orderBy('timestamp', 'desc').onSnapshot(snapshot => {
+            const salesList = document.getElementById('salesList');
+            salesList.innerHTML = '';
+
+            if (snapshot.empty) {
+                salesList.innerHTML = '<p class="small" style="grid-column: 1 / -1; text-align: center;">Nenhum item à venda no momento.</p>';
+                return;
             }
 
-            div.innerHTML = `
-                <img src="${data.imageUrl || 'https://via.placeholder.com/320x240?text=Sem+Imagem'}" alt="${data.title}">
-                <h4 style="margin-top: 0; color: var(--text-primary);">${data.title}</h4>
-                <p class="small" style="color: var(--text-primary);">${data.description}</p>
-                <div class="sale-price">R$ ${data.price.toFixed(2).replace('.', ',')}</div>
-                <p class="small" style="margin-top: 5px; color: var(--text-secondary);">Vendedor: ${data.sellerUsername}</p>
-                ${buttons}
-            `;
-            salesList.appendChild(div);
-        });
-    }, error => updateStatus(`Erro ao carregar vendas: ${error.message}`, true));
-}
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                const div = document.createElement('div');
+                div.className = 'sale-post';
+                
+                let buttons = `<a href="https://wa.me/?text=Tenho interesse no seu item '${data.title}' no IVAD!" target="_blank" class="sale-contact-btn">CHAMAR NO WHATSAPP</a>`;
+                if (data.contact && data.contact.toLowerCase().includes('discord')) {
+                     buttons = `<a href="#" onclick="updateStatus('Contato: ${data.contact}', false)" class="sale-contact-btn" style="background: #7289da;">VER DISCORD</a>`;
+                } else if (data.contact) {
+                     // Adiciona a funcionalidade de copiar contato
+                     buttons = `<a href="#" onclick="navigator.clipboard.writeText('${data.contact}'); updateStatus('Contato copiado!', false);" class="sale-contact-btn" style="background: #4A90E2;">COPIAR CONTATO</a>`;
+                }
+                
+                if (currentUser && (data.sellerUid === currentUser.uid || currentUser.uid === OWNER_UID)) {
+                    buttons = `<button onclick="deleteSale('${doc.id}', '${data.imageUrl}')" class="btn" style="background: var(--btn-red); width: 100%;">Excluir Postagem</button>`;
+                }
 
-async function deleteSale(saleId, imageUrl) {
-    if (!currentUser) return;
-    if (!confirm("Tem certeza que deseja excluir esta postagem?")) return;
-    
-    try {
-        // 1. Excluir imagem do Storage
-        if (imageUrl) {
-            const fileRef = storage.refFromURL(imageUrl);
-            await fileRef.delete();
+                div.innerHTML = `
+                    <img src="${data.imageUrl || 'https://via.placeholder.com/320x240?text=Sem+Imagem'}" alt="${data.title}">
+                    <h4 style="margin-top: 0; color: var(--text-primary);">${data.title}</h4>
+                    <p class="small" style="color: var(--text-primary);">${data.description}</p>
+                    <div class="sale-price">R$ ${data.price.toFixed(2).replace('.', ',')}</div>
+                    <p class="small" style="margin-top: 5px; color: var(--text-secondary);">Vendedor: ${data.sellerUsername}</p>
+                    ${buttons}
+                `;
+                salesList.appendChild(div);
+            });
+        }, error => updateStatus(`Erro ao carregar vendas: ${error.message}`, true));
+    }
+
+    async function deleteSale(saleId, imageUrl) {
+        if (!currentUser) return;
+        if (!confirm("Tem certeza que deseja excluir esta postagem?")) return;
+        
+        try {
+            // 1. Excluir imagem do Storage
+            if (imageUrl) {
+                const fileRef = storage.refFromURL(imageUrl);
+                await fileRef.delete();
+            }
+            
+            // 2. Excluir documento do Firestore (Regras verificam permissão)
+            await salesColRef.doc(saleId).delete();
+            updateStatus("Postagem excluída com sucesso.", false);
+        } catch (error) {
+            updateStatus(`Erro ao excluir postagem: ${error.message}`, true);
+        }
+    }
+
+
+    // ----------------------------------------------------
+    // 8. FUNÇÕES DE ADMINISTRADOR
+    // ----------------------------------------------------
+
+    async function adminGiveGold() {
+        if (currentUser.uid !== OWNER_UID) return;
+
+        const targetUsername = document.getElementById('adminName').value.trim();
+        const amount = parseInt(document.getElementById('adminAmount').value);
+
+        if (!targetUsername || isNaN(amount) || amount === 0) {
+            return updateStatus("[ADMIN] Preencha o nome do usuário e a quantidade de Gold.", true);
         }
         
-        // 2. Excluir documento do Firestore (Regras verificam permissão)
-        await salesColRef.doc(saleId).delete();
-        updateStatus("Postagem excluída com sucesso.", false);
-    } catch (error) {
-        updateStatus(`Erro ao excluir postagem: ${error.message}`, true);
-    }
-}
+        try {
+            // 1. Busca o UID pelo username (sempre busca no backend)
+            const snapshot = await usersColRef.where('username', '==', targetUsername).limit(1).get();
+            if (snapshot.empty) {
+                return updateStatus(`[ADMIN] Usuário '${targetUsername}' não encontrado.`, true);
+            }
+            const targetUid = snapshot.docs[0].id;
 
+            // 2. Atualiza o Gold (Regras permitem esta alteração por ser OWNER_UID)
+            await usersColRef.doc(targetUid).update({
+                gold: FieldValue.increment(amount) 
+            });
 
-// ----------------------------------------------------
-// 8. FUNÇÕES DE ADMINISTRADOR
-// ----------------------------------------------------
-
-async function adminGiveGold() {
-    if (currentUser.uid !== OWNER_UID) return;
-
-    const targetUsername = document.getElementById('adminName').value.trim();
-    const amount = parseInt(document.getElementById('adminAmount').value);
-
-    if (!targetUsername || isNaN(amount) || amount === 0) {
-        return updateStatus("[ADMIN] Preencha o nome do usuário e a quantidade de Gold.", true);
-    }
-    
-    try {
-        // 1. Busca o UID pelo username (sempre busca no backend)
-        const snapshot = await usersColRef.where('username', '==', targetUsername).limit(1).get();
-        if (snapshot.empty) {
-            return updateStatus(`[ADMIN] Usuário '${targetUsername}' não encontrado.`, true);
+            updateStatus(`[ADMIN] ${amount > 0 ? 'DADO' : 'REMOVIDO'} ${Math.abs(amount).toLocaleString()} Gold para ${targetUsername}.`);
+            document.getElementById('adminName').value = '';
+            document.getElementById('adminAmount').value = '';
+        } catch (error) {
+            updateStatus(`[ADMIN] Erro: ${error.message}`, true);
         }
-        const targetUid = snapshot.docs[0].id;
-
-        // 2. Atualiza o Gold (Regras permitem esta alteração por ser OWNER_UID)
-        await usersColRef.doc(targetUid).update({
-            gold: FieldValue.increment(amount) 
-        });
-
-        updateStatus(`[ADMIN] ${amount > 0 ? 'DADO' : 'REMOVIDO'} ${Math.abs(amount).toLocaleString()} Gold para ${targetUsername}.`);
-        document.getElementById('adminName').value = '';
-        document.getElementById('adminAmount').value = '';
-    } catch (error) {
-        updateStatus(`[ADMIN] Erro: ${error.message}`, true);
     }
-}
 
-async function adminClearChat() {
-    if (currentUser.uid !== OWNER_UID) return;
-    if (!confirm("Tem certeza que deseja apagar TODAS as mensagens do Chat Global?")) return;
-    
-    chatColRef.get().then(snapshot => {
-        const batch = db.batch();
-        snapshot.docs.forEach(doc => {
-            batch.delete(doc.ref);
+    async function adminClearChat() {
+        if (currentUser.uid !== OWNER_UID) return;
+        if (!confirm("Tem certeza que deseja apagar TODAS as mensagens do Chat Global?")) return;
+        
+        chatColRef.get().then(snapshot => {
+            const batch = db.batch();
+            snapshot.docs.forEach(doc => {
+                batch.delete(doc.ref);
+            });
+            return batch.commit();
+        })
+        .then(() => updateStatus("[ADMIN] Chat Global limpo com sucesso!", false))
+        .catch(error => updateStatus(`[ADMIN] Erro ao limpar chat: ${error.message}`, true));
+    }
+
+    // TODO: Implementar adminResetRank (resetar gold e wins/losses de todos)
+
+
+    // ----------------------------------------------------
+    // 9. CONTADOR DE USUÁRIOS ONLINE
+    // ----------------------------------------------------
+
+    function trackOnlineStatus(uid) {
+        if (isOnlineRef) return; 
+        
+        isOnlineRef = onlineUsersColRef.doc(uid);
+        
+        // 1. Marca como online
+        isOnlineRef.set({ 
+            username: document.getElementById('userLabel').textContent.split(', ')[1].replace('!', ''), // Pega o nome do label
+            timestamp: FieldValue.serverTimestamp() 
         });
-        return batch.commit();
-    })
-    .then(() => updateStatus("[ADMIN] Chat Global limpo com sucesso!", false))
-    .catch(error => updateStatus(`[ADMIN] Erro ao limpar chat: ${error.message}`, true));
-}
+        
+        // 2. Marca como offline (limpeza)
+        window.addEventListener('beforeunload', () => isOnlineRef.delete());
+        auth.onAuthStateChanged(user => {
+            if (!user && isOnlineRef) isOnlineRef.delete();
+        });
 
-// TODO: Implementar adminResetRank (resetar gold e wins/losses de todos)
+        // 3. Listener do contador em tempo real
+        onlineUsersColRef.onSnapshot(snapshot => {
+            let count = snapshot.size;
+            
+            // Limpeza de documentos antigos
+            const now = firebase.firestore.Timestamp.now().toMillis();
+            const timeout = 5 * 60 * 1000; // 5 minutos
+
+            let cleanupCount = 0;
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                if (data.timestamp && (now - data.timestamp.toMillis() > timeout)) {
+                    cleanupCount++;
+                }
+            });
+            
+            document.getElementById('visitorCount').textContent = Math.max(0, count - cleanupCount).toLocaleString();
+        }, error => console.error("Erro no contador online: ", error));
+    }
 
 
-// ----------------------------------------------------
-// 9. CONTADOR DE USUÁRIOS ONLINE
-// ----------------------------------------------------
+    // ----------------------------------------------------
+    // 10. LISTENERS GLOBAIS
+    // ----------------------------------------------------
 
-function trackOnlineStatus(uid) {
-    if (isOnlineRef) return; 
-    
-    isOnlineRef = onlineUsersColRef.doc(uid);
-    
-    // 1. Marca como online
-    isOnlineRef.set({ 
-        username: document.getElementById('userLabel').textContent.split(', ')[1].replace('!', ''), // Pega o nome do label
-        timestamp: FieldValue.serverTimestamp() 
-    });
-    
-    // 2. Marca como offline (limpeza)
-    window.addEventListener('beforeunload', () => isOnlineRef.delete());
     auth.onAuthStateChanged(user => {
-        if (!user && isOnlineRef) isOnlineRef.delete();
+        if (user) {
+            // user.uid está logado, agora carrega o perfil do firestore
+            loadUserData(user);
+        } else {
+            currentUser = null;
+            document.getElementById('signedOutUI').style.display = 'block';
+            document.getElementById('signedInUI').style.display = 'none';
+            document.getElementById('ownerPanel').style.display = 'none';
+            document.getElementById('playerInfoSocial').style.display = 'none';
+            updateStatus("Desconectado. Faça login para usar o sistema.", true);
+        }
     });
 
-    // 3. Listener do contador em tempo real
-    onlineUsersColRef.onSnapshot(snapshot => {
-        let count = snapshot.size;
-        
-        // Limpeza de documentos antigos
-        const now = firebase.firestore.Timestamp.now().toMillis();
-        const timeout = 5 * 60 * 1000; // 5 minutos
-
-        let cleanupCount = 0;
-        snapshot.forEach(doc => {
-            const data = doc.data();
-            if (data.timestamp && (now - data.timestamp.toMillis() > timeout)) {
-                // Não precisa apagar imediatamente aqui; a regra de segurança pode ser usada
-                // para garantir que a leitura de documentos antigos seja bloqueada
-                cleanupCount++;
-            }
-        });
-        
-        document.getElementById('visitorCount').textContent = Math.max(0, count - cleanupCount).toLocaleString();
-    }, error => console.error("Erro no contador online: ", error));
+    // Inicializa a primeira aba e listeners
+    document.addEventListener('DOMContentLoaded', () => {
+        switchTab('regrasTab');
+    });
+} else {
+    // Se o SDK não carregou, avisa o erro
+    document.addEventListener('DOMContentLoaded', () => {
+        alert("ERRO: O SDK do Firebase não carregou. Verifique a conexão com a internet e se os links <script> do Firebase estão corretos.");
+    });
 }
-
-
-// ----------------------------------------------------
-// 10. LISTENERS GLOBAIS
-// ----------------------------------------------------
-
-auth.onAuthStateChanged(user => {
-    if (user) {
-        // user.uid está logado, agora carrega o perfil do firestore
-        loadUserData(user);
-    } else {
-        currentUser = null;
-        document.getElementById('signedOutUI').style.display = 'block';
-        document.getElementById('signedInUI').style.display = 'none';
-        document.getElementById('ownerPanel').style.display = 'none';
-        document.getElementById('playerInfoSocial').style.display = 'none';
-        updateStatus("Desconectado. Faça login para usar o sistema.", true);
-    }
-});
-
-// Inicializa a primeira aba
-document.addEventListener('DOMContentLoaded', () => {
-    switchTab('regrasTab');
-});
 
 </script>
 

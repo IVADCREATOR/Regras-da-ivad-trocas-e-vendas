@@ -1,0 +1,1341 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>IVAD TROCAS E VENDAS - MULTIJOGOS</title>
+<style>
+/* VARS */
+:root{
+  --card-bg: rgba(15, 10, 30, 0.95); /* Deep Violet Transparent */
+  --btn-gradient: linear-gradient(90deg, #5EEAD4, #10B981); /* Teal/Green */
+  --btn-blue: linear-gradient(90deg, #8B5CF6, #6D28D9); /* Deep Purple Blue */
+  --btn-red: linear-gradient(90deg, #F87171, #EF4444); /* Red */
+  --text-primary: #E5E7EB;
+  --text-secondary: #C4B5FD; /* Light purple for secondary text */
+  --main-gold: #FCD34D; /* Light Gold */
+  --border-color: rgba(139, 92, 246, 0.3); /* Purple Border */
+  --green-win: #10B981;
+  --red-loss: #EF4444;
+}
+
+/* BASE & LAYOUT */
+html,body{height:100%;margin:0;font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;color:var(--text-primary);background:#05050A}
+body{perspective:1000px;overflow-x:hidden}
+
+.bg3d{
+  position:fixed;inset:0;
+  /* NOVO FUNDO 3D: Imagem de Nebulosa Roxa/Azul */
+  background:url('https://i.imgur.com/gK2g2f7.jpeg') no-repeat center center; 
+  background-size:cover;z-index:-2;
+  /* Efeito de cor e contraste para vibrante */
+  filter:contrast(1.2) saturate(1.5) brightness(0.65); 
+  transform-origin:center center;animation:float3d 18s ease-in-out infinite alternate;
+}
+@keyframes float3d{
+  0%{transform:translateZ(0px) rotateY(0deg) rotateX(0deg) scale(1.05)}
+  50%{transform:translateZ(15px) rotateY(2deg) rotateX(1deg) scale(1.06)}
+  100%{transform:translateZ(0px) rotateY(-1deg) rotateX(-1deg) scale(1.05)}
+}
+.overlay{position:fixed;inset:0;z-index:-1;background:linear-gradient(135deg, rgba(5,5,10,0.95), rgba(5,5,10,0.6))}
+
+header{
+    background:var(--card-bg);padding:1.4rem;text-align:center;position:relative;z-index:2;
+    border-bottom: 3px solid var(--main-gold); box-shadow: 0 4px 25px rgba(0,0,0,0.9);
+}
+header h1{margin:.2rem;font-size:2.4rem; letter-spacing: 5px; text-shadow: 0 0 18px rgba(252,211,77,0.9); font-weight: 900; }
+header p{margin:.1rem;color:var(--text-secondary);font-size:1rem; font-style: italic;}
+
+.container{max-width:1200px;margin:3rem auto;padding:1rem;display:grid;grid-template-columns:280px 1fr;gap:2.5rem}
+.card{background:var(--card-bg);padding:2rem;border-radius:15px;box-shadow:0 15px 50px rgba(0,0,0,0.95);border: 1px solid var(--border-color); transition: transform 0.3s, box-shadow 0.3s;}
+
+/* MENU E ABAS */
+.menu button{
+    display:block;width:100%;margin-bottom:.9rem;padding:1rem 1rem;border-radius:12px;border:none;
+    background:rgba(255,255,255,0.08);color:var(--text-primary);font-weight:600;cursor:pointer;
+    transition:all .3s ease; box-shadow: 0 5px 15px rgba(0,0,0,0.6); text-align: left;
+}
+.menu button:hover{
+    transform:translateY(-3px);
+    background:rgba(255,255,255,0.12);
+    box-shadow:0 10px 25px rgba(252,211,77,0.4);
+}
+.menu button.active{
+    background:var(--btn-blue); /* Mudança para azul-roxo */
+    color:var(--text-primary);
+    transform:translateY(0);
+    box-shadow:0 4px 15px rgba(0,0,0,0.8); font-weight: 700;
+}
+
+/* CONTEÚDO */
+.content h2{
+    margin-top:0; border-bottom: 3px solid var(--main-gold); padding-bottom: 15px; 
+    margin-bottom: 2rem; color: var(--main-gold); font-size: 2rem; font-weight: 800;
+}
+.content h3 { color: var(--text-primary); margin-top: 2rem; border-left: 4px solid var(--green-win); padding-left: 10px; }
+ul{padding-left:1.5rem}
+.small{font-size:.88rem;color:var(--text-secondary)}
+
+/* BOTÕES GERAIS (Efeito Neon Glow Reforçado) */
+.btn{
+  display:inline-block;padding:1rem 2rem;border-radius:12px;border:none;background:var(--btn-gradient);
+  color:#111;font-weight:800;cursor:pointer; transition: all .3s; position: relative; overflow: hidden;
+  box-shadow: 0 0 20px rgba(94, 237, 212, 0.5); /* Sombra mais forte */
+}
+.btn:hover:not(:disabled){
+    box-shadow: 0 0 40px rgba(94, 237, 212, 1), 0 0 15px rgba(0,0,0,0.7); 
+    transform: scale(1.03) translateY(-2px);
+}
+.btn:disabled{opacity:0.4; cursor: not-allowed; filter: grayscale(100%); box-shadow: none;}
+
+/* INPUTS */
+input[type="text"],input[type="password"],input[type=number],select,textarea{
+    width:100%;padding:1rem;margin:.6rem 0;border-radius:10px;
+    border:1px solid var(--border-color);background:rgba(0,0,0,0.6);
+    color:var(--text-primary);box-sizing: border-box; transition: border-color .3s, box-shadow .3s;
+}
+input:focus, textarea:focus{
+    outline: none; border-color: var(--main-gold); 
+    box-shadow: 0 0 8px var(--main-gold);
+}
+input[type="file"]{padding: 10px; background: rgba(255,255,255,0.05); border-radius: 10px; border: 1px dashed var(--border-color);}
+
+/* VENDAS GRID */
+.sales-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 30px;
+}
+.sale-post {
+    background: rgba(255,255,255,0.05); padding: 1.5rem; border-radius: 15px;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.7); transition: transform 0.4s, box-shadow 0.4s;
+}
+.sale-post:hover { transform: translateY(-7px); box-shadow: 0 12px 35px rgba(0,0,0,0.9); }
+
+.sale-post img {
+    width: 100%; height: 240px; object-fit: cover; border-radius: 10px; margin-bottom: 15px;
+    border: 3px solid var(--main-gold);
+}
+.sale-price {
+    font-size: 1.8rem; color: var(--green-win); font-weight: bold; margin: 5px 0;
+}
+.sale-contact-btn {
+    display: block; width: 100%; margin-top: 15px; background: #25d366; color: white;
+    padding: 14px; border-radius: 10px; text-decoration: none; text-align: center;
+    font-weight: bold; font-size: 1.1rem; transition: background .3s, transform .2s;
+}
+.sale-contact-btn:hover { background: #128c7e; transform: scale(1.02); }
+
+/* RANKING */
+.rank-list{max-height:500px;overflow-y:auto;padding:1.5rem; background: rgba(0,0,0,0.6); border-radius: 10px;}
+.rank-list li{padding: 5px 0; border-bottom: 1px dotted var(--border-color); transition: background-color 0.2s, padding-left 0.2s;}
+.rank-list li:last-child { border-bottom: none; }
+.rank-list li:hover { background-color: rgba(255,255,255,0.1); padding-left: 15px; border-radius: 6px; }
+
+/* CHAT */
+.chat-box{max-height:380px;overflow-y:auto;background:rgba(0,0,0,0.5);padding:1rem;margin-top:1rem;border-radius:12px;border: 1px solid var(--border-color)}
+.chat-input-area{margin-top:1rem; display: flex; gap: 8px; align-items: stretch;}
+.chat-input-area input[type=text]{margin: 0; flex-grow: 1; padding: 1rem; border-radius: 12px;}
+.chat-input-area button{padding: 0 1.5rem; margin: 0; font-size: 1.2rem; border-radius: 12px;}
+#btnRecordAudio{background: var(--btn-blue); color: #fff; width: 65px; font-size: 1.6rem;}
+#btnRecordAudio.recording{background: var(--btn-red); animation: pulse 1s infinite;}
+@keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
+
+/* JOGOS */
+.game-area{
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 25px;
+}
+.bet-option-card {
+    background: rgba(255,255,255,0.08); padding: 1.8rem; border-radius: 15px;
+    border: 1px solid var(--main-gold); /* Borda de ouro */
+}
+.bet-option-card h3 { color: var(--main-gold); font-size: 1.5rem; margin-bottom: 0.8rem; }
+
+
+/* NOTIFICAÇÃO GLOBAL */
+#globalNotice{
+    position:fixed;top:20px;right:20px;background:var(--main-gold);color:#111;padding:1.2rem 2.2rem;border-radius:12px;display:none;z-index:9999;
+    font-weight:900;box-shadow:0 8px 30px rgba(0,0,0,0.9);
+    animation: fadeInOut 4.5s cubic-bezier(0.19, 1, 0.22, 1) forwards;
+}
+@keyframes fadeInOut {
+    0% { opacity: 0; transform: translateY(-20px); }
+    10% { opacity: 1; transform: translateY(0); }
+    90% { opacity: 1; transform: translateY(0); }
+    100% { opacity: 0; transform: translateY(-20px); }
+}
+
+@media(max-width:880px){ 
+    .container{grid-template-columns:1fr; padding:.5rem; margin-top: 1.5rem} 
+    .menu{order:2} 
+    header h1 { font-size: 1.8rem; letter-spacing: 3px; }
+    .game-area { grid-template-columns: 1fr; }
+    .sales-grid { grid-template-columns: 1fr; }
+    .menu button { text-align: center; }
+}
+</style>
+</head>
+<body>
+<div class="bg3d" aria-hidden="true"></div>
+<div class="overlay" aria-hidden="true"></div>
+
+<header>
+  <h1>IVAD TROCAS E VENDAS</h1>
+  <p>O melhor ambiente multijogos de compra e venda.</p>
+</header>
+
+<main class="container">
+  <aside class="card menu">
+    <button class="tabbtn active" data-tab="regrasTab">📜 REGRAS</button>
+    <button class="tabbtn" data-tab="socialTab">🤝 SOCIAL (ID e Amigos)</button>
+    <button class="tabbtn" data-tab="jogoSimplesTab">💰 GOLD SIMPLES</button>
+    <button class="tabbtn" data-tab="apostasAvancadasTab">🎲 APOSTAS AVANÇADAS</button>
+    <button class="tabbtn" data-tab="habilidadeTab">🧠 JOGOS DE HABILIDADE</button>
+    <button class="tabbtn" data-tab="salesTab">🛒 VENDAS (Dinheiro Real)</button>
+    <button class="tabbtn" data-tab="rankTab">🏆 RANK GLOBAL</button>
+    <button class="tabbtn" data-tab="chatTab">💬 CHAT GLOBAL</button>
+    <hr style="border:none;height:1px;background:var(--border-color);margin:15px 0">
+
+    <div id="authArea" class="small">
+      <div id="signedOutUI">
+        <input id="username" type="text" placeholder="Nome de Usuário (único)">
+        <input id="pwd" type="password" placeholder="Senha (mín. 6 caracteres)">
+        <div style="display:flex;gap:.5rem; margin-top: 10px;">
+          <button id="btnSignup" class="btn" style="background:var(--btn-blue); flex-grow: 1; padding: .8rem;">Criar conta</button>
+          <button id="btnLogin" class="btn" style="flex-grow: 1; padding: .8rem;">Entrar</button>
+        </div>
+        <p class="small" style="margin-top: 8px;">Nome de usuário é único e não pode ser alterado.</p>
+      </div>
+
+      <div id="signedInUI" style="display:none">
+        <p style="margin-bottom: .8rem; font-size: 1.1rem;"><strong id="userLabel"></strong></p>
+        <div style="display:flex;gap:.5rem;align-items:center">
+          <button id="btnLogout" class="btn" style="background:var(--btn-red); padding: .7rem 1.2rem; font-size: 0.9rem;">Sair</button>
+          <div style="margin-left:auto; font-size: 1.3rem;"><span class="small" style="color:var(--main-gold); font-size: 0.9em;">Gold: </span><strong id="myGold" style="color: var(--main-gold);">0</strong></div>
+        </div>
+      </div>
+    </div>
+
+    <hr style="border:none;height:1px;background:var(--border-color);margin:15px 0">
+    <div id="ownerPanel" style="display:none">
+      <h4 style="margin:.3rem 0; color: #e57373;">🛠️ Painel do Dono</h4>
+      <input id="adminName" placeholder="Nome do Usuário (exato)">
+      <input id="adminAmount" type="number" placeholder="Gold (+/-)">
+      <button id="btnGive" class="btn" onclick="adminGiveGold()" style="width: 100%; margin-top: .5rem; background: var(--btn-blue);">Dar/Remover Gold</button>
+      <button id="btnReset" class="btn" onclick="adminResetRank()" style="background:var(--btn-red);margin-top:.5rem; width: 100%;">Resetar Ranking</button>
+      <button id="btnClearChat" class="btn" onclick="adminClearChat()" style="background:var(--btn-red);margin-top:.5rem; width: 100%;">Limpar Chat Global</button>
+      <p class="small" style="margin-top: 5px; color: #F87171;">Apenas para OWNER_UID.</p>
+    </div>
+    <hr style="border:none;height:1px;background:var(--border-color);margin:15px 0">
+    <p class="small">Visitantes online: <strong id="visitorCount">0</strong></p>
+  </aside>
+
+  <section class="card content">
+    <div id="regrasTab">
+      <h2>📜 Regras da Comunidade</h2>
+      <h3 style="color: var(--red-loss);">🚫 Proibido (Banimento Imediato)</h3>
+      <ul>
+        <li>**Conteúdo NSFW:** Fotos ou links de **partes íntimas** ou explícito. (Análise de IA e banimento acionados).</li>
+        <li>**Ofensas Graves/Racismo:** Qualquer forma de desrespeito ou preconceito.</li>
+        <li>**Golpes/Scam:** Tentar enganar outros membros.</li>
+        <li>**Spam** ou flood excessivo.</li>
+      </ul>
+      <h3 style="color: var(--green-win);">✅ Permitido</h3>
+      <ul>
+        <li>Anunciar itens e contas de jogo na aba Vendas.</li>
+        <li>Negociar e interagir de forma educada e transparente.</li>
+        <li>Usar o Chat Global para assuntos da comunidade.</li>
+      </ul>
+      <h3 style="color: var(--main-gold);">⚠️ Observações de Venda</h3>
+      <ul>
+        <li>Negociações são **responsabilidade das partes**.</li>
+        <li>O descumprimento das regras de conteúdo resulta em **banimento permanente**.</li>
+      </ul>
+    </div>
+
+    <div id="socialTab" style="display:none">
+      <h2>🤝 Social: Amigos e ID</h2>
+      <div id="playerInfoSocial" class="user-id-box card" style="display:none; background: rgba(0,0,0,0.4); padding: 1.5rem;">
+          <p style="margin: 0;"><span class="small" style="color:var(--main-gold);">Seu Nome: </span><strong id="socialUsername"></strong></p>
+          <p style="margin: 5px 0 0 0;"><span class="small" style="color:var(--main-gold);">Seu ID Único: </span><strong id="socialUserId"></strong></p>
+          <p class="small" style="margin-top: 10px;">Compartilhe este ID para ser adicionado.</p>
+      </div>
+      <h3 style="color: var(--btn-blue);">Minha Lista de Amigos</h3>
+      <ul class="friend-list" id="friendList">
+        <p class="small" style="text-align: center; margin: 10px 0;">Funcionalidade de amigos será implementada em breve.</p>
+      </ul>
+    </div>
+
+    <div id="jogoSimplesTab" style="display:none">
+        <h2>💰 Gold Simples (Trabalho e Apostas)</h2>
+      
+        <div id="playerInfo" class="card" style="margin-bottom:1.5rem; padding: 1rem; background: rgba(255,255,255,0.1); display:none; border: 1px solid var(--main-gold);">
+            <p style="margin: 0; font-size: 1.1rem;">Seu Gold: <strong id="playerGold" style="color: var(--main-gold);">0</strong></p>
+        </div>
+
+        <h3 style="margin-top: 1rem;">💼 Trabalhar (RNG)</h3>
+        <p class="small">Ganho varia de **1% a 100%** do seu Gold atual. (Cooldown: 5s)</p>
+        <button id="btnWork" class="btn" onclick="work()">Trabalhar (Gold Aleatório)</button>
+        <span id="workMsg" class="small" style="margin-left:1rem; color: #5EEAD4;"></span>
+
+        <hr style="border:none;height:1px;background:var(--border-color);margin:25px 0">
+
+        <h3 style="margin-top: 1rem;">Apostas Rápidas (Multiplicadores)</h3>
+        
+        <div class="game-area">
+            <div class="bet-option-card">
+                <h4 style="color: var(--main-gold); margin-top: 0;">2x (Mediano)</h4>
+                <p class="small">Tente dobrar sua aposta. 45% de chance.</p>
+                <input type="number" id="betAmount_2x" placeholder="Quantos golds apostar?" min="1">
+                <button onclick="betSimple(2, 'betAmount_2x', 'betMsg_2x', 45)" class="btn" style="background: var(--btn-gradient); width: 100%; margin-top: 10px;">Apostar 2x</button>
+                <span id="betMsg_2x" class="small" style="display: block; margin-top: 8px;"></span>
+            </div>
+            
+            <div class="bet-option-card">
+                <h4 style="color: var(--btn-blue); margin-top: 0;">5x (Alto Risco)</h4>
+                <p class="small">Arrisque por 5x. Chance de 20%.</p>
+                <input type="number" id="betAmount_5x" placeholder="Quantos golds apostar?" min="1">
+                <button onclick="betSimple(5, 'betAmount_5x', 'betMsg_5x', 20)" class="btn" style="background:var(--btn-blue); width: 100%; margin-top: 10px;">Apostar 5x</button>
+                <span id="betMsg_5x" class="small" style="display: block; margin-top: 8px;"></span>
+            </div>
+            
+            <div class="bet-option-card">
+                <h4 style="color: var(--btn-red); margin-top: 0;'>10x (Aposta Extrema)</h4>
+                <p class="small">Altíssimo risco. Chance de 10%.</p>
+                <input type="number" id="betAmount_10x" placeholder="Quantos golds apostar?" min="1">
+                <button onclick="betSimple(10, 'betAmount_10x', 'betMsg_10x', 10)" class="btn" style="background:var(--btn-red); width: 100%; margin-top: 10px;">Apostar 10x</button>
+                <span id="betMsg_10x" class="small" style="display: block; margin-top: 8px;"></span>
+            </div>
+        </div>
+    </div>
+
+    <div id="apostasAvancadasTab" style="display:none">
+        <h2>🎲 Apostas Avançadas</h2>
+
+        <p class="small">Jogos mais elaborados com maior interação e potencial de ganho/perda.</p>
+
+        <div class="game-area">
+            <div class="bet-option-card">
+                <h3 style="margin-top: 0;">Cor (2x ou 4x)</h3>
+                <p class="small">Aposte no Vermelho (2x), Preto (2x) ou Verde (4x).</p>
+                <input type="number" id="betCorAmount" placeholder="Gold para apostar" min="1">
+                <select id="betCorColor" style="margin-bottom: 10px; padding: 10px; border-radius: 8px; width: 100%; background: rgba(0,0,0,0.7); color: var(--text-primary); border: 1px solid var(--border-color);">
+                    <option value="red" style="color: red;">Vermelho (48%)</option>
+                    <option value="black" style="color: #333;">Preto (48%)</option>
+                    <option value="green" style="color: green;">Verde (4%)</option>
+                </select>
+                <button onclick="betCor()" class="btn" style="width: 100%;">Girar</button>
+                <span id="betCorMsg" class="small" style="display: block; margin-top: 5px;"></span>
+            </div>
+            
+            <div class="bet-option-card">
+                <h3 style="margin-top: 0;">Moeda da Sorte (2x)</h3>
+                <p class="small">Aposte cara ou coroa. 50% de chance. (Exclusivo)</p>
+                <input type="number" id="betCoinAmount" placeholder="Gold para apostar" min="1">
+                <select id="betCoinSide" style="margin-bottom: 10px; padding: 10px; border-radius: 8px; width: 100%; background: rgba(0,0,0,0.7); color: var(--text-primary); border: 1px solid var(--border-color);">
+                    <option value="cara">Cara</option>
+                    <option value="coroa">Coroa</option>
+                </select>
+                <button onclick="betCoin()" class="btn" style="width: 100%;">Lançar Moeda</button>
+                <span id="betCoinMsg" class="small" style="display: block; margin-top: 5px;"></span>
+            </div>
+            
+            <div class="bet-option-card">
+                <h3 style="margin-top: 0;">DICE 12x (Extremo)</h3>
+                <p class="small">Acerte um número de 1 a 12. Paga 12x a aposta. (8.3% chance)</p>
+                <input type="number" id="betDice12Amount" placeholder="Gold para apostar" min="1">
+                <input type="number" id="betDice12Number" placeholder="Seu Número (1-12)" min="1" max="12">
+                <button onclick="betDice(12, 12, 'betDice12Amount', 'betDice12Msg')" class="btn" style="width: 100%; background: var(--btn-red);">Rolar Alto Risco</button>
+                <span id="betDice12Msg" class="small" style="display: block; margin-top: 5px;"></span>
+            </div>
+            
+            <div class="bet-option-card">
+                <h3 style="margin-top: 0;">Número Mágico (4x)</h3>
+                <p class="small">Aposte 50 Gold. Chance de 25% de acertar.</p>
+                <button onclick="betRNG(4, 50, 25)" class="btn" style="width: 100%; background: var(--btn-blue);">Apostar 50 Gold (4x)</button>
+                <span id="betRNGMsg_4x" class="small" style="display: block; margin-top: 5px;"></span>
+            </div>
+            
+             <div class="bet-option-card" style="grid-column: 1 / -1; opacity: 0.5;">
+                <h3 style="margin-top: 0;">Roleta de Prêmios VIP</h3>
+                <p class="small">Custo 100 Gold. (Em desenvolvimento: Funcionalidade visual da roleta)</p>
+                <div style="position: relative; text-align: center; margin-bottom: 20px;">
+                    <div class="wheel-pointer"></div>
+                    <div id="prizeWheel" class="prize-wheel"></div>
+                </div>
+                <button id="btnSpin" onclick="showGlobalNotice('Funcionalidade em desenvolvimento!', 'var(--btn-red)')" class="btn" style="width: 100%; background: var(--main-gold); color: #111;" disabled>Girar Roleta (Custo: 100 Gold)</button>
+                <span id="spinMsg" class="small" style="display: block; margin-top: 5px;"></span>
+            </div>
+        </div>
+    </div>
+
+    <div id="habilidadeTab" style="display:none">
+        <h2>🧠 Jogos de Habilidade</h2>
+        <p class="small">Em construção. Jogue o Quiz Rápido abaixo para testar sua sorte e reflexos.</p>
+        
+        <div class="game-area">
+            <div class="card" style="background: rgba(0,0,0,0.4); padding: 1.5rem;">
+                <h4>Quiz Rápido: Qual o Gold do Campeão?</h4>
+                <p class="small">Aposte 10 Gold. Acerte a pergunta em 5s e ganhe 50 Gold. Erre ou estoure o tempo e perca.</p>
+                <p id="quizQuestion">Clique em "Começar" para iniciar.</p>
+                <div id="quizOptions" class="quiz-options"></div>
+                <button id="btnStartQuiz" class="btn" onclick="showGlobalNotice('Quiz em breve!', 'var(--btn-red)')" style="background: var(--btn-blue);">Começar Quiz (Aposta: 10 Gold)</button>
+                <span id="quizMsg" class="small" style="display: block; margin-top: 5px;"></span>
+            </div>
+
+            <div class="card" style="background: rgba(0,0,0,0.4); padding: 1.5rem;">
+                <h4>Mini Torneio: Jogo da Velha (PvP)</h4>
+                <p class="small">Convidar amigos para disputar gold em tempo real. (Em desenvolvimento)</p>
+                
+                <div id="tictactoeLobby">
+                    <input type="text" id="tttFriendId" placeholder="ID Único do Amigo" disabled>
+                    <input type="number" id="tttBetAmount" placeholder="Gold para apostar (min 100)" min="100" disabled>
+                    <button id="btnInviteTTT" class="btn" style="width: 100%; opacity: 0.5;" disabled>Convidar para Jogo</button>
+                    <span id="tttMsg" class="small" style="display: block; margin-top: 5-px;"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="salesTab" style="display:none">
+        <h2>🛒 Vendas e Compras (Dinheiro Real)</h2>
+        <p class="small">Use este espaço para negociar itens com dinheiro real (R$). **TODO CONTEÚDO É MONITORADO POR IA.** Proibido imagens ou textos de partes íntimas. O sistema de análise da IVAD aciona **banimento permanente** e a remoção automática do anúncio.</p>
+        
+        <h3 style="margin-top: 1.5rem; color: var(--green-win);">Criar Novo Anúncio</h3>
+        <input type="text" id="saleTitle" placeholder="Título do item (ex: Conta MAX TH15)" maxlength="80">
+        <input type="text" id="salePrice" placeholder="Preço em R$ (Ex: R$ 50,00)">
+        <input type="tel" id="saleWhatsapp" placeholder="Seu WhatsApp para contato (Ex: 5511987654321)">
+        <label for="salePhoto" class="small" style="display: block; margin-top: 10px;">Foto do Item/Conta (OBRIGATÓRIO):</label>
+        <input type="file" id="salePhoto" accept="image/*">
+        <textarea id="saleDescription" placeholder="Descrição e forma de pagamento (máx: 300 caracteres)" maxlength="300"></textarea>
+        <button id="btnPublishSale" onclick="publishSale()" class="btn" style="width: 100%;">Publicar Anúncio</button>
+        <span id="saleStatusMsg" class="small" style="display: block; margin-top: 10px;"></span>
+
+        <h3 style="margin-top: 2rem; color: var(--main-gold);">Anúncios Recentes</h3>
+        <div id="salesList" class="sales-grid">
+             <p class="small" style="grid-column: 1 / -1;">Carregando anúncios...</p>
+        </div>
+    </div>
+
+    <div id="rankTab" style="display:none">
+        <h2>🏆 Rank Global (Top 10)</h2>
+        <p class="small">Os 10 melhores da comunidade. Prova de dedicação e sorte!</p>
+        <div class="rank-list">
+            <ol>
+                <li style="color: var(--text-secondary);">Carregando...</li>
+            </ol>
+        </div>
+    </div>
+
+    <div id="chatTab" style="display:none">
+        <h2>💬 Chat Global (Tempo Real)</h2>
+        <p class="small">Conecte-se com a comunidade. Proibido palavras de baixo calão e spam.</p>
+        
+        <div class="chat-box" id="chatMessages">
+            Aguardando conexão com o chat...
+        </div>
+
+        <div class="chat-input-area">
+            <input type="text" id="chat-message-input" placeholder="Digite sua mensagem..." />
+            <button onclick="sendMessage()" class="btn" style="background:var(--btn-gradient)">Enviar</button>
+            <button id="btnRecordAudio" class="btn" style="background:var(--btn-blue)">🎤</button>
+        </div>
+        <span id="audioStatusMsg" class="small" style="display:block; margin-top: 5px;">Clique no microfone para gravar uma mensagem de 60s.</span>
+    </div>
+
+  </section>
+</main>
+
+<div id="globalNotice"></div>
+
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script>
+
+<script>
+    // ----------------------------------------------------
+    // 1. CONFIGURAÇÃO DO FIREBASE (CRÍTICO)
+    // ----------------------------------------------------
+    const firebaseConfig = {
+        // ATENÇÃO: SUBSTITUA ESTAS CHAVES PELAS SUAS!
+        apiKey: "AIzaSyCkmyMqEJaM8jVvmTN8I3gLnbC8YtMPWOI", 
+        authDomain: "regras-ivad.firebaseapp.com", 
+        projectId: "regras-ivad", 
+        storageBucket: "regras-ivad.firebasestorage.app", 
+        messagingSenderId: "812565896201", 
+        appId: "1:812565896201:web:d82f7e02e861d9a2a3b05a" 
+    };
+
+    const app = firebase.initializeApp(firebaseConfig);
+    const db = app.firestore();
+    const auth = app.auth();
+    const storage = app.storage();
+    const serverTimestamp = firebase.firestore.FieldValue.serverTimestamp;
+    const increment = firebase.firestore.FieldValue.increment;
+
+    // ** SUBSTITUA PELO SEU UID DE ADMIN REAL **
+    const OWNER_UID = 'm3h06woQv2V7lrNu1p8fDQCZ8IW2'; 
+
+    let lastWorkTime = 0;
+    let currentGold = 0; // Variável global para rastrear o gold
+
+    // ----------------------------------------------------
+    // 2. FUNÇÕES DE UTILIDADE E SEGURANÇA
+    // ----------------------------------------------------
+
+    // Notificação Global
+    window.showGlobalNotice = function(message, color = 'var(--main-gold)') {
+        const notice = document.getElementById('globalNotice');
+        notice.textContent = message;
+        notice.style.backgroundColor = color;
+        notice.style.display = 'block';
+        
+        notice.style.animation = 'none';
+        void notice.offsetWidth; 
+        notice.style.animation = 'fadeInOut 4.5s cubic-bezier(0.19, 1, 0.22, 1) forwards';
+    }
+
+    // Checagem de Conteúdo Proibido (Texto)
+    function checkNSFW(text) {
+        const nsfwKeywords = [
+            'porn', 'sexo', 'nudes', 'anal', 'vagina', 'penis', 'hentai', 'explícito', 'cu', 'boceta', 'rola', 
+            'pica', 'vazamento', 'desrespeito', 'fudeu', 'puta', 'viado', 'otário', 'burro', 'babaca',
+            'putaria', 'zoofilia', 'pedofilia', 'agressão', 'xingamento', 'maconha', 'cocaína', 'drogas'
+        ];
+        const normalizedText = text.toLowerCase().replace(/[^a-z0-9]/g, ''); 
+        
+        for (const keyword of nsfwKeywords) {
+            if (normalizedText.includes(keyword)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // Banimento (CLIENT-SIDE)
+    window.banUser = function(uid, displayName, reason = 'NSFW ou Desrespeito no texto') {
+        console.error(`USUÁRIO BANIDO: ${displayName} (${uid}) por: ${reason}`);
+        
+        // 1. Registrar no Firestore (para banimento permanente no backend)
+        db.collection('bannedUsers').doc(uid).set({
+            uid: uid,
+            displayName: displayName,
+            reason: reason,
+            bannedAt: serverTimestamp()
+        }).then(() => {
+            // 2. Deslogar o usuário
+            auth.signOut().then(() => {
+                alert(`⚠️ CONTEÚDO PROIBIDO DETECTADO. Você foi BANIDO permanentemente do sistema. Motivo: ${reason}`);
+            });
+        });
+    }
+
+    // ----------------------------------------------------
+    // 3. LÓGICA DE AUTENTICAÇÃO E CONTA (CORREÇÃO DE UI)
+    // ----------------------------------------------------
+
+    // Checa a unicidade do nome de usuário no Firestore
+    async function checkUsernameUnique(username) {
+        const snapshot = await db.collection("users").where("displayName", "==", username).limit(1).get();
+        return snapshot.empty; 
+    }
+
+    // CORRIGIDO: Atualiza a UI de autenticação (logado vs deslogado)
+    function updateAuthUI(user) {
+        const signedOutUI = document.getElementById('signedOutUI');
+        const signedInUI = document.getElementById('signedInUI');
+        const ownerPanel = document.getElementById('ownerPanel');
+        const playerInfo = document.getElementById('playerInfo');
+        const playerInfoSocial = document.getElementById('playerInfoSocial');
+
+        // Se houver um usuário REAL logado (não anônimo)
+        if (user && !user.isAnonymous) {
+            signedOutUI.style.display = 'none'; // Esconde a tela de Login/Cadastro
+            signedInUI.style.display = 'block'; // Mostra o botão 'Sair' e o Gold
+            playerInfo.style.display = 'block';
+            playerInfoSocial.style.display = 'block';
+
+            const displayName = user.displayName || 'Usuário';
+            document.getElementById('userLabel').textContent = `Bem-vindo(a), ${displayName}!`;
+            document.getElementById('socialUsername').textContent = displayName;
+            document.getElementById('socialUserId').textContent = user.uid;
+
+            ownerPanel.style.display = (user.uid === OWNER_UID) ? 'block' : 'none';
+            loadUserGold(user.uid); // Chama a função para carregar o Gold
+        } else {
+            // Se não houver usuário logado ou for anônimo
+            signedOutUI.style.display = 'block'; // Mostra a tela de Login/Cadastro
+            signedInUI.style.display = 'none'; // Esconde o botão 'Sair'
+            ownerPanel.style.display = 'none';
+            playerInfo.style.display = 'none';
+            playerInfoSocial.style.display = 'none';
+        }
+    }
+
+    // CORRIGIDO: Carrega o Gold do usuário e atualiza a UI (Listener em tempo real)
+    window.loadUserGold = function(uid) {
+        db.collection("users").doc(uid).onSnapshot(doc => {
+            if (doc.exists) {
+                const data = doc.data();
+                const gold = data.gold || 0;
+                
+                // Atualiza o Gold em todos os lugares
+                document.getElementById('myGold').textContent = gold.toLocaleString('pt-BR');
+                document.getElementById('playerGold').textContent = gold.toLocaleString('pt-BR');
+                window.currentGold = gold; 
+            } else {
+                console.warn("Documento do usuário não encontrado no Firestore. Criando documento...");
+                // Se o doc não existir, cria com 100 de gold.
+                db.collection("users").doc(uid).set({
+                    uid: uid,
+                    displayName: auth.currentUser.displayName,
+                    gold: 100, 
+                    wins: 0,
+                    losses: 0,
+                    createdAt: serverTimestamp()
+                }, { merge: true });
+            }
+        });
+    }
+    
+    // Listener de Cadastro (Mantido)
+    document.getElementById('btnSignup').addEventListener('click', async () => {
+        const username = document.getElementById('username').value.trim();
+        const password = document.getElementById('pwd').value.trim();
+        const btnSignup = document.getElementById('btnSignup');
+        
+        if (username.length < 3) return showGlobalNotice("Nome de usuário muito curto (mín. 3).", 'var(--btn-red)');
+        if (password.length < 6) return showGlobalNotice("Senha muito curta (mín. 6).", 'var(--btn-red)');
+
+        btnSignup.disabled = true;
+
+        try {
+            showGlobalNotice("Checando nome de usuário...", 'var(--main-gold)');
+            const isUnique = await checkUsernameUnique(username);
+            if (!isUnique) {
+                showGlobalNotice("Nome de usuário já existe. Tente outro.", 'var(--btn-red)');
+                return; 
+            }
+
+            showGlobalNotice("Criando conta...", 'var(--btn-blue)');
+            const userCredential = await auth.createUserWithEmailAndPassword(`${username}@ivad.com`, password);
+            const user = userCredential.user;
+
+            await user.updateProfile({ displayName: username });
+            
+            await db.collection("users").doc(user.uid).set({
+                uid: user.uid,
+                displayName: username,
+                gold: 100, 
+                wins: 0,
+                losses: 0,
+                createdAt: serverTimestamp()
+            });
+            
+            showGlobalNotice(`🎉 Conta criada e Gold inicial de 100 recebido!`, 'var(--green-win)');
+            document.getElementById('pwd').value = '';
+
+        } catch (error) {
+            let message = "Erro desconhecido. Tente novamente.";
+            if (error.code === 'auth/weak-password') {
+                message = "Senha muito fraca (mínimo de 6 caracteres).";
+            } else if (error.code === 'auth/email-already-in-use') {
+                message = "Nome de usuário já está em uso."; 
+            } else {
+                console.error("Erro de cadastro:", error.code, error.message);
+                message = `Falha no cadastro: ${error.message}`;
+            }
+            showGlobalNotice(`❌ ${message}`, 'var(--btn-red)');
+        } finally {
+            btnSignup.disabled = false;
+        }
+    });
+
+    // Listener de Login (Mantido)
+    document.getElementById('btnLogin').addEventListener('click', async () => {
+        const username = document.getElementById('username').value.trim();
+        const password = document.getElementById('pwd').value.trim();
+        const btnLogin = document.getElementById('btnLogin');
+        
+        if (username.length < 3 || password.length < 6) return showGlobalNotice("Preencha Usuário e Senha corretamente.", 'var(--btn-red)');
+
+        btnLogin.disabled = true;
+        showGlobalNotice("Acessando conta...", 'var(--main-gold)');
+
+        try {
+            await auth.signInWithEmailAndPassword(`${username}@ivad.com`, password);
+            
+            // A UI será atualizada automaticamente pelo listener auth.onAuthStateChanged
+
+            showGlobalNotice(`✅ Login bem-sucedido! Bem-vindo(a) ${username}.`, 'var(--green-win)');
+            document.getElementById('pwd').value = ''; 
+
+        } catch (error) {
+            let message = "Erro desconhecido. Tente novamente.";
+
+            if (error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
+                message = "Nome de usuário ou senha incorretos.";
+            } else {
+                console.error("Erro de login:", error.code, error.message);
+                message = `Falha no login: ${error.message}`;
+            }
+
+            showGlobalNotice(`❌ ${message}`, 'var(--btn-red)');
+        } finally {
+            btnLogin.disabled = false;
+        }
+    });
+
+
+    // Listener para o botão de Logout (Mantido)
+    document.getElementById('btnLogout').addEventListener('click', () => {
+        auth.signOut().then(() => {
+            showGlobalNotice("Você foi desconectado(a).", 'var(--btn-blue)');
+            // A UI será atualizada automaticamente pelo listener auth.onAuthStateChanged
+        }).catch(error => {
+            showGlobalNotice(`Erro ao desconectar: ${error.message}`, 'var(--btn-red)');
+        });
+    });
+
+    // ----------------------------------------------------
+    // 4. LÓGICA DE ABAS (Mantido)
+    // ----------------------------------------------------
+
+    // Função para trocar de aba
+    function switchTab(tabId) {
+        document.querySelectorAll('.tabbtn').forEach(btn => btn.classList.remove('active'));
+        document.querySelectorAll('.content > div').forEach(div => div.style.display = 'none');
+        
+        const newTab = document.getElementById(tabId);
+        const newButton = document.querySelector(`.tabbtn[data-tab="${tabId}"]`);
+        
+        if (newTab) newTab.style.display = 'block';
+        if (newButton) newButton.classList.add('active');
+
+        // Chamadas específicas para recarregar conteúdo em tempo real
+        if (tabId === 'rankTab') loadRank(); 
+        if (tabId === 'chatTab') loadChat();
+        if (tabId === 'salesTab') loadSales(); 
+    }
+
+    // ----------------------------------------------------
+    // 5. LÓGICA DE JOGOS E RANKING (Mantido)
+    // ----------------------------------------------------
+
+    // Função Trabalhar (Work)
+    window.work = async function() {
+        const user = auth.currentUser;
+        if (!user || user.isAnonymous) return showGlobalNotice("Faça login para trabalhar.", 'var(--btn-red)');
+        
+        const now = Date.now();
+        if (now - lastWorkTime < 5000) {
+            const remaining = Math.ceil((5000 - (now - lastWorkTime)) / 1000);
+            return showGlobalNotice(`Aguarde ${remaining}s para trabalhar novamente.`, 'var(--btn-red)');
+        }
+
+        lastWorkTime = now;
+        const btnWork = document.getElementById('btnWork');
+        const workMsg = document.getElementById('workMsg');
+        btnWork.disabled = true;
+
+        try {
+            const currentGold = window.currentGold || 0;
+            const maxGain = Math.max(10, Math.floor(currentGold * 1.0)); // 100% do gold, mínimo de 10
+            const gain = Math.floor(Math.random() * maxGain) + 1;
+
+            await db.collection("users").doc(user.uid).update({
+                gold: increment(gain)
+            });
+
+            workMsg.textContent = `Você trabalhou e ganhou ${gain.toLocaleString('pt-BR')} Gold!`;
+            showGlobalNotice(`+${gain.toLocaleString('pt-BR')} Gold`, 'var(--green-win)');
+
+        } catch (error) {
+            workMsg.textContent = 'Erro ao trabalhar. Tente novamente.';
+            console.error("Erro ao trabalhar:", error);
+        } finally {
+            setTimeout(() => {
+                btnWork.disabled = false;
+                workMsg.textContent = '';
+            }, 5000);
+        }
+    }
+
+    // Função Aposta Simples (Multiplicador)
+    window.betSimple = async function(multiplier, amountId, msgId, winChance = 45) {
+        const user = auth.currentUser;
+        if (!user || user.isAnonymous) return showGlobalNotice("Faça login para apostar.", 'var(--btn-red)');
+
+        const amountInput = document.getElementById(amountId);
+        const amount = parseInt(amountInput.value);
+        const betMsg = document.getElementById(msgId);
+        
+        if (isNaN(amount) || amount <= 0) return betMsg.textContent = "Aposta inválida.";
+        if (window.currentGold < amount) return betMsg.textContent = "Gold insuficiente.";
+        
+        amountInput.disabled = true;
+        betMsg.textContent = `Apostando ${amount.toLocaleString('pt-BR')} Gold...`;
+
+        const isWin = Math.random() * 100 < winChance;
+        const netChange = isWin ? (amount * multiplier) - amount : -amount;
+        const color = isWin ? 'var(--green-win)' : 'var(--red-loss)';
+        const statusText = isWin ? `GANHOU! Você ganhou ${netChange.toLocaleString('pt-BR')} Gold.` : `PERDEU! Você perdeu ${amount.toLocaleString('pt-BR')} Gold.`;
+
+        try {
+            await db.collection("users").doc(user.uid).update({
+                gold: increment(netChange),
+                wins: isWin ? increment(1) : increment(0),
+                losses: isWin ? increment(0) : increment(1),
+            });
+            
+            betMsg.innerHTML = `<span style="color:${color}; font-weight: bold;">${statusText}</span>`;
+            showGlobalNotice(statusText, color);
+
+        } catch (error) {
+            betMsg.textContent = 'Erro ao processar a aposta. Tente novamente.';
+            console.error("Erro na aposta simples:", error);
+        } finally {
+            setTimeout(() => {
+                amountInput.disabled = false;
+                amountInput.value = '';
+            }, 1000);
+        }
+    }
+    
+    // Função Carregar Ranking
+    window.loadRank = function(forceReload = false) {
+        const rankList = document.querySelector('.rank-list ol');
+        
+        // Limpar e mostrar carregando
+        if (forceReload) {
+             rankList.innerHTML = '<li style="color: var(--text-secondary);">Carregando...</li>';
+        }
+
+        db.collection("users")
+            .orderBy("gold", "desc")
+            .limit(10)
+            .onSnapshot(snapshot => {
+                rankList.innerHTML = '';
+                if (snapshot.empty) {
+                    rankList.innerHTML = '<li style="color: var(--text-secondary);">Nenhum jogador no ranking.</li>';
+                    return;
+                }
+                
+                snapshot.forEach((doc, index) => {
+                    const data = doc.data();
+                    const rank = index + 1;
+                    const style = rank === 1 ? 'color: var(--main-gold); font-weight: bold; font-size: 1.1em;' : 'color: var(--text-primary);';
+                    
+                    rankList.innerHTML += `
+                        <li style="${style}">
+                            #${rank} - ${data.displayName || 'Anônimo'} (${data.gold.toLocaleString('pt-BR')} Gold)
+                        </li>
+                    `;
+                });
+            }, error => {
+                rankList.innerHTML = `<li style="color: var(--red-loss);">Erro ao carregar rank: ${error.message}</li>`;
+                console.error("Erro ao carregar ranking:", error);
+            });
+    }
+
+    // ----------------------------------------------------
+    // 6. LÓGICA DE VENDAS E MODERAÇÃO DE FOTOS (Mantido)
+    // ----------------------------------------------------
+
+    window.publishSale = async function() {
+        const user = auth.currentUser;
+        if (!user || user.isAnonymous) return showGlobalNotice("Faça login para publicar anúncios.", 'var(--btn-red)');
+
+        const title = document.getElementById('saleTitle').value.trim();
+        const price = document.getElementById('salePrice').value.trim();
+        const whatsapp = document.getElementById('saleWhatsapp').value.trim();
+        const description = document.getElementById('saleDescription').value.trim();
+        const file = document.getElementById('salePhoto').files[0];
+        const btnPublish = document.getElementById('btnPublishSale');
+        const statusMsg = document.getElementById('saleStatusMsg');
+
+        statusMsg.textContent = '';
+        if (!title || !price || !whatsapp || !file) {
+            statusMsg.textContent = "Preencha todos os campos e anexe uma Foto.";
+            return;
+        }
+
+        // 1. CHECAGEM DE NSFW no TEXTO
+        if (checkNSFW(title) || checkNSFW(description)) {
+            statusMsg.textContent = "❌ Conteúdo PROIBIDO detectado no texto. Banimento imediato acionado.";
+            return banUser(user.uid, user.displayName, 'Conteúdo Proibido no Texto do Anúncio');
+        }
+        
+        btnPublish.disabled = true;
+        statusMsg.textContent = 'Carregando foto (e preparando para análise de IA)...';
+
+        try {
+            // 2. UPLOAD DA FOTO para o Storage
+            const fileExtension = file.name.split('.').pop();
+            const fileName = `${user.uid}_${Date.now()}.${fileExtension}`; 
+            const storageRef = storage.ref(`sales_photos/${user.uid}/${fileName}`);
+            
+            const snapshot = await storageRef.put(file);
+            const photoURL = await snapshot.ref.getDownloadURL();
+            
+            statusMsg.textContent = 'Publicando anúncio e iniciando moderação de imagem...';
+
+            // 3. CRIAÇÃO DO ANÚNCIO no Firestore
+            await db.collection("sales").doc().set({
+                userId: user.uid,
+                userName: user.displayName,
+                title: title,
+                price: price,
+                whatsapp: whatsapp,
+                description: description,
+                photoURL: photoURL,
+                timestamp: serverTimestamp(),
+                moderationStatus: 'pending' 
+            });
+
+            // 4. SUCESSO
+            statusMsg.textContent = '✅ Anúncio publicado. Foto enviada para análise de IA. Será visível em breve.';
+            
+            document.getElementById('saleTitle').value = document.getElementById('salePrice').value = document.getElementById('saleWhatsapp').value = document.getElementById('saleDescription').value = document.getElementById('salePhoto').value = '';
+
+            showGlobalNotice("Novo anúncio publicado! Aguardando análise de IA.", 'var(--main-gold)');
+            loadSales(); 
+            
+        } catch (error) {
+            statusMsg.textContent = `❌ Erro ao publicar: ${error.message}`;
+            console.error("Erro ao publicar anúncio:", error);
+        } finally {
+            btnPublish.disabled = false;
+        }
+    }
+
+    window.loadSales = function() {
+        const salesList = document.getElementById('salesList');
+        salesList.innerHTML = '<p class="small" style="grid-column: 1 / -1;">Buscando anúncios...</p>';
+
+        // Filtra APENAS anúncios com status 'approved' pela Cloud Function
+        db.collection("sales")
+            .where('moderationStatus', '==', 'approved') 
+            .orderBy("timestamp", "desc")
+            .limit(10)
+            .onSnapshot(snapshot => { 
+                salesList.innerHTML = '';
+                if (snapshot.empty) {
+                    salesList.innerHTML = '<p class="small" style="grid-column: 1 / -1;">Nenhum anúncio de venda encontrado.</p>';
+                    return;
+                }
+                
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    const whatsappLink = `https://api.whatsapp.com/send?phone=${data.whatsapp.replace(/\D/g,'')}&text=Olá! Vi seu anúncio "${data.title}" na IVAD e tenho interesse.`;
+                    
+                    salesList.innerHTML += `
+                        <div class="sale-post">
+                            <img src="${data.photoURL}" alt="Foto do item">
+                            <h4>${data.title}</h4>
+                            <p class="sale-price">${data.price}</p>
+                            <p class="small">Vendedor: ${data.userName}</p>
+                            <p>${data.description}</p>
+                            <a href="${whatsappLink}" target="_blank" class="sale-contact-btn">CHAMAR NO WHATSAPP</a>
+                        </div>
+                    `;
+                });
+            }, error => {
+                salesList.innerHTML = `<p class="small" style="grid-column: 1 / -1;">Erro ao carregar anúncios: ${error.message}</p>`;
+                console.error("Erro ao carregar vendas:", error);
+            });
+    }
+
+    // ----------------------------------------------------
+    // 7. LÓGICA DE CHAT (Mantido)
+    // ----------------------------------------------------
+    
+    window.sendMessage = async function() {
+        const user = auth.currentUser;
+        const chatInput = document.getElementById('chat-message-input');
+        let message = chatInput.value.trim();
+
+        if (!user || user.isAnonymous) return showGlobalNotice("Faça login para enviar mensagens.", 'var(--btn-red)');
+        if (!message) return;
+        
+        // Checagem de NSFW no chat
+        if (checkNSFW(message)) {
+            chatInput.value = '';
+            showGlobalNotice("❌ Mensagem bloqueada: Conteúdo proibido!", 'var(--btn-red)');
+            return banUser(user.uid, user.displayName, 'Conteúdo Proibido no Chat');
+        }
+
+        try {
+            await db.collection("chat").add({
+                text: message,
+                uid: user.uid,
+                displayName: user.displayName || 'Anônimo',
+                timestamp: serverTimestamp()
+            });
+
+            chatInput.value = '';
+            document.getElementById('chatMessages').scrollTop = document.getElementById('chatMessages').scrollHeight;
+        } catch (error) {
+            showGlobalNotice("Erro ao enviar mensagem.", 'var(--btn-red)');
+            console.error("Erro ao enviar mensagem:", error);
+        }
+    }
+
+    window.loadChat = function() {
+        const chatBox = document.getElementById('chatMessages');
+        let initialLoad = true;
+
+        db.collection("chat")
+            .orderBy("timestamp", "desc")
+            .limit(15) // Limita as últimas 15 mensagens
+            .onSnapshot(snapshot => {
+                let messagesHtml = '';
+                const messages = [];
+                snapshot.forEach(doc => messages.push(doc.data()));
+                
+                // Inverte a ordem para mostrar o mais novo embaixo
+                messages.reverse().forEach(data => {
+                    const isOwner = data.uid === OWNER_UID ? 'color: var(--main-gold); font-weight: bold;' : '';
+                    const username = data.displayName || 'Anônimo';
+                    
+                    messagesHtml += `
+                        <p style="margin: 5px 0; font-size: 0.9em;">
+                            <strong style="${isOwner}">${username}:</strong> ${data.text}
+                        </p>
+                    `;
+                });
+
+                chatBox.innerHTML = messagesHtml;
+                
+                // Rola para o final apenas no carregamento inicial e quando o usuário não está rolando
+                if (initialLoad) {
+                    chatBox.scrollTop = chatBox.scrollHeight;
+                    initialLoad = false;
+                }
+            }, error => {
+                chatBox.innerHTML = `<p style="color: var(--red-loss);">Erro ao carregar chat: ${error.message}</p>`;
+                console.error("Erro ao carregar chat:", error);
+            });
+    }
+    
+    // --- Funções de Aposta Avançadas (Mantido) ---
+    
+    // Roleta de Cor (48% Vermelho, 48% Preto, 4% Verde)
+    window.betCor = async function() {
+        const user = auth.currentUser;
+        if (!user || user.isAnonymous) return showGlobalNotice("Faça login para apostar.", 'var(--btn-red)');
+
+        const amountInput = document.getElementById('betCorAmount');
+        const colorSelect = document.getElementById('betCorColor');
+        const amount = parseInt(amountInput.value);
+        const selectedColor = colorSelect.value;
+        const betMsg = document.getElementById('betCorMsg');
+
+        if (isNaN(amount) || amount <= 0) return betMsg.textContent = "Aposta inválida.";
+        if (window.currentGold < amount) return betMsg.textContent = "Gold insuficiente.";
+        
+        amountInput.disabled = true;
+        
+        // Lógica de sorteio
+        const roll = Math.random() * 100;
+        let winColor, multiplier = 0;
+
+        if (roll < 4) { // 4%
+            winColor = 'green';
+            multiplier = 4;
+        } else if (roll < 52) { // 48% (4 + 48 = 52)
+            winColor = 'red';
+            multiplier = 2;
+        } else { // 48%
+            winColor = 'black';
+            multiplier = 2;
+        }
+
+        const isWin = winColor === selectedColor;
+        const netChange = isWin ? (amount * multiplier) - amount : -amount;
+        const color = isWin ? 'var(--green-win)' : 'var(--red-loss)';
+        const statusText = isWin 
+            ? `GANHOU! Caiu no ${winColor.toUpperCase()}! Você ganhou ${netChange.toLocaleString('pt-BR')} Gold.` 
+            : `PERDEU. Caiu no ${winColor.toUpperCase()}. Você perdeu ${amount.toLocaleString('pt-BR')} Gold.`;
+
+        try {
+            await db.collection("users").doc(user.uid).update({
+                gold: increment(netChange),
+                wins: isWin ? increment(1) : increment(0),
+                losses: isWin ? increment(0) : increment(1),
+            });
+            
+            betMsg.innerHTML = `<span style="color:${color}; font-weight: bold;">${statusText}</span>`;
+            showGlobalNotice(statusText, color);
+
+        } catch (error) {
+            betCorMsg.textContent = 'Erro ao processar a aposta. Tente novamente.';
+        } finally {
+            setTimeout(() => { amountInput.disabled = false; amountInput.value = ''; }, 1000);
+        }
+    }
+    
+    // Moeda da Sorte (50/50)
+    window.betCoin = async function() {
+        const user = auth.currentUser;
+        if (!user || user.isAnonymous) return showGlobalNotice("Faça login para apostar.", 'var(--btn-red)');
+
+        const amountInput = document.getElementById('betCoinAmount');
+        const sideSelect = document.getElementById('betCoinSide');
+        const amount = parseInt(amountInput.value);
+        const selectedSide = sideSelect.value;
+        const betCoinMsg = document.getElementById('betCoinMsg');
+
+        if (isNaN(amount) || amount <= 0) return betCoinMsg.textContent = "Aposta inválida.";
+        if (window.currentGold < amount) return betCoinMsg.textContent = "Gold insuficiente.";
+        
+        amountInput.disabled = true;
+        
+        const winSide = Math.random() < 0.5 ? 'cara' : 'coroa';
+        const isWin = winSide === selectedSide;
+        const multiplier = 2;
+        const netChange = isWin ? (amount * multiplier) - amount : -amount;
+        const color = isWin ? 'var(--green-win)' : 'var(--red-loss)';
+        const statusText = isWin 
+            ? `GANHOU! Caiu em ${winSide.toUpperCase()}! Você ganhou ${netChange.toLocaleString('pt-BR')} Gold.` 
+            : `PERDEU. Caiu em ${winSide.toUpperCase()}. Você perdeu ${amount.toLocaleString('pt-BR')} Gold.`;
+
+        try {
+            await db.collection("users").doc(user.uid).update({
+                gold: increment(netChange),
+                wins: isWin ? increment(1) : increment(0),
+                losses: isWin ? increment(0) : increment(1),
+            });
+            
+            betCoinMsg.innerHTML = `<span style="color:${color}; font-weight: bold;">${statusText}</span>`;
+            showGlobalNotice(statusText, color);
+
+        } catch (error) {
+            betCoinMsg.textContent = 'Erro ao processar a aposta. Tente novamente.';
+        } finally {
+            setTimeout(() => { amountInput.disabled = false; amountInput.value = ''; }, 1000);
+        }
+    }
+
+    // DICE 12x
+    window.betDice = async function(maxNumber, multiplier, amountId, msgId) {
+        const user = auth.currentUser;
+        if (!user || user.isAnonymous) return showGlobalNotice("Faça login para apostar.", 'var(--btn-red)');
+
+        const amountInput = document.getElementById(amountId);
+        const numberInput = document.getElementById('betDice12Number');
+        const amount = parseInt(amountInput.value);
+        const selectedNumber = parseInt(numberInput.value);
+        const betMsg = document.getElementById(msgId);
+        
+        if (isNaN(amount) || amount <= 0) return betMsg.textContent = "Aposta inválida.";
+        if (isNaN(selectedNumber) || selectedNumber < 1 || selectedNumber > maxNumber) return betMsg.textContent = `Número inválido (1-${maxNumber}).`;
+        if (window.currentGold < amount) return betMsg.textContent = "Gold insuficiente.";
+        
+        amountInput.disabled = true;
+        
+        const roll = Math.floor(Math.random() * maxNumber) + 1;
+        const isWin = roll === selectedNumber;
+        const netChange = isWin ? (amount * multiplier) - amount : -amount;
+        const color = isWin ? 'var(--green-win)' : 'var(--red-loss)';
+        const statusText = isWin 
+            ? `GANHOU! O dado rolou ${roll}! Você ganhou ${netChange.toLocaleString('pt-BR')} Gold.` 
+            : `PERDEU. O dado rolou ${roll}. Você perdeu ${amount.toLocaleString('pt-BR')} Gold.`;
+
+        try {
+            await db.collection("users").doc(user.uid).update({
+                gold: increment(netChange),
+                wins: isWin ? increment(1) : increment(0),
+                losses: isWin ? increment(0) : increment(1),
+            });
+            
+            betMsg.innerHTML = `<span style="color:${color}; font-weight: bold;">${statusText}</span>`;
+            showGlobalNotice(statusText, color);
+
+        } catch (error) {
+            betMsg.textContent = 'Erro ao processar a aposta. Tente novamente.';
+        } finally {
+            setTimeout(() => { amountInput.disabled = false; amountInput.value = ''; }, 1000);
+        }
+    }
+    
+    // Número Mágico (RNG Genérico)
+    window.betRNG = async function(multiplier, fixedAmount, winChance) {
+        const user = auth.currentUser;
+        if (!user || user.isAnonymous) return showGlobalNotice("Faça login para apostar.", 'var(--btn-red)');
+
+        const amount = fixedAmount;
+        const betMsg = document.getElementById('betRNGMsg_4x');
+
+        if (window.currentGold < amount) return betMsg.textContent = "Gold insuficiente.";
+        
+        // Lógica de sorteio
+        const isWin = Math.random() * 100 < winChance;
+        const netChange = isWin ? (amount * multiplier) - amount : -amount;
+        const color = isWin ? 'var(--green-win)' : 'var(--red-loss)';
+        const statusText = isWin 
+            ? `GANHOU! Você acertou e ganhou ${netChange.toLocaleString('pt-BR')} Gold.` 
+            : `PERDEU. Você errou e perdeu ${amount.toLocaleString('pt-BR')} Gold.`;
+
+        try {
+            await db.collection("users").doc(user.uid).update({
+                gold: increment(netChange),
+                wins: isWin ? increment(1) : increment(0),
+                losses: isWin ? increment(0) : increment(1),
+            });
+            
+            betMsg.innerHTML = `<span style="color:${color}; font-weight: bold;">${statusText}</span>`;
+            showGlobalNotice(statusText, color);
+
+        } catch (error) {
+            betMsg.textContent = 'Erro ao processar a aposta. Tente novamente.';
+        }
+    }
+
+    // ----------------------------------------------------
+    // 8. ADMIN FUNCTIONS (Painel do Dono) (Mantido)
+    // ----------------------------------------------------
+
+    window.adminGiveGold = async function() {
+        const user = auth.currentUser;
+        if (user.uid !== OWNER_UID) return showGlobalNotice("Acesso Negado.", 'var(--btn-red)');
+        
+        const targetUsername = document.getElementById('adminName').value.trim();
+        const amount = parseInt(document.getElementById('adminAmount').value);
+
+        if (!targetUsername || isNaN(amount) || amount === 0) return showGlobalNotice("Preencha o nome e o valor.", 'var(--btn-red)');
+
+        try {
+            // Encontra o usuário pelo nome de exibição no Firestore (não é possível no Auth SDK)
+            const snapshot = await db.collection("users").where("displayName", "==", targetUsername).limit(1).get();
+            if (snapshot.empty) return showGlobalNotice(`Usuário ${targetUsername} não encontrado.`, 'var(--btn-red)');
+
+            const targetUid = snapshot.docs[0].id;
+
+            await db.collection("users").doc(targetUid).update({
+                gold: increment(amount)
+            });
+
+            const action = amount > 0 ? `DEU ${amount.toLocaleString('pt-BR')} Gold` : `REMOVEU ${Math.abs(amount).toLocaleString('pt-BR')} Gold`;
+            showGlobalNotice(`✅ Sucesso! ${action} para ${targetUsername}.`, 'var(--green-win)');
+            document.getElementById('adminName').value = '';
+            document.getElementById('adminAmount').value = '';
+
+        } catch (error) {
+            showGlobalNotice("Erro na transação Admin.", 'var(--btn-red)');
+            console.error("Erro Admin Give Gold:", error);
+        }
+    }
+    
+    window.adminResetRank = async function() {
+        const user = auth.currentUser;
+        if (user.uid !== OWNER_UID) return showGlobalNotice("Acesso Negado.", 'var(--btn-red)');
+
+        if (!confirm("Tem certeza que deseja RESETAR o GOLD, WINS e LOSSES de TODOS os usuários? Esta ação é irreversível!")) {
+            return;
+        }
+
+        showGlobalNotice("Iniciando reset de ranking...", 'var(--btn-red)');
+
+        try {
+            // Obter todos os documentos da coleção 'users'
+            const usersSnapshot = await db.collection("users").get();
+            const batch = db.batch();
+
+            usersSnapshot.forEach(doc => {
+                const userRef = db.collection("users").doc(doc.id);
+                batch.update(userRef, {
+                    gold: 100, // Volta para o gold inicial
+                    wins: 0,
+                    losses: 0
+                });
+            });
+
+            await batch.commit();
+            showGlobalNotice("🏆 Ranking RESETADO com sucesso! Todos voltaram a 100 Gold.", 'var(--main-gold)');
+
+        } catch (error) {
+            showGlobalNotice("❌ Erro ao resetar ranking.", 'var(--btn-red)');
+            console.error("Erro Admin Reset Rank:", error);
+        }
+    }
+    
+    window.adminClearChat = async function() {
+        const user = auth.currentUser;
+        if (user.uid !== OWNER_UID) return showGlobalNotice("Acesso Negado.", 'var(--btn-red)');
+        
+        if (!confirm("Tem certeza que deseja limpar o CHAT GLOBAL?")) return;
+
+        showGlobalNotice("Limpando chat...", 'var(--btn-red)');
+
+        try {
+            // Deleta os documentos em lotes
+            const chatSnapshot = await db.collection("chat").limit(100).get(); // Limita a 100 por lote
+            const batch = db.batch();
+
+            if (chatSnapshot.empty) {
+                showGlobalNotice("Chat já está vazio.", 'var(--green-win)');
+                return;
+            }
+
+            chatSnapshot.forEach(doc => {
+                batch.delete(doc.ref);
+            });
+
+            await batch.commit();
+            showGlobalNotice("✅ Chat Global limpo com sucesso!", 'var(--green-win)');
+
+        } catch (error) {
+            showGlobalNotice("❌ Erro ao limpar chat.", 'var(--btn-red)');
+            console.error("Erro Admin Clear Chat:", error);
+        }
+    }
+
+    // ----------------------------------------------------
+    // 9. INICIALIZAÇÃO
+    // ----------------------------------------------------
+
+    document.addEventListener('DOMContentLoaded', () => {
+        // CORREÇÃO CRÍTICA PARA AS ABAS: Adiciona o listener de clique
+        document.querySelectorAll('.tabbtn').forEach(button => {
+            button.addEventListener('click', function() {
+                switchTab(this.dataset.tab);
+            });
+        });
+        
+        // Garante que a primeira aba ('regrasTab') esteja ativa ao carregar
+        switchTab('regrasTab');
+
+        // Escuta o estado de autenticação (logado, deslogado, anônimo)
+        auth.onAuthStateChanged(user => {
+            // Checa se o usuário é banido ANTES de atualizar a UI (simulação de check inicial)
+            if (user && !user.isAnonymous) {
+                 db.collection('bannedUsers').doc(user.uid).get().then(doc => {
+                    if (doc.exists) {
+                        auth.signOut();
+                        alert(`⚠️ Sua conta está BANIDA. Motivo: ${doc.data().reason}`);
+                        return;
+                    }
+                    updateAuthUI(user);
+                }).catch(error => {
+                    console.error("Erro ao checar banimento:", error);
+                    updateAuthUI(user); // Tenta carregar mesmo se der erro no ban check
+                });
+            } else {
+                updateAuthUI(user);
+                // Se não houver usuário logado, tenta logar anonimamente
+                if (!user) {
+                    auth.signInAnonymously().catch(error => console.error("Erro ao logar anonimamente:", error));
+                }
+            }
+        });
+        
+        // Contagem de visitantes online (Placeholder - apenas para demonstração)
+        db.collection('visitors').doc('online').onSnapshot(doc => {
+             document.getElementById('visitorCount').textContent = doc.data() ? doc.data().count : '0';
+        });
+
+    });
+</script>
+</body>
+</html>

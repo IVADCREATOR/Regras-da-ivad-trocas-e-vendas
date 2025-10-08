@@ -117,21 +117,12 @@ input:focus, textarea:focus{outline: none; border-color: var(--main-gold);}
 .tictactoe-cell.x { color: var(--btn-blue); }
 .tictactoe-cell.o { color: var(--btn-red); }
 
-/* Apostas Avançadas (Apenas placeholder visual) */
-.bet-options { display: flex; gap: 20px; flex-wrap: wrap;}
+/* Apostas Avançadas */
+.bet-options { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;}
 .bet-option-card {
-    flex: 1 1 30%; background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 10px;
-    border: 1px solid var(--border-color); min-width: 180px;
+    background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 10px;
+    border: 1px solid var(--border-color);
 }
-/* Raspadinha */
-.scratch-area { 
-    width: 100%; height: 50px; background: #c0c0c0; border: 2px solid #fff; border-radius: 8px;
-    display: flex; justify-content: center; align-items: center; font-size: 1.5rem;
-    font-weight: bold; color: #333; cursor: pointer; user-select: none; margin-top: 10px;
-    box-shadow: 0 0 10px rgba(0,0,0,0.5) inset;
-}
-.scratched { background: #333; color: var(--main-gold); }
-
 /* Roleta */
 .prize-wheel {
     width: 100%; max-width: 250px; aspect-ratio: 1/1; border-radius: 50%;
@@ -161,7 +152,7 @@ input:focus, textarea:focus{outline: none; border-color: var(--main-gold);}
 }
 @keyframes fadeInOut { 0%{opacity:0; transform: translateX(100px)} 5%{opacity:1; transform: translateX(0)} 95%{opacity:1; transform: translateX(0)} 100%{opacity:0; transform: translateX(100px)} }
 
-@media(max-width:880px){ .container{grid-template-columns:1fr; padding:.5rem; margin-top: 1rem} .menu{order:2} .bet-option-card { flex-basis: 100%;} }
+@media(max-width:880px){ .container{grid-template-columns:1fr; padding:.5rem; margin-top: 1rem} .menu{order:2} }
 </style>
 </head>
 <body>
@@ -193,7 +184,7 @@ input:focus, textarea:focus{outline: none; border-color: var(--main-gold);}
           <button id="btnSignup" class="btn" style="background:var(--btn-blue); flex-grow: 1;">Criar conta</button>
           <button id="btnLogin" class="btn" style="flex-grow: 1;">Entrar</button>
         </div>
-        <p class="small" style="margin-top: 5px;">Nome único (A-z, 0-9, _).</p>
+        <p class="small" style="margin-top: 5px;">Nome único (A-z, 0-9, _). **Não pode ser duplicado.**</p>
       </div>
 
       <div id="signedInUI" style="display:none">
@@ -278,60 +269,121 @@ input:focus, textarea:focus{outline: none; border-color: var(--main-gold);}
       <hr style="border:none;height:1px;background:var(--border-color);margin:20px 0">
 
       <h3 style="margin-top: 1rem;">Aposta Simples (2x)</h3>
-      <p class="small">Chance de 50%. Ganha 2x o que apostou se acertar, **perde o valor se errar**.</p>
-      <input type="number" id="betAmount" placeholder="Quantos golds apostar?" min="1">
-      <button id="btnBetSimple" class="btn">Apostar 2x</button>
-      <span id="betMsgSimple" class="small" style="color: #ffd54f;"></span>
+      <p class="small">Tente dobrar seu Gold com uma chance mediana.</p>
+      <input type="number" id="betAmount_2x" placeholder="Quantos golds apostar?" min="1">
+      <button onclick="betSimple(2, 'betAmount_2x', 'betMsg_2x')" class="btn">Apostar 2x</button>
+      <span id="betMsg_2x" class="small" style="color: #ffd54f;"></span>
 
       <h3 style="margin-top: 2rem;">Aposta Média (5x)</h3>
-      <p class="small">Chance de 20%. Ganha 5x o que apostou, **perde o valor se errar**.</p>
-      <input type="number" id="betAmountMedium" placeholder="Quantos golds apostar?" min="1">
-      <button id="btnBetMedium" class="btn" style="background:var(--btn-blue)">Apostar 5x</button>
-      <span id="betMsgMedium" class="small" style="color: #90caf9;"></span>
+      <p class="small">Arrisque um pouco mais por uma recompensa maior.</p>
+      <input type="number" id="betAmount_5x" placeholder="Quantos golds apostar?" min="1">
+      <button onclick="betSimple(5, 'betAmount_5x', 'betMsg_5x')" class="btn" style="background:var(--btn-blue)">Apostar 5x</button>
+      <span id="betMsg_5x" class="small" style="color: #90caf9;"></span>
 
       <h3 style="margin-top: 2rem;">Aposta Alta (10x)</h3>
-      <p class="small">Chance de 10%. Ganha 10x o que apostou, **perde o valor se errar**.</p>
-      <input type="number" id="betAmountHigh" placeholder="Quantos golds apostar?" min="1">
-      <button id="btnBetHigh" class="btn" style="background:var(--btn-red)">Apostar 10x</button>
-      <span id="betMsgHigh" class="small" style="color: #ef9a9a;"></span>
+      <p class="small">Para quem tem coragem. O prêmio é alto.</p>
+      <input type="number" id="betAmount_10x" placeholder="Quantos golds apostar?" min="1">
+      <button onclick="betSimple(10, 'betAmount_10x', 'betMsg_10x')" class="btn" style="background:var(--btn-red)">Apostar 10x</button>
+      <span id="betMsg_10x" class="small" style="color: #ef9a9a;"></span>
     </div>
 
     <div id="apostasAvancadasTab" style="display:none">
         <h2>🎲 Apostas Avançadas</h2>
 
-        <p class="small">Aqui você encontra jogos de sorte com chances fixas e prêmios variados.</p>
+        <p class="small">Jogos mais elaborados, com prêmios e riscos variados.</p>
 
         <div class="bet-options">
             <div class="bet-option-card">
                 <h3 style="margin-top: 0;">Cor (2x ou 4x)</h3>
-                <p class="small">Aposte no Vermelho (48%), Preto (48%) ou Verde (4%).</p>
+                <p class="small">Aposte no Vermelho (2x), Preto (2x) ou Verde (4x).</p>
                 <input type="number" id="betCorAmount" placeholder="Gold para apostar" min="1">
                 <select id="betCorColor" style="margin-bottom: 10px;">
-                    <option value="red" style="color: red;">Vermelho (2x)</option>
-                    <option value="black" style="color: #333;">Preto (2x)</option>
-                    <option value="green" style="color: green;">Verde (4x)</option>
+                    <option value="red" style="color: red;">Vermelho (48%)</option>
+                    <option value="black" style="color: #333;">Preto (48%)</option>
+                    <option value="green" style="color: green;">Verde (4%)</option>
                 </select>
-                <button id="btnBetCor" class="btn" style="width: 100%;">Apostar</button>
+                <button onclick="betCor()" class="btn" style="width: 100%;">Apostar</button>
                 <span id="betCorMsg" class="small" style="display: block; margin-top: 5px;"></span>
             </div>
 
             <div class="bet-option-card">
-                <h3 style="margin-top: 0;">Raspadinha R$50</h3>
-                <p class="small">Custa 50 Gold. Ganhe 0x, 2x, 5x, ou 10x o valor da aposta (50 Gold).</p>
-                <div id="scratchCard" class="scratch-area">RASPE AQUI!</div>
-                <button id="btnScratch" class="btn" style="width: 100%; margin-top: 10px;">Comprar Raspadinha (50 Gold)</button>
-                <span id="scratchMsg" class="small" style="display: block; margin-top: 5px;"></span>
+                <h3 style="margin-top: 0;">Moeda da Sorte (2x)</h3>
+                <p class="small">Aposte cara ou coroa. 50% de chance.</p>
+                <input type="number" id="betCoinAmount" placeholder="Gold para apostar" min="1">
+                <select id="betCoinSide" style="margin-bottom: 10px;">
+                    <option value="cara">Cara</option>
+                    <option value="coroa">Coroa</option>
+                </select>
+                <button onclick="betCoin()" class="btn" style="width: 100%;">Lançar Moeda</button>
+                <span id="betCoinMsg" class="small" style="display: block; margin-top: 5px;"></span>
             </div>
 
             <div class="bet-option-card">
                 <h3 style="margin-top: 0;">Roleta de Prêmios</h3>
-                <p class="small">Custa 100 Gold. Gire e ganhe **+500**, **+100** ou **-200** Gold.</p>
+                <p class="small">Custo 100 Gold. Gire e ganhe **+500**, **+100** ou **-200** Gold.</p>
                 <div style="position: relative; text-align: center;">
                     <div class="wheel-pointer"></div>
                     <div id="prizeWheel" class="prize-wheel"></div>
                 </div>
-                <button id="btnSpin" class="btn" style="width: 100%;">Girar Roleta (100 Gold)</button>
+                <button onclick="spinWheel()" class="btn" style="width: 100%;">Girar Roleta (100 Gold)</button>
                 <span id="spinMsg" class="small" style="display: block; margin-top: 5px;"></span>
+            </div>
+            
+            <div class="bet-option-card">
+                <h3 style="margin-top: 0;">DICE 3x</h3>
+                <p class="small">Acerte um número de 1 a 6. Paga 3x a aposta.</p>
+                <input type="number" id="betDiceAmount" placeholder="Gold para apostar" min="1">
+                <input type="number" id="betDiceNumber" placeholder="Seu Número (1-6)" min="1" max="6">
+                <button onclick="betDice(3, 6, 'betDiceAmount', 'betDiceMsg')" class="btn" style="width: 100%;">Rolar</button>
+                <span id="betDiceMsg" class="small" style="display: block; margin-top: 5px;"></span>
+            </div>
+
+            <div class="bet-option-card">
+                <h3 style="margin-top: 0;">DICE 12x</h3>
+                <p class="small">Acerte um número de 1 a 12. Paga 12x a aposta.</p>
+                <input type="number" id="betDice12Amount" placeholder="Gold para apostar" min="1">
+                <input type="number" id="betDice12Number" placeholder="Seu Número (1-12)" min="1" max="12">
+                <button onclick="betDice(12, 12, 'betDice12Amount', 'betDice12Msg')" class="btn" style="width: 100%; background: var(--btn-red);">Rolar Alto Risco</button>
+                <span id="betDice12Msg" class="small" style="display: block; margin-top: 5px;"></span>
+            </div>
+
+            <div class="bet-option-card">
+                <h3 style="margin-top: 0;">Par ou Ímpar (2x)</h3>
+                <p class="small">Aposte em par ou ímpar com um custo fixo de 20 Gold.</p>
+                <select id="betParImparChoice" style="margin-bottom: 10px;">
+                    <option value="par">Par</option>
+                    <option value="impar">Ímpar</option>
+                </select>
+                <button onclick="betParImpar(20)" class="btn" style="width: 100%;">Apostar (20 Gold)</button>
+                <span id="betParImparMsg" class="small" style="display: block; margin-top: 5px;"></span>
+            </div>
+            
+            <div class="bet-option-card">
+                <h3 style="margin-top: 0;">Caça ao Tesouro (100x)</h3>
+                <p class="small">Custo 500 Gold. Chance de 1%. Ganhe 100x o custo!</p>
+                <button onclick="betRNG(100, 500, 1)" class="btn" style="width: 100%;">Apostar 500 Gold (100x)</button>
+                <span id="betRNGMsg_100x" class="small" style="display: block; margin-top: 5px;"></span>
+            </div>
+            
+            <div class="bet-option-card">
+                <h3 style="margin-top: 0;">Símbolo da Fortuna (20x)</h3>
+                <p class="small">Custo 100 Gold. Chance de 5%. Pague 20x.</p>
+                <button onclick="betRNG(20, 100, 5)" class="btn" style="width: 100%;">Apostar 100 Gold (20x)</button>
+                <span id="betRNGMsg_20x" class="small" style="display: block; margin-top: 5px;"></span>
+            </div>
+
+            <div class="bet-option-card">
+                <h3 style="margin-top: 0;">Número Mágico (4x)</h3>
+                <p class="small">Custo 50 Gold. Chance de 25%. Pague 4x.</p>
+                <button onclick="betRNG(4, 50, 25)" class="btn" style="width: 100%;">Apostar 50 Gold (4x)</button>
+                <span id="betRNGMsg_4x" class="small" style="display: block; margin-top: 5px;"></span>
+            </div>
+            
+            <div class="bet-option-card">
+                <h3 style="margin-top: 0;">Aposta Segura (1.2x)</h3>
+                <p class="small">Custo 10 Gold. Chance de 80%. Pague 1.2x.</p>
+                <button onclick="betRNG(1.2, 10, 80)" class="btn" style="width: 100%; background: var(--btn-blue);">Apostar 10 Gold (1.2x)</button>
+                <span id="betRNGMsg_1_2x" class="small" style="display: block; margin-top: 5px;"></span>
             </div>
         </div>
     </div>
@@ -358,7 +410,7 @@ input:focus, textarea:focus{outline: none; border-color: var(--main-gold);}
                     <input type="text" id="tttFriendId" placeholder="ID Único do Amigo para Convidar">
                     <input type="number" id="tttBetAmount" placeholder="Gold para apostar (min 100)" min="100">
                     <button id="btnInviteTTT" class="btn" style="width: 100%;">Convidar para Jogo</button>
-                    <span id="tttMsg" class="small" style="display: block; margin-top: 5px;"></span>
+                    <span id="tttMsg" class="small" style="display: block; margin-top: 5-px;"></span>
                 </div>
                 
                 <div id="tictactoeGame" style="display:none;">
@@ -483,7 +535,7 @@ input:focus, textarea:focus{outline: none; border-color: var(--main-gold);}
     });
 
     // ----------------------------------------------------
-    // 3. LÓGICA DE AUTENTICAÇÃO E PERFIL
+    // 3. LÓGICA DE AUTENTICAÇÃO E PERFIL (COM CHECAGEM DE NOME ÚNICO)
     // ----------------------------------------------------
 
     auth.onAuthStateChanged(user => {
@@ -497,7 +549,7 @@ input:focus, textarea:focus{outline: none; border-color: var(--main-gold);}
             document.getElementById('socialUserId').textContent = user.uid;
 
             // Painel do Dono
-            if (user.uid === m3h06woQv2V7lrNu1p8fDQCZ8IW2) {
+            if (user.uid === OWNER_UID) {
                 document.getElementById('ownerPanel').style.display = 'block';
             } else {
                 document.getElementById('ownerPanel').style.display = 'none';
@@ -511,35 +563,46 @@ input:focus, textarea:focus{outline: none; border-color: var(--main-gold);}
                 document.getElementById('playerGold').textContent = gold;
             });
             
-            // Inicia o rastreamento de visitantes e o chat
             trackVisitor();
             loadChat(); 
 
         } else {
-            // UI Deslogada
             document.getElementById('signedOutUI').style.display = 'block';
             document.getElementById('signedInUI').style.display = 'none';
             document.getElementById('playerInfo').style.display = 'none';
             document.getElementById('playerInfoSocial').style.display = 'none';
 
-            // Tenta login anônimo para permitir a leitura do Rank e Chat
             auth.signInAnonymously().catch(error => console.error("Erro ao logar anonimamente:", error));
         }
     });
 
-    // Funções de Login, Cadastro e Logout
     document.getElementById('btnLogout').addEventListener('click', () => auth.signOut());
     
+    // --- FUNÇÃO DE CADASTRO CORRIGIDA (CHECA NOME DE USUÁRIO) ---
     document.getElementById('btnSignup').addEventListener('click', () => {
-        const email = document.getElementById('username').value + '@ivad.temp';
         const password = document.getElementById('pwd').value;
-        const name = document.getElementById('username').value;
+        const name = document.getElementById('username').value.trim();
         
-        if (!name || password.length < 6) return alert("Nome e senha (mín. 6 caracteres) são obrigatórios.");
-
-        auth.createUserWithEmailAndPassword(email, password)
+        if (!name || name.length < 3 || password.length < 6) {
+            return alert("Nome (min. 3 caracteres) e senha (min. 6 caracteres) são obrigatórios.");
+        }
+        
+        // 1. Checa se o nome de usuário já existe no Firestore
+        db.collection('users').where('displayName', '==', name).get()
+            .then(snapshot => {
+                if (!snapshot.empty) {
+                    throw new Error("auth/username-already-in-use");
+                }
+                
+                const email = name + '@ivad.temp'; 
+                
+                // 2. Cria a conta no Firebase Auth
+                return auth.createUserWithEmailAndPassword(email, password);
+            })
             .then(cred => {
+                // 3. Define o nome de exibição no Auth
                 return cred.user.updateProfile({ displayName: name }).then(() => {
+                    // 4. Cria o documento do usuário no Firestore
                     return db.collection('users').doc(cred.user.uid).set({
                         name: name,
                         displayName: name,
@@ -549,11 +612,19 @@ input:focus, textarea:focus{outline: none; border-color: var(--main-gold);}
                 });
             })
             .then(() => showGlobalNotice("Conta criada com sucesso! 100 Gold de bônus.", 'var(--green-win)'))
-            .catch(error => alert("Erro ao criar conta: " + error.message.replace('auth/', '')));
+            .catch(error => {
+                let msg = error.message;
+                if (error.code === 'auth/username-already-in-use') {
+                    msg = "Nome de usuário já está em uso. Escolha outro!";
+                } else if (error.message.includes('auth/email-already-in-use')) {
+                    msg = "Conta já registrada. Tente fazer login.";
+                }
+                alert("Erro ao criar conta: " + msg);
+            });
     });
 
     document.getElementById('btnLogin').addEventListener('click', () => {
-        const email = document.getElementById('username').value + '@ivad.temp';
+        const email = document.getElementById('username').value.trim() + '@ivad.temp';
         const password = document.getElementById('pwd').value;
         auth.signInWithEmailAndPassword(email, password)
             .catch(error => alert("Erro no login: " + error.message.replace('auth/', '')));
@@ -604,7 +675,6 @@ input:focus, textarea:focus{outline: none; border-color: var(--main-gold);}
             });
     }
     
-    // Atualiza o rank a cada 5 segundos
     setInterval(loadRank, 5000); 
     loadRank(); 
 
@@ -769,7 +839,7 @@ input:focus, textarea:focus{outline: none; border-color: var(--main-gold);}
 
 
     // ----------------------------------------------------
-    // 6. LÓGICA DE JOGOS E ADMIN
+    // 6. LÓGICA DE JOGOS E APOSTAS (NOVAS FUNÇÕES INVERSAMENTE PROPORCIONAIS)
     // ----------------------------------------------------
 
     // Trabalhar (Exemplo de Transação Segura)
@@ -790,18 +860,351 @@ input:focus, textarea:focus{outline: none; border-color: var(--main-gold);}
                 transaction.update(userRef, { gold: newGold });
                 document.getElementById('workMsg').textContent = `💰 Você ganhou ${earned.toLocaleString('pt-BR')} Gold! Total: ${newGold.toLocaleString('pt-BR')}`;
                 
-                // Retorna um valor para uso no .then
                 return newGold;
             });
         }).then((newGold) => {
             showGlobalNotice(`Você trabalhou e ganhou Gold!`, 'var(--main-gold)');
-            setTimeout(() => btnWork.disabled = false, 5000); // Cooldown de 5s
+            setTimeout(() => btnWork.disabled = false, 5000); 
         }).catch(error => {
             console.error("Erro na transação de trabalho:", error);
             document.getElementById('workMsg').textContent = `❌ Aguarde 5 segundos antes de trabalhar novamente.`;
             setTimeout(() => btnWork.disabled = false, 5000);
         });
     };
+    
+    // Aposta Simples (2x, 5x, 10x)
+    window.betSimple = function(multiplier, inputId, msgId) {
+        const user = auth.currentUser;
+        if (!user || user.isAnonymous) return showGlobalNotice("Faça login para apostar.", 'var(--btn-red)');
+
+        const amount = parseInt(document.getElementById(inputId).value);
+        if (isNaN(amount) || amount < 1) return showGlobalNotice("Aposte um valor válido.", 'var(--btn-red)');
+
+        let winChance;
+        if (multiplier === 2) winChance = 50; // 50%
+        else if (multiplier === 5) winChance = 20; // 20%
+        else if (multiplier === 10) winChance = 10; // 10%
+        else return;
+
+        db.runTransaction(transaction => {
+            const userRef = db.collection('users').doc(user.uid);
+            return transaction.get(userRef).then(doc => {
+                const currentGold = doc.data().gold || 0;
+                if (currentGold < amount) throw new Error("gold-insuficiente");
+
+                const didWin = Math.random() * 100 < winChance;
+                let newGold;
+                let message;
+
+                if (didWin) {
+                    const gain = amount * (multiplier - 1);
+                    newGold = currentGold + gain;
+                    message = `🎉 Vitória! Você ganhou ${gain.toLocaleString('pt-BR')} Gold. Total: ${newGold.toLocaleString('pt-BR')}`;
+                } else {
+                    newGold = currentGold - amount;
+                    message = `😭 Perdeu! Você perdeu ${amount.toLocaleString('pt-BR')} Gold. Total: ${newGold.toLocaleString('pt-BR')}`;
+                }
+
+                transaction.update(userRef, { gold: newGold });
+                document.getElementById(msgId).textContent = message;
+            });
+        }).catch(error => {
+            if (error.message === "gold-insuficiente") {
+                document.getElementById(msgId).textContent = `❌ Gold insuficiente para esta aposta.`;
+                showGlobalNotice("Gold insuficiente.", 'var(--btn-red)');
+            } else {
+                console.error("Erro na aposta simples:", error);
+                document.getElementById(msgId).textContent = `❌ Erro na transação. Tente novamente.`;
+            }
+        });
+    }
+
+    // Aposta de Cor (Vermelho 2x, Preto 2x, Verde 4x)
+    window.betCor = function() {
+        const user = auth.currentUser;
+        if (!user || user.isAnonymous) return showGlobalNotice("Faça login para apostar.", 'var(--btn-red)');
+
+        const amount = parseInt(document.getElementById('betCorAmount').value);
+        const choice = document.getElementById('betCorColor').value;
+        if (isNaN(amount) || amount < 1) return showGlobalNotice("Aposte um valor válido.", 'var(--btn-red)');
+
+        let winChance, multiplier, actualResult;
+
+        const roll = Math.random() * 100;
+        if (roll < 48) { actualResult = 'red'; multiplier = 2; }
+        else if (roll < 96) { actualResult = 'black'; multiplier = 2; }
+        else { actualResult = 'green'; multiplier = 4; }
+
+        const didWin = choice === actualResult;
+
+        db.runTransaction(transaction => {
+            const userRef = db.collection('users').doc(user.uid);
+            return transaction.get(userRef).then(doc => {
+                const currentGold = doc.data().gold || 0;
+                if (currentGold < amount) throw new Error("gold-insuficiente");
+
+                let newGold;
+                let message;
+
+                if (didWin) {
+                    const gain = amount * (multiplier - 1);
+                    newGold = currentGold + gain;
+                    message = `🎉 Vitória! Caiu ${actualResult.toUpperCase()}. Você ganhou ${gain.toLocaleString('pt-BR')} Gold. Total: ${newGold.toLocaleString('pt-BR')}`;
+                } else {
+                    newGold = currentGold - amount;
+                    message = `😭 Perdeu! Caiu ${actualResult.toUpperCase()}. Você perdeu ${amount.toLocaleString('pt-BR')} Gold. Total: ${newGold.toLocaleString('pt-BR')}`;
+                }
+
+                transaction.update(userRef, { gold: newGold });
+                document.getElementById('betCorMsg').textContent = message;
+            });
+        }).catch(error => {
+            if (error.message === "gold-insuficiente") {
+                document.getElementById('betCorMsg').textContent = `❌ Gold insuficiente para esta aposta.`;
+                showGlobalNotice("Gold insuficiente.", 'var(--btn-red)');
+            } else {
+                console.error("Erro na aposta cor:", error);
+            }
+        });
+    }
+    
+    // Moeda da Sorte (Cara/Coroa)
+    window.betCoin = function() {
+        const user = auth.currentUser;
+        if (!user || user.isAnonymous) return showGlobalNotice("Faça login para apostar.", 'var(--btn-red)');
+
+        const amount = parseInt(document.getElementById('betCoinAmount').value);
+        const choice = document.getElementById('betCoinSide').value;
+        if (isNaN(amount) || amount < 1) return showGlobalNotice("Aposte um valor válido.", 'var(--btn-red)');
+
+        const actualResult = Math.random() < 0.5 ? 'cara' : 'coroa';
+        const didWin = choice === actualResult;
+        const multiplier = 2;
+
+        db.runTransaction(transaction => {
+            const userRef = db.collection('users').doc(user.uid);
+            return transaction.get(userRef).then(doc => {
+                const currentGold = doc.data().gold || 0;
+                if (currentGold < amount) throw new Error("gold-insuficiente");
+
+                let newGold;
+                let message;
+
+                if (didWin) {
+                    const gain = amount * (multiplier - 1);
+                    newGold = currentGold + gain;
+                    message = `🎉 Vitória! Caiu ${actualResult.toUpperCase()}. Você ganhou ${gain.toLocaleString('pt-BR')} Gold. Total: ${newGold.toLocaleString('pt-BR')}`;
+                } else {
+                    newGold = currentGold - amount;
+                    message = `😭 Perdeu! Caiu ${actualResult.toUpperCase()}. Você perdeu ${amount.toLocaleString('pt-BR')} Gold. Total: ${newGold.toLocaleString('pt-BR')}`;
+                }
+
+                transaction.update(userRef, { gold: newGold });
+                document.getElementById('betCoinMsg').textContent = message;
+            });
+        }).catch(error => {
+            if (error.message === "gold-insuficiente") {
+                document.getElementById('betCoinMsg').textContent = `❌ Gold insuficiente para esta aposta.`;
+                showGlobalNotice("Gold insuficiente.", 'var(--btn-red)');
+            } else {
+                console.error("Erro na aposta moeda:", error);
+            }
+        });
+    }
+
+    // Aposta de Dado (Multiplicador e Limite)
+    window.betDice = function(multiplier, limit, amountId, msgId) {
+        const user = auth.currentUser;
+        if (!user || user.isAnonymous) return showGlobalNotice("Faça login para apostar.", 'var(--btn-red)');
+
+        const amount = parseInt(document.getElementById(amountId).value);
+        const choiceInput = document.getElementById(amountId.includes('12') ? 'betDice12Number' : 'betDiceNumber');
+        const choice = parseInt(choiceInput.value);
+
+        if (isNaN(amount) || amount < 1) return showGlobalNotice("Aposte um valor válido.", 'var(--btn-red)');
+        if (isNaN(choice) || choice < 1 || choice > limit) return showGlobalNotice(`Escolha um número entre 1 e ${limit}.`, 'var(--btn-red)');
+
+        const actualResult = Math.floor(Math.random() * limit) + 1;
+        const didWin = choice === actualResult;
+
+        db.runTransaction(transaction => {
+            const userRef = db.collection('users').doc(user.uid);
+            return transaction.get(userRef).then(doc => {
+                const currentGold = doc.data().gold || 0;
+                if (currentGold < amount) throw new Error("gold-insuficiente");
+
+                let newGold;
+                let message;
+
+                if (didWin) {
+                    const gain = amount * (multiplier - 1);
+                    newGold = currentGold + gain;
+                    message = `🎉 Vitória! Caiu ${actualResult}. Você ganhou ${gain.toLocaleString('pt-BR')} Gold. Total: ${newGold.toLocaleString('pt-BR')}`;
+                } else {
+                    newGold = currentGold - amount;
+                    message = `😭 Perdeu! Caiu ${actualResult}. Você perdeu ${amount.toLocaleString('pt-BR')} Gold. Total: ${newGold.toLocaleString('pt-BR')}`;
+                }
+
+                transaction.update(userRef, { gold: newGold });
+                document.getElementById(msgId).textContent = message;
+            });
+        }).catch(error => {
+            if (error.message === "gold-insuficiente") {
+                document.getElementById(msgId).textContent = `❌ Gold insuficiente para esta aposta.`;
+                showGlobalNotice("Gold insuficiente.", 'var(--btn-red)');
+            } else {
+                console.error("Erro na aposta dado:", error);
+            }
+        });
+    }
+
+    // Aposta Par ou Ímpar
+    window.betParImpar = function(cost) {
+        const user = auth.currentUser;
+        if (!user || user.isAnonymous) return showGlobalNotice("Faça login para apostar.", 'var(--btn-red)');
+
+        const choice = document.getElementById('betParImparChoice').value;
+
+        db.runTransaction(transaction => {
+            const userRef = db.collection('users').doc(user.uid);
+            return transaction.get(userRef).then(doc => {
+                const currentGold = doc.data().gold || 0;
+                if (currentGold < cost) throw new Error("gold-insuficiente");
+
+                const result = Math.floor(Math.random() * 100); // 0 a 99
+                const isResultEven = result % 2 === 0;
+                const didWin = (choice === 'par' && isResultEven) || (choice === 'impar' && !isResultEven);
+                const multiplier = 2;
+
+                let newGold;
+                let message;
+
+                if (didWin) {
+                    const gain = cost * (multiplier - 1);
+                    newGold = currentGold + gain;
+                    message = `🎉 Vitória! O número foi ${result} (${isResultEven ? 'PAR' : 'ÍMPAR'}). Você ganhou ${gain.toLocaleString('pt-BR')} Gold. Total: ${newGold.toLocaleString('pt-BR')}`;
+                } else {
+                    newGold = currentGold - cost;
+                    message = `😭 Perdeu! O número foi ${result} (${isResultEven ? 'PAR' : 'ÍMPAR'}). Você perdeu ${cost.toLocaleString('pt-BR')} Gold. Total: ${newGold.toLocaleString('pt-BR')}`;
+                }
+
+                transaction.update(userRef, { gold: newGold });
+                document.getElementById('betParImparMsg').textContent = message;
+            });
+        }).catch(error => {
+            if (error.message === "gold-insuficiente") {
+                document.getElementById('betParImparMsg').textContent = `❌ Gold insuficiente para esta aposta (Custo: ${cost} Gold).`;
+                showGlobalNotice("Gold insuficiente.", 'var(--btn-red)');
+            } else {
+                console.error("Erro na aposta par/ímpar:", error);
+            }
+        });
+    }
+
+
+    // Aposta RNG com Prêmios e Chances Variadas (Inversamente Proporcionais)
+    window.betRNG = function(multiplier, cost, winChance) {
+        const user = auth.currentUser;
+        if (!user || user.isAnonymous) return showGlobalNotice("Faça login para apostar.", 'var(--btn-red)');
+
+        let msgId;
+        if (multiplier === 100) msgId = 'betRNGMsg_100x';
+        else if (multiplier === 20) msgId = 'betRNGMsg_20x';
+        else if (multiplier === 4) msgId = 'betRNGMsg_4x';
+        else if (multiplier === 1.2) msgId = 'betRNGMsg_1_2x';
+        else return;
+
+        db.runTransaction(transaction => {
+            const userRef = db.collection('users').doc(user.uid);
+            return transaction.get(userRef).then(doc => {
+                const currentGold = doc.data().gold || 0;
+                if (currentGold < cost) throw new Error("gold-insuficiente");
+
+                const didWin = Math.random() * 100 < winChance;
+                let newGold;
+                let message;
+
+                if (didWin) {
+                    const gain = Math.floor(cost * (multiplier - 1));
+                    newGold = currentGold + gain;
+                    message = `🎉 Vitória! Você ganhou ${gain.toLocaleString('pt-BR')} Gold. Total: ${newGold.toLocaleString('pt-BR')}`;
+                } else {
+                    newGold = currentGold - cost;
+                    message = `😭 Perdeu! Você perdeu ${cost.toLocaleString('pt-BR')} Gold. Total: ${newGold.toLocaleString('pt-BR')}`;
+                }
+
+                transaction.update(userRef, { gold: newGold });
+                document.getElementById(msgId).textContent = message;
+            });
+        }).catch(error => {
+            if (error.message === "gold-insuficiente") {
+                document.getElementById(msgId).textContent = `❌ Gold insuficiente (Custo: ${cost} Gold).`;
+                showGlobalNotice("Gold insuficiente.", 'var(--btn-red)');
+            } else {
+                console.error("Erro na aposta RNG:", error);
+                document.getElementById(msgId).textContent = `❌ Erro na transação. Tente novamente.`;
+            }
+        });
+    }
+
+
+    // Lógica da Roleta (Placeholder visual e lógica de transação)
+    window.spinWheel = function() {
+        const user = auth.currentUser;
+        if (!user || user.isAnonymous) return showGlobalNotice("Faça login para girar a Roleta.", 'var(--btn-red)');
+        
+        const cost = 100;
+        const wheel = document.getElementById('prizeWheel');
+        const btnSpin = document.getElementById('btnSpin');
+
+        btnSpin.disabled = true;
+
+        const prizes = [
+            { name: '+500 Gold (33%)', amount: 500, win: true, limit: 33 },
+            { name: '+100 Gold (33%)', amount: 100, win: true, limit: 66 },
+            { name: '-200 Gold (34%)', amount: -200, win: false, limit: 100 }
+        ];
+
+        const roll = Math.random() * 100;
+        let finalPrize = prizes.find(p => roll < p.limit);
+        const degreesPerSection = 360 / 3; // 120 graus por seção (simulação visual)
+        let randomSpin = 360 * 5 + degreesPerSection * prizes.indexOf(finalPrize) + (Math.random() * 100 - 50);
+
+        wheel.style.transition = 'none';
+        wheel.style.transform = 'rotate(0deg)';
+        void wheel.offsetWidth; 
+        wheel.style.transition = 'transform 4s cubic-bezier(0.25, 0.1, 0.25, 1)';
+        wheel.style.transform = `rotate(${randomSpin}deg)`;
+        
+        // Transação do Gold após a animação
+        setTimeout(() => {
+            db.runTransaction(transaction => {
+                const userRef = db.collection('users').doc(user.uid);
+                return transaction.get(userRef).then(doc => {
+                    const currentGold = doc.data().gold || 0;
+                    if (currentGold < cost) throw new Error("gold-insuficiente");
+
+                    const finalAmount = currentGold - cost + finalPrize.amount;
+                    
+                    transaction.update(userRef, { gold: finalAmount });
+
+                    const msg = finalPrize.amount >= 0 
+                        ? `🎉 Ganhou! Você recebeu ${finalPrize.amount.toLocaleString('pt-BR')} Gold.`
+                        : `😭 Perdeu! Você perdeu ${Math.abs(finalPrize.amount).toLocaleString('pt-BR')} Gold.`;
+                        
+                    document.getElementById('spinMsg').textContent = msg + ` Total: ${finalAmount.toLocaleString('pt-BR')}`;
+                    btnSpin.disabled = false;
+                });
+            }).catch(error => {
+                document.getElementById('spinMsg').textContent = `❌ ${error.message === "gold-insuficiente" ? "Gold insuficiente." : "Erro na transação."}`;
+                btnSpin.disabled = false;
+            });
+        }, 4500); // Espera a animação
+    }
+
+    // ----------------------------------------------------
+    // 7. FUNÇÕES DIVERSAS E ADMIN
+    // ----------------------------------------------------
     
     // Transação de Admin (Dar/Remover Gold)
     document.getElementById('btnGive').addEventListener('click', () => {
@@ -856,7 +1259,6 @@ input:focus, textarea:focus{outline: none; border-color: var(--main-gold);}
 
     // Placeholder para Amigos (Requer mais backend)
     window.loadFriendList = function() {
-        // Esta é uma função placeholder, você precisaria de uma subcoleção 'friends' para funcionar de verdade.
         document.getElementById('friendList').innerHTML = '<p class="small" style="text-align: center;">Funcionalidade Social não implementada no código simples.</p>';
         document.getElementById('friendCount').textContent = '0';
     }

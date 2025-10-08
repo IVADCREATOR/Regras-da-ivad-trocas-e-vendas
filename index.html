@@ -447,31 +447,45 @@ input[type="file"]{padding: 10px; background: rgba(255,255,255,0.05); border-rad
 
 <div id="globalNotice"></div>
 
-<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage.js"></script>
 
 <script>
-    // ----------------------------------------------------
-    // 1. CONFIGURAÇÃO DO FIREBASE (CRÍTICO)
-    // ----------------------------------------------------
+    // Seus dados de configuração (ATUALIZADOS)
     const firebaseConfig = {
-        // ATENÇÃO: SUBSTITUA ESTAS CHAVES PELAS SUAS!
-        apiKey: "AIzaSyCkmyMqEJaM8jVvmTN8I3gLnbC8YtMPWOI", 
-        authDomain: "regras-ivad.firebaseapp.com", 
-        projectId: "regras-ivad", 
-        storageBucket: "regras-ivad.firebasestorage.app", 
-        messagingSenderId: "812565896201", 
-        appId: "1:812565896201:web:d82f7e02e861d9a2a3b05a" 
+      apiKey: "AIzaSyDxXQjbQ400wgqTW1_UfY3vPs1XES6M-78",
+      authDomain: "regras-ivad.firebaseapp.com",
+      projectId: "regras-ivad",
+      storageBucket: "regras-ivad.firebasestorage.app",
+      messagingSenderId: "812565896201",
+      appId: "1:812565896201:web:e8e6b5e6aaaf944b1aacd8",
+      measurementId: "G-3Z5PFGMND5"
     };
 
+    // Inicializa o app
     const app = firebase.initializeApp(firebaseConfig);
-    const db = app.firestore();
-    const auth = app.auth();
-    const storage = app.storage();
-    const serverTimestamp = firebase.firestore.FieldValue.serverTimestamp;
-    const increment = firebase.firestore.FieldValue.increment;
+</script>
+
+<script>
+    // =====================================================================
+    // 1. IMPORTAÇÕES MODULARES (Substituem os antigos firebase.auth() etc.)
+    // =====================================================================
+    // Firestore
+    const { getFirestore, collection, doc, query, where, orderBy, limit, getDocs, updateDoc, setDoc, addDoc, onSnapshot, FieldValue } = firebase.firestore;
+    const { serverTimestamp, increment } = FieldValue;
+
+    // Authentication
+    const { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, signInAnonymously, updateProfile } = firebase.auth;
+
+    // Storage
+    const { getStorage, ref: storageRef, uploadBytes, getDownloadURL } = firebase.storage;
+
+    // Inicializa serviços com a nova sintaxe
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+    const storage = getStorage(app);
 
     // ** SUBSTITUA PELO SEU UID DE ADMIN REAL **
     const OWNER_UID = 'm3h06woQv2V7lrNu1p8fDQCZ8IW2'; 
@@ -480,10 +494,10 @@ input[type="file"]{padding: 10px; background: rgba(255,255,255,0.05); border-rad
     let currentGold = 0; // Variável global para rastrear o gold
 
     // ----------------------------------------------------
-    // 2. FUNÇÕES DE UTILIDADE E SEGURANÇA
+    // 2. FUNÇÕES DE UTILIDADE E SEGURANÇA (updateProfile usando nova sintaxe)
     // ----------------------------------------------------
 
-    // Notificação Global
+    // Notificação Global (Mantido)
     window.showGlobalNotice = function(message, color = 'var(--main-gold)') {
         const notice = document.getElementById('globalNotice');
         notice.textContent = message;
@@ -495,7 +509,7 @@ input[type="file"]{padding: 10px; background: rgba(255,255,255,0.05); border-rad
         notice.style.animation = 'fadeInOut 4.5s cubic-bezier(0.19, 1, 0.22, 1) forwards';
     }
 
-    // Checagem de Conteúdo Proibido (Texto)
+    // Checagem de Conteúdo Proibido (Texto) (Mantido)
     function checkNSFW(text) {
         const nsfwKeywords = [
             'porn', 'sexo', 'nudes', 'anal', 'vagina', 'penis', 'hentai', 'explícito', 'cu', 'boceta', 'rola', 
@@ -512,35 +526,36 @@ input[type="file"]{padding: 10px; background: rgba(255,255,255,0.05); border-rad
         return false;
     }
 
-    // Banimento (CLIENT-SIDE)
+    // Banimento (CLIENT-SIDE) (setDoc usando nova sintaxe)
     window.banUser = function(uid, displayName, reason = 'NSFW ou Desrespeito no texto') {
         console.error(`USUÁRIO BANIDO: ${displayName} (${uid}) por: ${reason}`);
         
-        // 1. Registrar no Firestore (para banimento permanente no backend)
-        db.collection('bannedUsers').doc(uid).set({
+        // 1. Registrar no Firestore
+        setDoc(doc(db, 'bannedUsers', uid), {
             uid: uid,
             displayName: displayName,
             reason: reason,
             bannedAt: serverTimestamp()
         }).then(() => {
-            // 2. Deslogar o usuário
-            auth.signOut().then(() => {
+            // 2. Deslogar o usuário (signOut usando nova sintaxe)
+            signOut(auth).then(() => {
                 alert(`⚠️ CONTEÚDO PROIBIDO DETECTADO. Você foi BANIDO permanentemente do sistema. Motivo: ${reason}`);
             });
         });
     }
 
     // ----------------------------------------------------
-    // 3. LÓGICA DE AUTENTICAÇÃO E CONTA (CORREÇÃO DE UI)
+    // 3. LÓGICA DE AUTENTICAÇÃO E CONTA (TUDO COM SINTAXE MODULAR)
     // ----------------------------------------------------
 
-    // Checa a unicidade do nome de usuário no Firestore
+    // Checa a unicidade do nome de usuário no Firestore (query e getDocs usando nova sintaxe)
     async function checkUsernameUnique(username) {
-        const snapshot = await db.collection("users").where("displayName", "==", username).limit(1).get();
+        const q = query(collection(db, "users"), where("displayName", "==", username), limit(1));
+        const snapshot = await getDocs(q);
         return snapshot.empty; 
     }
 
-    // CORRIGIDO: Atualiza a UI de autenticação (logado vs deslogado)
+    // Atualiza a UI de autenticação (Mantido)
     function updateAuthUI(user) {
         const signedOutUI = document.getElementById('signedOutUI');
         const signedInUI = document.getElementById('signedInUI');
@@ -548,10 +563,9 @@ input[type="file"]{padding: 10px; background: rgba(255,255,255,0.05); border-rad
         const playerInfo = document.getElementById('playerInfo');
         const playerInfoSocial = document.getElementById('playerInfoSocial');
 
-        // Se houver um usuário REAL logado (não anônimo)
         if (user && !user.isAnonymous) {
-            signedOutUI.style.display = 'none'; // Esconde a tela de Login/Cadastro
-            signedInUI.style.display = 'block'; // Mostra o botão 'Sair' e o Gold
+            signedOutUI.style.display = 'none'; 
+            signedInUI.style.display = 'block'; 
             playerInfo.style.display = 'block';
             playerInfoSocial.style.display = 'block';
 
@@ -561,32 +575,30 @@ input[type="file"]{padding: 10px; background: rgba(255,255,255,0.05); border-rad
             document.getElementById('socialUserId').textContent = user.uid;
 
             ownerPanel.style.display = (user.uid === OWNER_UID) ? 'block' : 'none';
-            loadUserGold(user.uid); // Chama a função para carregar o Gold
+            loadUserGold(user.uid); 
         } else {
-            // Se não houver usuário logado ou for anônimo
-            signedOutUI.style.display = 'block'; // Mostra a tela de Login/Cadastro
-            signedInUI.style.display = 'none'; // Esconde o botão 'Sair'
+            signedOutUI.style.display = 'block'; 
+            signedInUI.style.display = 'none'; 
             ownerPanel.style.display = 'none';
             playerInfo.style.display = 'none';
             playerInfoSocial.style.display = 'none';
         }
     }
 
-    // CORRIGIDO: Carrega o Gold do usuário e atualiza a UI (Listener em tempo real)
+    // Carrega o Gold do usuário (onSnapshot, doc e setDoc usando nova sintaxe)
     window.loadUserGold = function(uid) {
-        db.collection("users").doc(uid).onSnapshot(doc => {
-            if (doc.exists) {
-                const data = doc.data();
+        onSnapshot(doc(db, "users", uid), (docSnapshot) => {
+            if (docSnapshot.exists()) {
+                const data = docSnapshot.data();
                 const gold = data.gold || 0;
                 
-                // Atualiza o Gold em todos os lugares
                 document.getElementById('myGold').textContent = gold.toLocaleString('pt-BR');
                 document.getElementById('playerGold').textContent = gold.toLocaleString('pt-BR');
                 window.currentGold = gold; 
             } else {
                 console.warn("Documento do usuário não encontrado no Firestore. Criando documento...");
                 // Se o doc não existir, cria com 100 de gold.
-                db.collection("users").doc(uid).set({
+                setDoc(doc(db, "users", uid), {
                     uid: uid,
                     displayName: auth.currentUser.displayName,
                     gold: 100, 
@@ -598,7 +610,7 @@ input[type="file"]{padding: 10px; background: rgba(255,255,255,0.05); border-rad
         });
     }
     
-    // Listener de Cadastro (Mantido)
+    // Listener de Cadastro (createUserWithEmailAndPassword e updateProfile usando nova sintaxe)
     document.getElementById('btnSignup').addEventListener('click', async () => {
         const username = document.getElementById('username').value.trim();
         const password = document.getElementById('pwd').value.trim();
@@ -618,12 +630,14 @@ input[type="file"]{padding: 10px; background: rgba(255,255,255,0.05); border-rad
             }
 
             showGlobalNotice("Criando conta...", 'var(--btn-blue)');
-            const userCredential = await auth.createUserWithEmailAndPassword(`${username}@ivad.com`, password);
+            // Sintaxe Modular:
+            const userCredential = await createUserWithEmailAndPassword(auth, `${username}@ivad.com`, password);
             const user = userCredential.user;
 
-            await user.updateProfile({ displayName: username });
+            await updateProfile(user, { displayName: username });
             
-            await db.collection("users").doc(user.uid).set({
+            // Sintaxe Modular:
+            await setDoc(doc(db, "users", user.uid), {
                 uid: user.uid,
                 displayName: username,
                 gold: 100, 
@@ -651,7 +665,7 @@ input[type="file"]{padding: 10px; background: rgba(255,255,255,0.05); border-rad
         }
     });
 
-    // Listener de Login (Mantido)
+    // Listener de Login (signInWithEmailAndPassword usando nova sintaxe)
     document.getElementById('btnLogin').addEventListener('click', async () => {
         const username = document.getElementById('username').value.trim();
         const password = document.getElementById('pwd').value.trim();
@@ -663,10 +677,9 @@ input[type="file"]{padding: 10px; background: rgba(255,255,255,0.05); border-rad
         showGlobalNotice("Acessando conta...", 'var(--main-gold)');
 
         try {
-            await auth.signInWithEmailAndPassword(`${username}@ivad.com`, password);
+            // Sintaxe Modular:
+            await signInWithEmailAndPassword(auth, `${username}@ivad.com`, password);
             
-            // A UI será atualizada automaticamente pelo listener auth.onAuthStateChanged
-
             showGlobalNotice(`✅ Login bem-sucedido! Bem-vindo(a) ${username}.`, 'var(--green-win)');
             document.getElementById('pwd').value = ''; 
 
@@ -687,11 +700,10 @@ input[type="file"]{padding: 10px; background: rgba(255,255,255,0.05); border-rad
     });
 
 
-    // Listener para o botão de Logout (Mantido)
+    // Listener para o botão de Logout (signOut usando nova sintaxe)
     document.getElementById('btnLogout').addEventListener('click', () => {
-        auth.signOut().then(() => {
+        signOut(auth).then(() => {
             showGlobalNotice("Você foi desconectado(a).", 'var(--btn-blue)');
-            // A UI será atualizada automaticamente pelo listener auth.onAuthStateChanged
         }).catch(error => {
             showGlobalNotice(`Erro ao desconectar: ${error.message}`, 'var(--btn-red)');
         });
@@ -701,7 +713,6 @@ input[type="file"]{padding: 10px; background: rgba(255,255,255,0.05); border-rad
     // 4. LÓGICA DE ABAS (Mantido)
     // ----------------------------------------------------
 
-    // Função para trocar de aba
     function switchTab(tabId) {
         document.querySelectorAll('.tabbtn').forEach(btn => btn.classList.remove('active'));
         document.querySelectorAll('.content > div').forEach(div => div.style.display = 'none');
@@ -712,14 +723,13 @@ input[type="file"]{padding: 10px; background: rgba(255,255,255,0.05); border-rad
         if (newTab) newTab.style.display = 'block';
         if (newButton) newButton.classList.add('active');
 
-        // Chamadas específicas para recarregar conteúdo em tempo real
         if (tabId === 'rankTab') loadRank(); 
         if (tabId === 'chatTab') loadChat();
         if (tabId === 'salesTab') loadSales(); 
     }
 
     // ----------------------------------------------------
-    // 5. LÓGICA DE JOGOS E RANKING (Mantido)
+    // 5. LÓGICA DE JOGOS E RANKING (updateDoc e increment usando nova sintaxe)
     // ----------------------------------------------------
 
     // Função Trabalhar (Work)
@@ -740,10 +750,11 @@ input[type="file"]{padding: 10px; background: rgba(255,255,255,0.05); border-rad
 
         try {
             const currentGold = window.currentGold || 0;
-            const maxGain = Math.max(10, Math.floor(currentGold * 1.0)); // 100% do gold, mínimo de 10
+            const maxGain = Math.max(10, Math.floor(currentGold * 1.0)); 
             const gain = Math.floor(Math.random() * maxGain) + 1;
 
-            await db.collection("users").doc(user.uid).update({
+            // Sintaxe Modular:
+            await updateDoc(doc(db, "users", user.uid), {
                 gold: increment(gain)
             });
 
@@ -782,7 +793,8 @@ input[type="file"]{padding: 10px; background: rgba(255,255,255,0.05); border-rad
         const statusText = isWin ? `GANHOU! Você ganhou ${netChange.toLocaleString('pt-BR')} Gold.` : `PERDEU! Você perdeu ${amount.toLocaleString('pt-BR')} Gold.`;
 
         try {
-            await db.collection("users").doc(user.uid).update({
+            // Sintaxe Modular:
+            await updateDoc(doc(db, "users", user.uid), {
                 gold: increment(netChange),
                 wins: isWin ? increment(1) : increment(0),
                 losses: isWin ? increment(0) : increment(1),
@@ -802,44 +814,43 @@ input[type="file"]{padding: 10px; background: rgba(255,255,255,0.05); border-rad
         }
     }
     
-    // Função Carregar Ranking
+    // Função Carregar Ranking (query, collection, orderBy, limit, onSnapshot usando nova sintaxe)
     window.loadRank = function(forceReload = false) {
         const rankList = document.querySelector('.rank-list ol');
         
-        // Limpar e mostrar carregando
         if (forceReload) {
              rankList.innerHTML = '<li style="color: var(--text-secondary);">Carregando...</li>';
         }
 
-        db.collection("users")
-            .orderBy("gold", "desc")
-            .limit(10)
-            .onSnapshot(snapshot => {
-                rankList.innerHTML = '';
-                if (snapshot.empty) {
-                    rankList.innerHTML = '<li style="color: var(--text-secondary);">Nenhum jogador no ranking.</li>';
-                    return;
-                }
+        // Sintaxe Modular:
+        const q = query(collection(db, "users"), orderBy("gold", "desc"), limit(10));
+
+        onSnapshot(q, (snapshot) => {
+            rankList.innerHTML = '';
+            if (snapshot.empty) {
+                rankList.innerHTML = '<li style="color: var(--text-secondary);">Nenhum jogador no ranking.</li>';
+                return;
+            }
+            
+            snapshot.forEach((doc, index) => {
+                const data = doc.data();
+                const rank = index + 1;
+                const style = rank === 1 ? 'color: var(--main-gold); font-weight: bold; font-size: 1.1em;' : 'color: var(--text-primary);';
                 
-                snapshot.forEach((doc, index) => {
-                    const data = doc.data();
-                    const rank = index + 1;
-                    const style = rank === 1 ? 'color: var(--main-gold); font-weight: bold; font-size: 1.1em;' : 'color: var(--text-primary);';
-                    
-                    rankList.innerHTML += `
-                        <li style="${style}">
-                            #${rank} - ${data.displayName || 'Anônimo'} (${data.gold.toLocaleString('pt-BR')} Gold)
-                        </li>
-                    `;
-                });
-            }, error => {
-                rankList.innerHTML = `<li style="color: var(--red-loss);">Erro ao carregar rank: ${error.message}</li>`;
-                console.error("Erro ao carregar ranking:", error);
+                rankList.innerHTML += `
+                    <li style="${style}">
+                        #${rank} - ${data.displayName || 'Anônimo'} (${data.gold.toLocaleString('pt-BR')} Gold)
+                    </li>
+                `;
             });
+        }, error => {
+            rankList.innerHTML = `<li style="color: var(--red-loss);">Erro ao carregar rank: ${error.message}</li>`;
+            console.error("Erro ao carregar ranking:", error);
+        });
     }
 
     // ----------------------------------------------------
-    // 6. LÓGICA DE VENDAS E MODERAÇÃO DE FOTOS (Mantido)
+    // 6. LÓGICA DE VENDAS (ref, uploadBytes, getDownloadURL, setDoc, query, where, orderBy, onSnapshot, doc usando nova sintaxe)
     // ----------------------------------------------------
 
     window.publishSale = async function() {
@@ -860,7 +871,6 @@ input[type="file"]{padding: 10px; background: rgba(255,255,255,0.05); border-rad
             return;
         }
 
-        // 1. CHECAGEM DE NSFW no TEXTO
         if (checkNSFW(title) || checkNSFW(description)) {
             statusMsg.textContent = "❌ Conteúdo PROIBIDO detectado no texto. Banimento imediato acionado.";
             return banUser(user.uid, user.displayName, 'Conteúdo Proibido no Texto do Anúncio');
@@ -870,18 +880,18 @@ input[type="file"]{padding: 10px; background: rgba(255,255,255,0.05); border-rad
         statusMsg.textContent = 'Carregando foto (e preparando para análise de IA)...';
 
         try {
-            // 2. UPLOAD DA FOTO para o Storage
+            // Sintaxe Modular:
             const fileExtension = file.name.split('.').pop();
             const fileName = `${user.uid}_${Date.now()}.${fileExtension}`; 
-            const storageRef = storage.ref(`sales_photos/${user.uid}/${fileName}`);
+            const storageReference = storageRef(storage, `sales_photos/${user.uid}/${fileName}`);
             
-            const snapshot = await storageRef.put(file);
-            const photoURL = await snapshot.ref.getDownloadURL();
+            const snapshot = await uploadBytes(storageReference, file);
+            const photoURL = await getDownloadURL(snapshot.ref);
             
             statusMsg.textContent = 'Publicando anúncio e iniciando moderação de imagem...';
 
-            // 3. CRIAÇÃO DO ANÚNCIO no Firestore
-            await db.collection("sales").doc().set({
+            // Sintaxe Modular:
+            await addDoc(collection(db, "sales"), {
                 userId: user.uid,
                 userName: user.displayName,
                 title: title,
@@ -893,7 +903,6 @@ input[type="file"]{padding: 10px; background: rgba(255,255,255,0.05); border-rad
                 moderationStatus: 'pending' 
             });
 
-            // 4. SUCESSO
             statusMsg.textContent = '✅ Anúncio publicado. Foto enviada para análise de IA. Será visível em breve.';
             
             document.getElementById('saleTitle').value = document.getElementById('salePrice').value = document.getElementById('saleWhatsapp').value = document.getElementById('saleDescription').value = document.getElementById('salePhoto').value = '';
@@ -913,12 +922,13 @@ input[type="file"]{padding: 10px; background: rgba(255,255,255,0.05); border-rad
         const salesList = document.getElementById('salesList');
         salesList.innerHTML = '<p class="small" style="grid-column: 1 / -1;">Buscando anúncios...</p>';
 
-        // Filtra APENAS anúncios com status 'approved' pela Cloud Function
-        db.collection("sales")
-            .where('moderationStatus', '==', 'approved') 
-            .orderBy("timestamp", "desc")
-            .limit(10)
-            .onSnapshot(snapshot => { 
+        // Sintaxe Modular:
+        const q = query(collection(db, "sales"), 
+                        where('moderationStatus', '==', 'approved'), 
+                        orderBy("timestamp", "desc"), 
+                        limit(10));
+
+        onSnapshot(q, (snapshot) => { 
                 salesList.innerHTML = '';
                 if (snapshot.empty) {
                     salesList.innerHTML = '<p class="small" style="grid-column: 1 / -1;">Nenhum anúncio de venda encontrado.</p>';
@@ -947,7 +957,7 @@ input[type="file"]{padding: 10px; background: rgba(255,255,255,0.05); border-rad
     }
 
     // ----------------------------------------------------
-    // 7. LÓGICA DE CHAT (Mantido)
+    // 7. LÓGICA DE CHAT (addDoc, query, onSnapshot, collection usando nova sintaxe)
     // ----------------------------------------------------
     
     window.sendMessage = async function() {
@@ -958,7 +968,6 @@ input[type="file"]{padding: 10px; background: rgba(255,255,255,0.05); border-rad
         if (!user || user.isAnonymous) return showGlobalNotice("Faça login para enviar mensagens.", 'var(--btn-red)');
         if (!message) return;
         
-        // Checagem de NSFW no chat
         if (checkNSFW(message)) {
             chatInput.value = '';
             showGlobalNotice("❌ Mensagem bloqueada: Conteúdo proibido!", 'var(--btn-red)');
@@ -966,7 +975,8 @@ input[type="file"]{padding: 10px; background: rgba(255,255,255,0.05); border-rad
         }
 
         try {
-            await db.collection("chat").add({
+            // Sintaxe Modular:
+            await addDoc(collection(db, "chat"), {
                 text: message,
                 uid: user.uid,
                 displayName: user.displayName || 'Anônimo',
@@ -985,15 +995,14 @@ input[type="file"]{padding: 10px; background: rgba(255,255,255,0.05); border-rad
         const chatBox = document.getElementById('chatMessages');
         let initialLoad = true;
 
-        db.collection("chat")
-            .orderBy("timestamp", "desc")
-            .limit(15) // Limita as últimas 15 mensagens
-            .onSnapshot(snapshot => {
+        // Sintaxe Modular:
+        const q = query(collection(db, "chat"), orderBy("timestamp", "desc"), limit(15));
+
+        onSnapshot(q, (snapshot) => {
                 let messagesHtml = '';
                 const messages = [];
                 snapshot.forEach(doc => messages.push(doc.data()));
                 
-                // Inverte a ordem para mostrar o mais novo embaixo
                 messages.reverse().forEach(data => {
                     const isOwner = data.uid === OWNER_UID ? 'color: var(--main-gold); font-weight: bold;' : '';
                     const username = data.displayName || 'Anônimo';
@@ -1007,7 +1016,6 @@ input[type="file"]{padding: 10px; background: rgba(255,255,255,0.05); border-rad
 
                 chatBox.innerHTML = messagesHtml;
                 
-                // Rola para o final apenas no carregamento inicial e quando o usuário não está rolando
                 if (initialLoad) {
                     chatBox.scrollTop = chatBox.scrollHeight;
                     initialLoad = false;
@@ -1018,9 +1026,8 @@ input[type="file"]{padding: 10px; background: rgba(255,255,255,0.05); border-rad
             });
     }
     
-    // --- Funções de Aposta Avançadas (Mantido) ---
+    // --- Funções de Aposta Avançadas (updateDoc e doc usando nova sintaxe) ---
     
-    // Roleta de Cor (48% Vermelho, 48% Preto, 4% Verde)
     window.betCor = async function() {
         const user = auth.currentUser;
         if (!user || user.isAnonymous) return showGlobalNotice("Faça login para apostar.", 'var(--btn-red)');
@@ -1036,17 +1043,16 @@ input[type="file"]{padding: 10px; background: rgba(255,255,255,0.05); border-rad
         
         amountInput.disabled = true;
         
-        // Lógica de sorteio
         const roll = Math.random() * 100;
         let winColor, multiplier = 0;
 
-        if (roll < 4) { // 4%
+        if (roll < 4) { 
             winColor = 'green';
             multiplier = 4;
-        } else if (roll < 52) { // 48% (4 + 48 = 52)
+        } else if (roll < 52) { 
             winColor = 'red';
             multiplier = 2;
-        } else { // 48%
+        } else { 
             winColor = 'black';
             multiplier = 2;
         }
@@ -1059,7 +1065,8 @@ input[type="file"]{padding: 10px; background: rgba(255,255,255,0.05); border-rad
             : `PERDEU. Caiu no ${winColor.toUpperCase()}. Você perdeu ${amount.toLocaleString('pt-BR')} Gold.`;
 
         try {
-            await db.collection("users").doc(user.uid).update({
+            // Sintaxe Modular:
+            await updateDoc(doc(db, "users", user.uid), {
                 gold: increment(netChange),
                 wins: isWin ? increment(1) : increment(0),
                 losses: isWin ? increment(0) : increment(1),
@@ -1101,7 +1108,8 @@ input[type="file"]{padding: 10px; background: rgba(255,255,255,0.05); border-rad
             : `PERDEU. Caiu em ${winSide.toUpperCase()}. Você perdeu ${amount.toLocaleString('pt-BR')} Gold.`;
 
         try {
-            await db.collection("users").doc(user.uid).update({
+            // Sintaxe Modular:
+            await updateDoc(doc(db, "users", user.uid), {
                 gold: increment(netChange),
                 wins: isWin ? increment(1) : increment(0),
                 losses: isWin ? increment(0) : increment(1),
@@ -1143,7 +1151,8 @@ input[type="file"]{padding: 10px; background: rgba(255,255,255,0.05); border-rad
             : `PERDEU. O dado rolou ${roll}. Você perdeu ${amount.toLocaleString('pt-BR')} Gold.`;
 
         try {
-            await db.collection("users").doc(user.uid).update({
+            // Sintaxe Modular:
+            await updateDoc(doc(db, "users", user.uid), {
                 gold: increment(netChange),
                 wins: isWin ? increment(1) : increment(0),
                 losses: isWin ? increment(0) : increment(1),
@@ -1169,7 +1178,6 @@ input[type="file"]{padding: 10px; background: rgba(255,255,255,0.05); border-rad
 
         if (window.currentGold < amount) return betMsg.textContent = "Gold insuficiente.";
         
-        // Lógica de sorteio
         const isWin = Math.random() * 100 < winChance;
         const netChange = isWin ? (amount * multiplier) - amount : -amount;
         const color = isWin ? 'var(--green-win)' : 'var(--red-loss)';
@@ -1178,7 +1186,8 @@ input[type="file"]{padding: 10px; background: rgba(255,255,255,0.05); border-rad
             : `PERDEU. Você errou e perdeu ${amount.toLocaleString('pt-BR')} Gold.`;
 
         try {
-            await db.collection("users").doc(user.uid).update({
+            // Sintaxe Modular:
+            await updateDoc(doc(db, "users", user.uid), {
                 gold: increment(netChange),
                 wins: isWin ? increment(1) : increment(0),
                 losses: isWin ? increment(0) : increment(1),
@@ -1193,7 +1202,7 @@ input[type="file"]{padding: 10px; background: rgba(255,255,255,0.05); border-rad
     }
 
     // ----------------------------------------------------
-    // 8. ADMIN FUNCTIONS (Painel do Dono) (Mantido)
+    // 8. ADMIN FUNCTIONS (query, where, getDocs, updateDoc, doc, collection, get, deleteDoc usando nova sintaxe)
     // ----------------------------------------------------
 
     window.adminGiveGold = async function() {
@@ -1206,13 +1215,16 @@ input[type="file"]{padding: 10px; background: rgba(255,255,255,0.05); border-rad
         if (!targetUsername || isNaN(amount) || amount === 0) return showGlobalNotice("Preencha o nome e o valor.", 'var(--btn-red)');
 
         try {
-            // Encontra o usuário pelo nome de exibição no Firestore (não é possível no Auth SDK)
-            const snapshot = await db.collection("users").where("displayName", "==", targetUsername).limit(1).get();
+            // Sintaxe Modular:
+            const q = query(collection(db, "users"), where("displayName", "==", targetUsername), limit(1));
+            const snapshot = await getDocs(q);
+
             if (snapshot.empty) return showGlobalNotice(`Usuário ${targetUsername} não encontrado.`, 'var(--btn-red)');
 
             const targetUid = snapshot.docs[0].id;
 
-            await db.collection("users").doc(targetUid).update({
+            // Sintaxe Modular:
+            await updateDoc(doc(db, "users", targetUid), {
                 gold: increment(amount)
             });
 
@@ -1238,14 +1250,14 @@ input[type="file"]{padding: 10px; background: rgba(255,255,255,0.05); border-rad
         showGlobalNotice("Iniciando reset de ranking...", 'var(--btn-red)');
 
         try {
-            // Obter todos os documentos da coleção 'users'
-            const usersSnapshot = await db.collection("users").get();
-            const batch = db.batch();
+            // Sintaxe Modular:
+            const usersSnapshot = await getDocs(collection(db, "users"));
+            const batch = firebase.firestore.writeBatch(db); // WriteBatch usa a sintaxe v8/v9, mas com a referência do DB.
 
-            usersSnapshot.forEach(doc => {
-                const userRef = db.collection("users").doc(doc.id);
+            usersSnapshot.forEach(docSnapshot => {
+                const userRef = doc(db, "users", docSnapshot.id);
                 batch.update(userRef, {
-                    gold: 100, // Volta para o gold inicial
+                    gold: 100, 
                     wins: 0,
                     losses: 0
                 });
@@ -1269,17 +1281,19 @@ input[type="file"]{padding: 10px; background: rgba(255,255,255,0.05); border-rad
         showGlobalNotice("Limpando chat...", 'var(--btn-red)');
 
         try {
-            // Deleta os documentos em lotes
-            const chatSnapshot = await db.collection("chat").limit(100).get(); // Limita a 100 por lote
-            const batch = db.batch();
+            // Sintaxe Modular:
+            const q = query(collection(db, "chat"), limit(100));
+            const chatSnapshot = await getDocs(q); 
+            const batch = firebase.firestore.writeBatch(db);
 
             if (chatSnapshot.empty) {
                 showGlobalNotice("Chat já está vazio.", 'var(--green-win)');
                 return;
             }
 
-            chatSnapshot.forEach(doc => {
-                batch.delete(doc.ref);
+            chatSnapshot.forEach(docSnapshot => {
+                // Sintaxe Modular:
+                batch.delete(doc(db, "chat", docSnapshot.id));
             });
 
             await batch.commit();
@@ -1296,43 +1310,41 @@ input[type="file"]{padding: 10px; background: rgba(255,255,255,0.05); border-rad
     // ----------------------------------------------------
 
     document.addEventListener('DOMContentLoaded', () => {
-        // CORREÇÃO CRÍTICA PARA AS ABAS: Adiciona o listener de clique
         document.querySelectorAll('.tabbtn').forEach(button => {
             button.addEventListener('click', function() {
                 switchTab(this.dataset.tab);
             });
         });
         
-        // Garante que a primeira aba ('regrasTab') esteja ativa ao carregar
         switchTab('regrasTab');
 
-        // Escuta o estado de autenticação (logado, deslogado, anônimo)
-        auth.onAuthStateChanged(user => {
-            // Checa se o usuário é banido ANTES de atualizar a UI (simulação de check inicial)
+        // onAuthStateChanged usando nova sintaxe
+        onAuthStateChanged(auth, user => {
             if (user && !user.isAnonymous) {
-                 db.collection('bannedUsers').doc(user.uid).get().then(doc => {
-                    if (doc.exists) {
-                        auth.signOut();
-                        alert(`⚠️ Sua conta está BANIDA. Motivo: ${doc.data().reason}`);
+                 // get() e doc() usando nova sintaxe
+                 firebase.firestore.getDoc(doc(db, 'bannedUsers', user.uid)).then(docSnapshot => {
+                    if (docSnapshot.exists()) {
+                        signOut(auth);
+                        alert(`⚠️ Sua conta está BANIDA. Motivo: ${docSnapshot.data().reason}`);
                         return;
                     }
                     updateAuthUI(user);
                 }).catch(error => {
                     console.error("Erro ao checar banimento:", error);
-                    updateAuthUI(user); // Tenta carregar mesmo se der erro no ban check
+                    updateAuthUI(user);
                 });
             } else {
                 updateAuthUI(user);
-                // Se não houver usuário logado, tenta logar anonimamente
+                // signInAnonymously usando nova sintaxe
                 if (!user) {
-                    auth.signInAnonymously().catch(error => console.error("Erro ao logar anonimamente:", error));
+                    signInAnonymously(auth).catch(error => console.error("Erro ao logar anonimamente:", error));
                 }
             }
         });
         
-        // Contagem de visitantes online (Placeholder - apenas para demonstração)
-        db.collection('visitors').doc('online').onSnapshot(doc => {
-             document.getElementById('visitorCount').textContent = doc.data() ? doc.data().count : '0';
+        // onSnapshot e doc usando nova sintaxe
+        onSnapshot(doc(db, 'visitors', 'online'), (docSnapshot) => {
+             document.getElementById('visitorCount').textContent = docSnapshot.data() ? docSnapshot.data().count : '0';
         });
 
     });

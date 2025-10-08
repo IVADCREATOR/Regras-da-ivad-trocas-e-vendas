@@ -1,18 +1,20 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>IVAD TROCAS E VENDAS</title>
 <style>
 :root{
   --card-bg: rgba(0,0,0,0.62);
   --btn-gradient: linear-gradient(90deg,#ffd54f,#ffb300);
+  --btn-blue: linear-gradient(90deg,#90caf9,#42a5f5);
+  --btn-red: linear-gradient(90deg,#ef9a9a,#e57373);
 }
 html,body{height:100%;margin:0;font-family:Arial,Helvetica,sans-serif;color:#fff;background:#000}
 body{perspective:1000px;overflow-x:hidden}
 .bg3d{
-  position:fixed;inset:0;background:url('/* LINK DA IMAGEM */') no-repeat center center;
+  position:fixed;inset:0;background:url('/* LINK RAW IMAGEM */') no-repeat center center;
   background-size:cover;z-index:-2;filter:contrast(0.92) saturate(0.95) brightness(0.9);
   transform-origin:center center;animation:float3d 18s ease-in-out infinite alternate;
 }
@@ -39,6 +41,8 @@ input[type="text"],input[type="password"],input[type=number],select{width:100%;p
 .rank-list{max-height:420px;overflow:auto}
 footer{padding:1rem;text-align:center;color:#ccc}
 @media(max-width:880px){ .container{grid-template-columns:1fr; padding:.5rem} .menu{order:2} }
+.chat-box{max-height:200px;overflow:auto;background:rgba(255,255,255,0.05);padding:.5rem;margin-top:.5rem;border-radius:8px}
+.chat-msg{margin:.25rem 0}
 </style>
 </head>
 <body>
@@ -54,16 +58,17 @@ footer{padding:1rem;text-align:center;color:#ccc}
   <aside class="card menu">
     <button class="tabbtn active" data-tab="regrasTab">REGRAS</button>
     <button class="tabbtn" data-tab="jogoTab">🎮 JOGUINHO</button>
-    <button class="tabbtn" data-tab="cassinoTab">🎰 CASSINO</button>
     <button class="tabbtn" data-tab="rankTab">🏆 RANK GLOBAL</button>
+    <button class="tabbtn" data-tab="chatTab">💬 CHAT</button>
     <hr style="border:none;height:1px;background:rgba(255,255,255,0.06);margin:10px 0">
 
+    <!-- LOGIN / SIGNUP -->
     <div id="authArea" class="small">
       <div id="signedOutUI">
         <input id="username" type="text" placeholder="Escolha um nome (sem espaços)">
         <input id="pwd" type="password" placeholder="Senha (≥6)">
         <div style="display:flex;gap:.5rem">
-          <button id="btnSignup" class="btn" style="background:linear-gradient(90deg,#90caf9,#42a5f5)">Criar conta</button>
+          <button id="btnSignup" class="btn" style="background:var(--btn-blue)">Criar conta</button>
           <button id="btnLogin" class="btn">Entrar</button>
         </div>
         <p class="small">Nome único — se já existir, escolha outro.</p>
@@ -72,7 +77,7 @@ footer{padding:1rem;text-align:center;color:#ccc}
       <div id="signedInUI" style="display:none">
         <p><strong id="userLabel"></strong></p>
         <div style="display:flex;gap:.5rem;align-items:center">
-          <button id="btnLogout" class="btn" style="background:linear-gradient(90deg,#ef9a9a,#e57373)">Sair</button>
+          <button id="btnLogout" class="btn" style="background:var(--btn-red)">Sair</button>
           <div style="margin-left:auto"><span class="small">Gold: </span><strong id="myGold">0</strong></div>
         </div>
       </div>
@@ -84,10 +89,9 @@ footer{padding:1rem;text-align:center;color:#ccc}
       <input id="adminName" placeholder="nome do usuário (exact)">
       <input id="adminAmount" type="number" placeholder="gold (positivo/negativo)">
       <button id="btnGive" class="btn">Dar/Remover gold</button>
-      <button id="btnReset" class="btn" style="background:linear-gradient(90deg,#ef9a9a,#e57373);margin-top:.5rem">Resetar ranking</button>
+      <button id="btnReset" class="btn" style="background:var(--btn-red);margin-top:.5rem">Resetar ranking</button>
       <p class="small">Somente OWNER_UID pode usar</p>
     </div>
-
     <hr style="border:none;height:1px;background:rgba(255,255,255,0.06);margin:10px 0">
     <p class="small">Ranking público salvo no Firestore.</p>
   </aside>
@@ -98,42 +102,37 @@ footer{padding:1rem;text-align:center;color:#ccc}
       <h3>🚫 Proibido</h3>
       <ul>
         <li>Flodar mensagens (spam).</li>
-        <li>Compartilhar links suspeitos.</li>
-        <li>Colocar preço em contas de outros.</li>
-        <li>Ofensas, xingamentos ou desrespeito.</li>
-        <li>Itens ilegais ou roubados.</li>
+        <li>Compartilhar links suspeitos (pornografia, vírus, phishing, etc.).</li>
+        <li>Colocar preço ou valor em contas de outras pessoas.</li>
+        <li>Ofensas, xingamentos ou desrespeito entre membros.</li>
+        <li>Vendas de itens ilegais, roubados ou que violem regras.</li>
       </ul>
-
       <h3>✅ Permitido</h3>
       <ul>
-        <li>Postar links não suspeitos.</li>
-        <li>Comprar e vender produtos de forma clara.</li>
-        <li>Negociar com bom senso.</li>
+        <li>Postar links (não suspeitos).</li>
+        <li>Comprar e vender produtos de forma clara e respeitosa.</li>
+        <li>Negociar e interagir com bom senso.</li>
       </ul>
-
       <h3>⚠️ Observações</h3>
       <ul>
         <li>Descumprimento pode levar a banimento.</li>
-        <li>Negociações são responsabilidade dos participantes.</li>
+        <li>Negociações são responsabilidade entre partes.</li>
       </ul>
     </div>
 
     <div id="jogoTab" style="display:none">
-      <h2>🎮 Joguinho</h2>
-      <p class="small">Clique <strong>Trabalhar</strong> para ganhar <strong>+1 gold</strong> (5s de cooldown)</p>
-      <div style="margin:1rem 0">
-        <button id="btnWork" class="btn">Trabalhar (+1 gold)</button>
-        <span id="workMsg" class="small" style="margin-left:1rem"></span>
-      </div>
-    </div>
+      <h2>🎮 Cassino & Joguinho</h2>
+      <p class="small">Clique <strong>Trabalhar</strong> para ganhar <strong>+1 gold</strong>. (Rate-limit: 5s)</p>
+      <button id="btnWork" class="btn">Trabalhar (+1 gold)</button>
+      <span id="workMsg" class="small" style="margin-left:1rem"></span>
 
-    <div id="cassinoTab" style="display:none">
-      <h2>🎰 Cassino</h2>
-      <p class="small">Aposte 1 gold, escolha um número de 1 a 6. Acertou? ganha 6x!</p>
-      <div style="margin:1rem 0">
-        <input type="number" id="betNumber" min="1" max="6" placeholder="1-6">
-        <button id="btnBet" class="btn">Apostar</button>
-        <span id="betMsg" class="small" style="margin-left:1rem"></span>
+      <h3>Aposta Simples</h3>
+      <input type="number" id="betAmount" placeholder="Quantos golds apostar?" min="1">
+      <button id="btnBet" class="btn">Apostar 50/50</button>
+      <span id="betMsg" class="small"></span>
+
+      <div id="playerInfo" style="margin-top:1rem;display:none">
+        <p>Jogador: <strong id="playerName"></strong> — Gold: <strong id="playerGold">0</strong></p>
       </div>
     </div>
 
@@ -141,6 +140,13 @@ footer{padding:1rem;text-align:center;color:#ccc}
       <h2>🏆 Rank Global</h2>
       <p class="small">Top jogadores (atualiza automaticamente)</p>
       <div class="rank-list card" id="rankList" style="margin-top:1rem"></div>
+    </div>
+
+    <div id="chatTab" style="display:none">
+      <h2>💬 Chat Global</h2>
+      <div class="chat-box" id="chatBox"></div>
+      <input type="text" id="chatInput" placeholder="Digite sua mensagem" style="margin-top:.5rem">
+      <button id="btnSendChat" class="btn">Enviar</button>
     </div>
   </section>
 </main>
@@ -151,25 +157,28 @@ footer{padding:1rem;text-align:center;color:#ccc}
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
 <script>
-const firebaseConfig = /* COLE AQUI */;
+const firebaseConfig = /* COLE AQUI SEU FIREBASE CONFIG */;
 const OWNER_UID = "COLE_AQUI_SEU_UID";
+
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-// UI refs
 const signedOutUI = document.getElementById('signedOutUI');
 const signedInUI = document.getElementById('signedInUI');
 const userLabel = document.getElementById('userLabel');
 const myGold = document.getElementById('myGold');
-const betNumber = document.getElementById('betNumber');
-const betMsg = document.getElementById('betMsg');
-const workMsg = document.getElementById('workMsg');
+const playerName = document.getElementById('playerName');
+const playerGold = document.getElementById('playerGold');
+const playerInfo = document.getElementById('playerInfo');
+const chatBox = document.getElementById('chatBox');
+const chatInput = document.getElementById('chatInput');
 
-// tabs
+// Tabs
 function showTab(id){
-  ['regrasTab','jogoTab','cassinoTab','rankTab'].forEach(t=>document.getElementById(t).style.display=(t===id?'block':'none'));
+  ['regrasTab','jogoTab','rankTab','chatTab'].forEach(t=>document.getElementById(t).style.display=(t===id?'block':'none'));
 }
 document.querySelectorAll('.tabbtn').forEach(b=>{
   b.addEventListener('click',e=>{
@@ -180,113 +189,111 @@ document.querySelectorAll('.tabbtn').forEach(b=>{
 });
 showTab('regrasTab');
 
+// Helper
 function usernameToEmail(u){ return `${u}@ivad.local`; }
 function validUsername(u){ return /^[a-zA-Z0-9_]{3,20}$/.test(u); }
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 
-// SIGNUP
-document.getElementById('btnSignup').onclick=async ()=>{
-  const uname=document.getElementById('username').value.trim();
-  const pw=document.getElementById('pwd').value;
+// Signup
+document.getElementById('btnSignup').onclick = async ()=>{
+  const uname = document.getElementById('username').value.trim();
+  const pw = document.getElementById('pwd').value;
   if(!validUsername(uname)){ alert('Nome inválido'); return; }
   if(pw.length<6){ alert('Senha precisa ≥6'); return; }
   try{
     const q = await db.collection('users').where('displayName','==',uname).limit(1).get();
     if(!q.empty){ alert('Nome já existe'); return; }
-    const email=usernameToEmail(uname);
-    const cred=await auth.createUserWithEmailAndPassword(email,pw);
-    const user=cred.user;
-    await db.collection('users').doc(user.uid).set({uid:user.uid,email:email,displayName:uname,gold:0,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+    const syntheticEmail = usernameToEmail(uname);
+    const cred = await auth.createUserWithEmailAndPassword(syntheticEmail,pw);
+    const user = cred.user;
+    await db.collection('users').doc(user.uid).set({uid:user.uid,email:syntheticEmail,displayName:uname,gold:0,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
     alert('Conta criada! Você já está logado.');
   }catch(err){ console.error(err); alert('Erro: '+err.message); }
 };
 
-// LOGIN
-document.getElementById('btnLogin').onclick=async ()=>{
-  const uname=document.getElementById('username').value.trim();
-  const pw=document.getElementById('pwd').value;
+// Login
+document.getElementById('btnLogin').onclick = async ()=>{
+  const uname = document.getElementById('username').value.trim();
+  const pw = document.getElementById('pwd').value;
   if(!validUsername(uname)){ alert('Nome inválido'); return; }
   if(pw.length<6){ alert('Senha precisa ≥6'); return; }
-  try{
-    const email=usernameToEmail(uname);
-    await auth.signInWithEmailAndPassword(email,pw);
-  }catch(err){ console.error(err); alert('Erro ao entrar: '+err.message); }
+  try{ await auth.signInWithEmailAndPassword(usernameToEmail(uname), pw); }
+  catch(err){ console.error(err); alert('Erro ao entrar: '+err.message); }
 };
+document.getElementById('btnLogout').onclick = ()=>auth.signOut();
 
-document.getElementById('btnLogout').onclick=()=>auth.signOut();
-
-// auth state
+// Auth state
 auth.onAuthStateChanged(async user=>{
   if(user){
     signedOutUI.style.display='none';
     signedInUI.style.display='block';
-    userLabel.textContent='Conectado: '+(user.email?user.email.split('@')[0]:user.uid);
-    if(user.uid===OWNER_UID) document.getElementById('ownerPanel').style.display='block';
+    userLabel.textContent = 'Conectado: '+(user.email?user.email.split('@')[0]:user.uid);
+    if(user.uid === OWNER_UID) document.getElementById('ownerPanel').style.display='block';
     else document.getElementById('ownerPanel').style.display='none';
     updateMyInfo(user.uid);
+    loadChat();
   }else{
     signedOutUI.style.display='block';
     signedInUI.style.display='none';
     document.getElementById('ownerPanel').style.display='none';
     myGold.textContent='0';
+    playerInfo.style.display='none';
   }
 });
 
+// Update gold/player info
 async function updateMyInfo(uid){
   const doc = await db.collection('users').doc(uid).get();
   if(doc.exists){
-    const data=doc.data();
-    myGold.textContent=data.gold||0;
+    const data = doc.data();
+    myGold.textContent = data.gold||0;
+    playerName.textContent = data.displayName;
+    playerGold.textContent = data.gold||0;
+    playerInfo.style.display='block';
   }
 }
 
-// WORK BUTTON
+// Work
 let lastWork=0;
 document.getElementById('btnWork').onclick=async ()=>{
-  const user=auth.currentUser;
+  const user = auth.currentUser;
   if(!user){ alert('Faça login'); return; }
-  const now=Date.now();
-  if(now-lastWork<5000){ workMsg.textContent='Aguarde 5s'; return; }
+  const now = Date.now();
+  if(now-lastWork<5000){ document.getElementById('workMsg').textContent='Aguarde 5s'; return; }
   lastWork=now;
   try{
-    const ref=db.collection('users').doc(user.uid);
+    const userRef = db.collection('users').doc(user.uid);
     await db.runTransaction(async tx=>{
-      const d=await tx.get(ref);
-      tx.update(ref,{gold:(d.data().gold||0)+1});
+      const d = await tx.get(userRef);
+      if(!d.exists) throw 'Usuário não encontrado';
+      tx.update(userRef,{gold:(d.data().gold||0)+1});
     });
     updateMyInfo(user.uid);
-    workMsg.textContent='+1 gold!';
-    setTimeout(()=>workMsg.textContent='',1200);
+    document.getElementById('workMsg').textContent='+1 gold!';
+    setTimeout(()=>document.getElementById('workMsg').textContent='',1200);
     reloadRank();
   }catch(err){ console.error(err); alert('Erro: '+err); }
 };
 
-// CASSINO
+// Bet 50/50
 document.getElementById('btnBet').onclick=async ()=>{
-  const user=auth.currentUser;
+  const user = auth.currentUser;
   if(!user){ alert('Faça login'); return; }
-  const n=Number(betNumber.value);
-  if(!n||n<1||n>6){ alert('Número inválido'); return; }
-  try{
-    const ref=db.collection('users').doc(user.uid);
-    await db.runTransaction(async tx=>{
-      const d=await tx.get(ref);
-      const gold=d.data().gold||0;
-      if(gold<1){ throw 'Gold insuficiente'; }
-      const rnd=Math.floor(Math.random()*6)+1;
-      let msg='';
-      let newGold=gold-1;
-      if(rnd===n){ newGold+=6; msg='🎉 Acertou! +6 gold'; }
-      else msg=`❌ Errou! Saiu ${rnd}`;
-      tx.update(ref,{gold:newGold});
-      betMsg.textContent=msg;
-      setTimeout(()=>betMsg.textContent='',2000);
-    });
-    updateMyInfo(user.uid);
-    reloadRank();
-  }catch(err){ alert('Erro: '+err); }
+  const amt = Number(document.getElementById('betAmount').value);
+  if(!amt || amt<=0){ alert('Insira um valor válido'); return; }
+  const userRef = db.collection('users').doc(user.uid);
+  const doc = await userRef.get();
+  if((doc.data().gold||0)<amt){ alert('Gold insuficiente'); return; }
+  const win = Math.random()<0.5;
+  const diff = win?amt: -amt;
+  await userRef.update({gold:(doc.data().gold||0)+diff});
+  updateMyInfo(user.uid);
+  document.getElementById('betMsg').textContent=win?`Você ganhou ${amt} gold!`:`Você perdeu ${amt} gold!`;
+  setTimeout(()=>document.getElementById('betMsg').textContent='',2000);
+  reloadRank();
 };
 
-// RANK
+// Rank
 async function reloadRank(){
   const list=document.getElementById('rankList');
   list.innerHTML='<p class="small">Carregando...</p>';
@@ -294,23 +301,5 @@ async function reloadRank(){
     const snap=await db.collection('users').orderBy('gold','desc').limit(50).get();
     if(snap.empty){ list.innerHTML='<p class="small">Nenhum jogador ainda.</p>'; return; }
     let html='<ol>';
-    snap.forEach(doc=>{ const d=doc.data(); html+=`<li style="margin:.4rem 0"><strong>${d.displayName||d.email}</strong> — ${Number(d.gold||0)} gold</li>`; });
-    html+='</ol>'; list.innerHTML=html;
-  }catch(err){ list.innerHTML='<p class="small">Erro ao carregar ranking</p>'; }
-}
-reloadRank(); setInterval(reloadRank,10000);
-
-// OWNER ACTIONS
-document.getElementById('btnGive').onclick=async ()=>{
-  const user=auth.currentUser; if(!user||user.uid!==OWNER_UID){ alert('Somente dono'); return; }
-  const name=document.getElementById('adminName').value.trim();
-  const amt=Number(document.getElementById('adminAmount').value||0);
-  if(!name||!amt){ alert('Nome e quantidade necessários'); return; }
-  const q=await db.collection('users').where('displayName','==',name).limit(1).get();
-  if(q.empty){ alert('Usuário não encontrado'); return; }
-  const doc=q.docs[0];
-  await db.collection('users').doc(doc.id).update({gold:Number(doc.data().gold||0)+amt});
-  alert('Atualizado'); reloadRank();
-};
-document.getElementById('btnReset').onclick=async ()=>{
-  const user=auth.currentUser; if(!user||user.uid!==OWNER_UID){ alert('Somente dono
+    snap.forEach(doc=>{const d=doc.data(); html+=`<li style="margin:.4rem 0"><strong>${escapeHtml(d.displayName||d.email||'user')}</strong> — ${Number(d.gold||0)} gold</li>`;});
+    html+='</

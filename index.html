@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>IVAD TROCAS E VENDAS - MULTIJOGOS</title>
+<title>IVAD TROCAS E VENDAS - MULTIJOGOS SUPREMO</title>
 <style>
 /* VARS */
 :root{
@@ -17,6 +17,7 @@
   --border-color: rgba(139, 92, 246, 0.3); /* Purple Border */
   --green-win: #10B981;
   --red-loss: #EF4444;
+  --extreme-bet: #FF69B4; /* Hot Pink */
 }
 
 /* BASE & LAYOUT */
@@ -25,10 +26,8 @@ body{perspective:1000px;overflow-x:hidden}
 
 .bg3d{
   position:fixed;inset:0;
-  /* NOVO FUNDO 3D: Imagem de Nebulosa Roxa/Azul */
   background:url('https://i.imgur.com/gK2g2f7.jpeg') no-repeat center center; 
   background-size:cover;z-index:-2;
-  /* Efeito de cor e contraste para vibrante */
   filter:contrast(1.2) saturate(1.5) brightness(0.65); 
   transform-origin:center center;animation:float3d 18s ease-in-out infinite alternate;
 }
@@ -61,7 +60,7 @@ header p{margin:.1rem;color:var(--text-secondary);font-size:1rem; font-style: it
     box-shadow:0 10px 25px rgba(252,211,77,0.4);
 }
 .menu button.active{
-    background:var(--btn-blue); /* Mudança para azul-roxo */
+    background:var(--btn-blue); 
     color:var(--text-primary);
     transform:translateY(0);
     box-shadow:0 4px 15px rgba(0,0,0,0.8); font-weight: 700;
@@ -80,7 +79,7 @@ ul{padding-left:1.5rem}
 .btn{
   display:inline-block;padding:1rem 2rem;border-radius:12px;border:none;background:var(--btn-gradient);
   color:#111;font-weight:800;cursor:pointer; transition: all .3s; position: relative; overflow: hidden;
-  box-shadow: 0 0 20px rgba(94, 237, 212, 0.5); /* Sombra mais forte */
+  box-shadow: 0 0 20px rgba(94, 237, 212, 0.5); 
 }
 .btn:hover:not(:disabled){
     box-shadow: 0 0 40px rgba(94, 237, 212, 1), 0 0 15px rgba(0,0,0,0.7); 
@@ -98,7 +97,6 @@ input:focus, textarea:focus{
     outline: none; border-color: var(--main-gold); 
     box-shadow: 0 0 8px var(--main-gold);
 }
-/* Estilo para input file */
 input[type="file"]{
     padding: 10px; 
     background: rgba(255,255,255,0.05); 
@@ -116,7 +114,7 @@ input[type="file"]::-webkit-file-upload-button {
     cursor: pointer;
     margin-right: 10px;
 }
-input[type="file"]::file-selector-button { /* Padrão moderno */
+input[type="file"]::file-selector-button { 
     background: var(--btn-blue);
     color: white;
     padding: 8px 15px;
@@ -166,7 +164,7 @@ input[type="file"]::file-selector-button { /* Padrão moderno */
 .chat-input-area{margin-top:1rem; display: flex; gap: 8px; align-items: stretch;}
 .chat-input-area input[type=text]{margin: 0; flex-grow: 1; padding: 1rem; border-radius: 12px;}
 .chat-input-area button{padding: 0 1.5rem; margin: 0; font-size: 1.2rem; border-radius: 12px;}
-#btnRecordAudio{background: var(--btn-blue); color: #fff; width: 65px; font-size: 1.6rem; opacity: 0.5;} /* Desabilitado por enquanto */
+#btnRecordAudio{background: var(--btn-blue); color: #fff; width: 65px; font-size: 1.6rem; opacity: 0.5;} 
 
 /* JOGOS */
 .game-area{
@@ -174,9 +172,24 @@ input[type="file"]::file-selector-button { /* Padrão moderno */
 }
 .bet-option-card {
     background: rgba(255,255,255,0.08); padding: 1.8rem; border-radius: 15px;
-    border: 1px solid var(--main-gold); /* Borda de ouro */
+    border: 1px solid var(--main-gold); 
 }
 .bet-option-card h3 { color: var(--main-gold); font-size: 1.5rem; margin-bottom: 0.8rem; }
+.treasure-box-container {
+    display: flex; gap: 15px; margin-top: 15px;
+}
+.treasure-box {
+    flex-grow: 1; padding: 1.5rem; border-radius: 10px; background: rgba(80, 50, 160, 0.7);
+    color: white; font-weight: bold; text-align: center; font-size: 1.8rem; cursor: pointer;
+    transition: transform 0.3s, background 0.3s; border: 3px solid transparent;
+}
+.treasure-box:hover {
+    transform: translateY(-5px);
+    background: rgba(120, 70, 200, 0.9);
+}
+.treasure-box.open {
+    transform: scale(1.05);
+}
 
 
 /* NOTIFICAÇÃO GLOBAL */
@@ -348,11 +361,21 @@ input[type="file"]::file-selector-button { /* Padrão moderno */
     </div>
 
     <div id="apostasAvancadasTab" style="display:none">
-        <h2>🎲 Apostas Avançadas</h2>
+        <h2>🎲 Apostas Avançadas e Extremas</h2>
 
-        <p class="small">Jogos mais elaborados com maior interação e potencial de ganho/perda.</p>
+        <p class="small">Jogos mais elaborados com maior interação e potencial de ganho/perda. **NOVAS FUNÇÕES EXTREMAS ADICIONADAS!**</p>
 
         <div class="game-area">
+            
+            <div class="bet-option-card" style="border-color: var(--extreme-bet);">
+                <h3 style="margin-top: 0; color: var(--extreme-bet);">👑 LOTERIA 100x (MAX ROULETTE)</h3>
+                <p class="small">Escolha um número de 1 a 100. Paga **100x** a aposta. (1% chance)</p>
+                <input type="number" id="bet100xAmount" placeholder="Gold para apostar" min="1">
+                <input type="number" id="bet100xNumber" placeholder="Seu Número (1-100)" min="1" max="100">
+                <button onclick="betDice(100, 100, 'bet100xAmount', 'bet100xNumber', 'bet100xMsg')" class="btn" style="width: 100%; background: var(--extreme-bet);">GANHE 100X</button>
+                <span id="bet100xMsg" class="small" style="display: block; margin-top: 5px;"></span>
+            </div>
+
             <div class="bet-option-card">
                 <h3 style="margin-top: 0;">Cor (2x ou 4x)</h3>
                 <p class="small">Aposte no Vermelho (2x), Preto (2x) ou Verde (4x).</p>
@@ -394,13 +417,16 @@ input[type="file"]::file-selector-button { /* Padrão moderno */
                 <span id="betRNGMsg_4x" class="small" style="display: block; margin-top: 5px;"></span>
             </div>
             
-             <div class="bet-option-card" style="opacity: 0.5;">
-                <h3 style="margin-top: 0;">Roleta de Prêmios VIP</h3>
-                <p class="small">Custo 100 Gold. (Em desenvolvimento: Funcionalidade visual da roleta)</p>
-                <div style="position: relative; text-align: center; margin-bottom: 20px;">
-                    <div class="wheel-pointer"></div>
-                    <button class="btn" disabled>Girar Roleta (Em Breve)</button>
+            <div class="bet-option-card" style="border-color: var(--green-win);">
+                <h3 style="margin-top: 0; color: var(--green-win);">📦 Caça ao Tesouro (3x)</h3>
+                <p class="small">Escolha uma caixa: **Tesouro (3x)**, **Pequeno Prêmio (1.5x)** ou **Armadilha (Perde)**.</p>
+                <input type="number" id="betTreasureAmount" placeholder="Gold para apostar" min="1">
+                <div class="treasure-box-container">
+                    <div class="treasure-box" data-box="A" onclick="betTreasureHunt(this)">A</div>
+                    <div class="treasure-box" data-box="B" onclick="betTreasureHunt(this)">B</div>
+                    <div class="treasure-box" data-box="C" onclick="betTreasureHunt(this)">C</div>
                 </div>
+                <span id="betTreasureMsg" class="small" style="display: block; margin-top: 15px;"></span>
             </div>
         </div>
     </div>
@@ -411,12 +437,12 @@ input[type="file"]::file-selector-button { /* Padrão moderno */
         <div class="game-area">
             <div class="bet-option-card" style="opacity: 0.5;">
                 <h3 style="margin-top: 0;">Jogo de Memória</h3>
-                <p class="small">Combine os pares em 60 segundos para ganhar 2x a aposta.</p>
+                <p class="small">Combine os pares em 60 segundos para ganhar 2x a aposta. (Em Breve)</p>
                 <button class="btn" disabled>Jogar (Em Breve)</button>
             </div>
             <div class="bet-option-card" style="opacity: 0.5;">
                 <h3 style="margin-top: 0;">Quiz Global</h3>
-                <p class="small">Responda a 10 perguntas em 30 segundos para ganhar 3x.</p>
+                <p class="small">Responda a 10 perguntas em 30 segundos para ganhar 3x. (Em Breve)</p>
                 <button class="btn" disabled>Jogar (Em Breve)</button>
             </div>
         </div>
@@ -472,28 +498,35 @@ input[type="file"]::file-selector-button { /* Padrão moderno */
 // 1. CONFIGURAÇÃO E INICIALIZAÇÃO DO FIREBASE (v8)
 // ----------------------------------------------------
 // SEU UID DE ADMINISTRADOR! ESSENCIAL PARA O PAINEL E REGRAS!
-// **SUBSTITUA ESTE VALOR PELO SEU UID REAL**
-const OWNER_UID = "SEU_UID_DE_ADMINISTRADOR"; 
+const OWNER_UID = "m3h06woQv2V7lrNu1p8fDQCZ8IW2"; 
 let currentUser = null; 
 let initialGold = 1000; 
 let isOnlineRef = null; 
 const CHAT_LIMIT = 50;
 let isWorkingCooldown = false;
 
-// ATENÇÃO: SUBSTITUA OS VALORES ABAIXO PELOS SEUS DADOS REAIS DO FIREBASE
+// ATENÇÃO: SUBSTITUA OS VALORES MARCADOS COM [!] PELOS SEUS DADOS REAIS DO FIREBASE
 const firebaseConfig = {
     apiKey: "AIzaSyCkmyMqEJaM8jVvmTN8I3gLnbC8YtMPWOI", // Sua chave fornecida
-    // **SUBSTITUA ESTES VALORES PELOS SEUS DADOS**
-    authDomain: "SEU_AUTH_DOMAIN", 
-    projectId: "SEU_PROJECT_ID",
-    storageBucket: "SEU_STORAGE_BUCKET",
+    authDomain: "[!] SEU_AUTH_DOMAIN", // Ex: "seu-projeto.firebaseapp.com"
+    projectId: "[!] SEU_PROJECT_ID", // Ex: "seu-projeto-12345"
+    storageBucket: "[!] SEU_STORAGE_BUCKET", // Ex: "seu-projeto.appspot.com"
     messagingSenderId: "SEU_MESSAGING_SENDER_ID",
     appId: "SEU_APP_ID"
 };
 
 // Certifica-se de que o Firebase SDK está carregado antes de inicializar
 if (typeof firebase !== 'undefined') {
-    firebase.initializeApp(firebaseConfig);
+    try {
+        firebase.initializeApp(firebaseConfig);
+    } catch (e) {
+        console.error("Erro ao inicializar Firebase. Verifique sua configuração.", e);
+        document.addEventListener('DOMContentLoaded', () => {
+             updateStatus("ERRO: Configuração do Firebase inválida. Verifique o console.", true);
+        });
+        throw e; // Interrompe o script se a config falhar
+    }
+    
     const auth = firebase.auth();
     const db = firebase.firestore();
     const FieldValue = firebase.firestore.FieldValue;
@@ -515,7 +548,6 @@ if (typeof firebase !== 'undefined') {
         const statusElement = document.getElementById('globalNotice');
         statusElement.textContent = message;
         
-        // Usando style.setProperty para garantir que as variáveis CSS sejam lidas
         if (isError) {
              statusElement.style.backgroundColor = 'var(--red-loss)';
              statusElement.style.color = 'white';
@@ -533,24 +565,19 @@ if (typeof firebase !== 'undefined') {
     }
 
     function switchTab(tabId) {
-        // 1. Esconde todos os conteúdos
         document.querySelectorAll('.content > div').forEach(tab => {
             tab.style.display = 'none';
         });
-        // 2. Desativa todos os botões
         document.querySelectorAll('.tabbtn').forEach(btn => {
             btn.classList.remove('active');
         });
 
-        // 3. Mostra o conteúdo da aba selecionada
         const content = document.getElementById(tabId);
         if (content) {
             content.style.display = 'block';
-             // Reset CSS display for the main content area
             document.querySelector('.content').style.display = 'block';
         }
 
-        // 4. Ativa o botão selecionado
         document.querySelector(`.tabbtn[data-tab="${tabId}"]`).classList.add('active');
     }
 
@@ -583,7 +610,6 @@ if (typeof firebase !== 'undefined') {
             return updateStatus("Senha deve ter no mínimo 6 caracteres.", true);
         }
 
-        // 1. Verifica se o username é único
         const isAvailable = await checkUsernameAvailability(username);
         if (!isAvailable) {
             return updateStatus("Nome de usuário já está em uso.", true);
@@ -591,12 +617,10 @@ if (typeof firebase !== 'undefined') {
 
         updateStatus("Criando conta...");
         
-        // 2. Cria usuário no Auth
         auth.createUserWithEmailAndPassword(email, password)
             .then(async (userCredential) => {
                 const user = userCredential.user;
                 
-                // 3. Cria documento no Firestore 
                 await usersColRef.doc(user.uid).set({
                     username: username,
                     gold: initialGold,
@@ -628,16 +652,13 @@ if (typeof firebase !== 'undefined') {
     async function loadUserData(user) {
         currentUser = user;
         
-        // 1. Troca a UI
         document.getElementById('signedOutUI').style.display = 'none';
         document.getElementById('signedInUI').style.display = 'block';
 
-        // 2. Verifica e mostra o Painel do Dono
         document.getElementById('ownerPanel').style.display = user.uid === OWNER_UID ? 'block' : 'none';
 
         const userRef = usersColRef.doc(user.uid);
         
-        // 3. Listener em tempo real para Gold e Username
         userRef.onSnapshot(docSnapshot => {
             if (docSnapshot.exists) {
                 const data = docSnapshot.data();
@@ -656,7 +677,6 @@ if (typeof firebase !== 'undefined') {
             }
         });
 
-        // 4. Ativar funções de tempo real
         loadRanking(); 
         loadChat();    
         loadSales();
@@ -665,7 +685,7 @@ if (typeof firebase !== 'undefined') {
 
 
     // ----------------------------------------------------
-    // 4. JOGOS E SISTEMA ANTI-HACK DE GOLD
+    // 4. JOGOS E SISTEMA ANTI-HACK DE GOLD (FUNÇÕES RESTAURADAS E NOVAS)
     // ----------------------------------------------------
 
     async function updateGold(amount, isWin = false) {
@@ -689,14 +709,12 @@ if (typeof firebase !== 'undefined') {
     }
 
     function validateBet(amount) {
-        // Lê o gold atual, removendo formatação. Se não tiver gold, usa 0.
-        const currentGoldText = document.getElementById('myGold').textContent.replace(/,/g, '');
+        const currentGoldText = document.getElementById('myGold').textContent.replace(/[^0-9]/g, '');
         const currentGold = parseInt(currentGoldText) || 0;
         
         if (!currentUser) { 
             updateStatus("Faça login para apostar.", true); return false; 
         }
-        // Garante que o amount seja um número inteiro positivo
         const betAmount = parseInt(amount); 
         
         if (isNaN(betAmount) || betAmount <= 0) { 
@@ -727,7 +745,7 @@ if (typeof firebase !== 'undefined') {
         }, 4000);
     }
 
-    // Jogo Simples: Trabalho (AGORA COM COOLDOWN VISUAL)
+    // Jogo Simples: Trabalho (RESTAURO)
     async function work() {
         const btnWork = document.getElementById('btnWork');
         if (isWorkingCooldown) return updateStatus("Aguarde o cooldown (5 segundos).", true);
@@ -737,8 +755,8 @@ if (typeof firebase !== 'undefined') {
         btnWork.disabled = true;
         btnWork.classList.add('cooldown');
 
-        const currentGold = parseInt(document.getElementById('myGold').textContent.replace(/,/g, '')) || 0;
-        const percentage = Math.floor(Math.random() * 100) + 1; // 1% a 100%
+        const currentGold = parseInt(document.getElementById('myGold').textContent.replace(/[^0-9]/g, '')) || 0;
+        const percentage = Math.floor(Math.random() * 100) + 1; 
         const earnings = Math.max(1, Math.floor(currentGold * (percentage / 100))); 
         
         await updateGold(earnings, true);
@@ -750,10 +768,10 @@ if (typeof firebase !== 'undefined') {
             btnWork.disabled = false;
             btnWork.classList.remove('cooldown');
             document.getElementById('workMsg').textContent = '';
-        }, 5000); // 5 segundos de cooldown
+        }, 5000); 
     }
 
-    // Jogo Simples: Multiplicador (CORRIGIDO)
+    // Jogo Simples: Multiplicador (RESTAURO)
     async function betSimple(multiplier, inputId, msgId, winChance) {
         const inputElement = document.getElementById(inputId);
         const amount = parseInt(inputElement.value);
@@ -772,7 +790,7 @@ if (typeof firebase !== 'undefined') {
         notify(msg, win);
     }
 
-    // Aposta Avançada: Cor (48% 2x, 4% 4x) - (CORRIGIDO)
+    // Aposta Avançada: Cor (RESTAURO)
     async function betCor() {
         const amount = parseInt(document.getElementById('betCorAmount').value);
         const choice = document.getElementById('betCorColor').value;
@@ -806,7 +824,7 @@ if (typeof firebase !== 'undefined') {
         notify(msg, win);
     }
 
-    // Aposta Avançada: Moeda (50% 2x) - (CORRIGIDO)
+    // Aposta Avançada: Moeda (RESTAURO)
     async function betCoin() {
         const amount = parseInt(document.getElementById('betCoinAmount').value);
         const choice = document.getElementById('betCoinSide').value;
@@ -826,7 +844,7 @@ if (typeof firebase !== 'undefined') {
         notify(msg, win);
     }
 
-    // Aposta Avançada: Dice (12x) - (CORRIGIDO)
+    // Aposta Avançada: Dice/Loteria (RESTAURO e NOVO)
     async function betDice(maxNumber, multiplier, inputAmountId, inputChoiceId, msgId) {
         const amount = parseInt(document.getElementById(inputAmountId).value);
         const choice = parseInt(document.getElementById(inputChoiceId).value);
@@ -849,7 +867,7 @@ if (typeof firebase !== 'undefined') {
         notify(msg, win);
     }
 
-    // Aposta Avançada: RNG Mágico (4x) - (CORRIGIDO)
+    // Aposta Avançada: RNG Mágico (RESTAURO)
     async function betRNG(multiplier, fixedAmount, winChance, msgId) {
         const amount = fixedAmount;
         if (!validateBet(amount)) return; 
@@ -866,6 +884,83 @@ if (typeof firebase !== 'undefined') {
         
         document.getElementById(msgId).textContent = msg;
         notify(msg, win);
+    }
+    
+    // NOVO JOGO: Caça ao Tesouro
+    async function betTreasureHunt(chosenBoxElement) {
+        const boxes = document.querySelectorAll('.treasure-box');
+        const amount = parseInt(document.getElementById('betTreasureAmount').value);
+        
+        if (!validateBet(amount)) return; 
+        
+        // Desabilitar todas as caixas temporariamente
+        boxes.forEach(box => {
+            box.onclick = null;
+            box.style.opacity = '0.5';
+        });
+
+        const msgElement = document.getElementById('betTreasureMsg');
+        msgElement.textContent = 'Procurando...';
+
+        const outcomes = [
+            { id: 'T', mult: 3, name: '💰 Tesouro (3x)', color: 'var(--green-win)' },
+            { id: 'P', mult: 1.5, name: '✨ Pequeno Prêmio (1.5x)', color: 'var(--main-gold)' },
+            { id: 'A', mult: -1, name: '☠️ Armadilha (Perde)', color: 'var(--red-loss)' }
+        ];
+
+        // Sorteia as caixas
+        const shuffledOutcomes = outcomes.sort(() => Math.random() - 0.5);
+        const winningOutcome = shuffledOutcomes.find(o => o.id === 'T');
+        
+        let result = 0;
+        let finalMsg = '';
+        let isWin = false;
+
+        // Revela o resultado em todas as caixas
+        boxes.forEach((box, index) => {
+            const outcome = shuffledOutcomes[index];
+            box.classList.add('open');
+            box.style.borderColor = outcome.color;
+
+            if (box === chosenBoxElement) {
+                // Usuário acertou ou errou
+                if (outcome.mult > 1) {
+                    result = amount * (outcome.mult - 1);
+                    isWin = true;
+                    finalMsg = `🎉 VOCÊ ACERTOU! Encontrou o ${outcome.name}! Lucro de ${result.toLocaleString()} Gold.`;
+                } else if (outcome.mult === 1.5) {
+                    result = amount * (outcome.mult - 1);
+                    isWin = true;
+                    finalMsg = `👍 Prêmio de Consolação! Encontrou o ${outcome.name}! Lucro de ${result.toLocaleString()} Gold.`;
+                } else {
+                    result = -amount;
+                    isWin = false;
+                    finalMsg = `💥 ERROU! ${outcome.name}. Perdeu ${amount.toLocaleString()} Gold.`;
+                }
+            }
+            
+            // Adiciona o resultado visual
+            setTimeout(() => {
+                box.textContent = outcome.id; 
+            }, 500);
+        });
+
+        // Atualiza o Gold e notifica
+        await updateGold(result, isWin);
+        msgElement.textContent = finalMsg;
+        notify(finalMsg, isWin);
+
+        // Resetar o jogo após 4 segundos
+        setTimeout(() => {
+            boxes.forEach(box => {
+                box.classList.remove('open');
+                box.style.borderColor = 'transparent';
+                box.style.opacity = '1';
+                box.textContent = box.getAttribute('data-box');
+                box.onclick = () => betTreasureHunt(box); // Reativa o clique
+            });
+            msgElement.textContent = '';
+        }, 4000);
     }
 
 
@@ -984,11 +1079,9 @@ if (typeof firebase !== 'undefined') {
             const fileName = `${currentUser.uid}_${Date.now()}_${imageFile.name}`;
             const imageRef = storageRef.child(fileName);
             
-            // 1. Upload da Imagem
             const snapshot = await imageRef.put(imageFile);
             const imageUrl = await snapshot.ref.getDownloadURL();
 
-            // 2. Criação do Documento no Firestore 
             await salesColRef.add({
                 title: title,
                 description: description,
@@ -1031,7 +1124,6 @@ if (typeof firebase !== 'undefined') {
                 
                 let buttons = '';
 
-                // Botão de Contato Padrão
                 if (data.contact) {
                      if (data.contact.toLowerCase().includes('discord')) {
                         buttons += `<a href="#" onclick="updateStatus('Contato: ${data.contact} - Copiado!', false); navigator.clipboard.writeText('${data.contact}')" class="sale-contact-btn" style="background: #7289da;">VER DISCORD</a>`;
@@ -1043,7 +1135,6 @@ if (typeof firebase !== 'undefined') {
                      }
                 }
                 
-                // Botão de Excluir (para o vendedor ou dono)
                 if (currentUser && (data.sellerUid === currentUser.uid || currentUser.uid === OWNER_UID)) {
                     buttons += `<button onclick="deleteSale('${doc.id}', '${data.imageUrl}')" class="btn" style="background: var(--btn-red); width: 100%; margin-top: 10px;">Excluir Postagem</button>`;
                 }
@@ -1066,13 +1157,11 @@ if (typeof firebase !== 'undefined') {
         if (!confirm("Tem certeza que deseja excluir esta postagem?")) return;
         
         try {
-            // 1. Excluir imagem do Storage
             if (imageUrl) {
                 const fileRef = storage.refFromURL(imageUrl);
                 await fileRef.delete();
             }
             
-            // 2. Excluir documento do Firestore 
             await salesColRef.doc(saleId).delete();
             updateStatus("Postagem excluída com sucesso.", false);
         } catch (error) {
@@ -1086,7 +1175,7 @@ if (typeof firebase !== 'undefined') {
     // ----------------------------------------------------
 
     async function adminGiveGold() {
-        if (currentUser.uid !== m3h06woQv2V7lrNu1p8fDQCZ8IW2) return;
+        if (currentUser.uid !== OWNER_UID) return;
 
         const targetUsername = document.getElementById('adminName').value.trim();
         const amount = parseInt(document.getElementById('adminAmount').value);
@@ -1103,7 +1192,6 @@ if (typeof firebase !== 'undefined') {
             const targetUid = snapshot.docs[0].id;
             const isWin = amount > 0;
 
-            // Uso de FieldValue.increment para segurança
             await usersColRef.doc(targetUid).update({
                 gold: FieldValue.increment(amount) ,
                 wins: isWin ? FieldValue.increment(1) : FieldValue.increment(0),
@@ -1122,7 +1210,6 @@ if (typeof firebase !== 'undefined') {
         if (currentUser.uid !== OWNER_UID) return;
         if (!confirm("Tem certeza que deseja apagar TODAS as mensagens do Chat Global?")) return;
         
-        // Limita o número de documentos para evitar timeout (Firestore limita batches)
         chatColRef.limit(200).get().then(snapshot => {
             const batch = db.batch();
             snapshot.docs.forEach(doc => {
@@ -1149,24 +1236,21 @@ if (typeof firebase !== 'undefined') {
             timestamp: FieldValue.serverTimestamp() 
         });
         
-        // Marca como offline
         window.addEventListener('beforeunload', () => isOnlineRef.delete());
         auth.onAuthStateChanged(user => {
             if (!user && isOnlineRef) isOnlineRef.delete();
         });
 
-        // Listener do contador em tempo real
         onlineUsersColRef.onSnapshot(snapshot => {
             let count = 0;
             const now = firebase.firestore.Timestamp.now().toMillis();
-            const timeout = 5 * 60 * 1000; // 5 minutos
+            const timeout = 5 * 60 * 1000; 
             const batch = db.batch();
             let hasCleanup = false;
 
             snapshot.forEach(doc => {
                 const data = doc.data();
                 if (data.timestamp && (now - data.timestamp.toMillis() > timeout)) {
-                    // Marca para exclusão se estiver desatualizado
                     batch.delete(doc.ref);
                     hasCleanup = true;
                 } else {
@@ -1196,18 +1280,15 @@ if (typeof firebase !== 'undefined') {
             document.getElementById('signedInUI').style.display = 'none';
             document.getElementById('ownerPanel').style.display = 'none';
             document.getElementById('playerInfoSocial').style.display = 'none';
-            // Garante que o contador online seja zerado para este usuário ao deslogar
             if (isOnlineRef) { isOnlineRef.delete(); isOnlineRef = null; }
             updateStatus("Desconectado. Faça login para usar o sistema.", true);
         }
     });
 
-    // Inicializa a primeira aba e listeners
     document.addEventListener('DOMContentLoaded', () => {
         switchTab('regrasTab');
     });
 } else {
-    // Se o SDK não carregou, avisa o erro
     document.addEventListener('DOMContentLoaded', () => {
         alert("ERRO: O SDK do Firebase não carregou. Verifique a conexão com a internet e se os links <script> do Firebase estão corretos.");
     });

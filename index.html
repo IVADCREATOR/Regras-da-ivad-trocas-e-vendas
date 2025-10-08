@@ -177,17 +177,18 @@ input:focus{outline: none; border-color: var(--main-gold);}
         <p style="margin: 0;">Seu Gold: <strong id="playerGold" style="color: var(--main-gold);">0</strong></p>
       </div>
 
-      <p class="small">Clique <strong>Trabalhar</strong> para ganhar <strong>+1 gold</strong>. (Cooldown: 5s)</p>
-      <button id="btnWork" class="btn">Trabalhar (+1 gold)</button>
+      <p class="small">Clique <strong>Trabalhar</strong> para ganhar gold aleatório entre **10 e 30**. (Cooldown: 5s)</p>
+      <button id="btnWork" class="btn">Trabalhar (10-30 gold)</button>
       <span id="workMsg" class="small" style="margin-left:1rem; color: #90caf9;"></span>
 
       <h3 style="margin-top: 2rem;">Aposta Simples 50/50 (1x)</h3>
+      <p class="small">Chance de 50%. Ganha o que apostou.</p>
       <input type="number" id="betAmount" placeholder="Quantos golds apostar?" min="1">
       <button id="btnBet" class="btn">Apostar 50/50</button>
       <span id="betMsg" class="small" style="color: #ffd54f;"></span>
 
       <h3 style="margin-top: 2rem;">Aposta Alta (5x)</h3>
-      <p class="small">Chance de 20%, mas paga **5x** o valor apostado.</p>
+      <p class="small">Chance menor (20%), mas paga **5x** o valor apostado se ganhar.</p>
       <input type="number" id="highBetAmount" placeholder="Quantos golds apostar (chance menor)?" min="1">
       <button id="btnHighBet" class="btn" style="background:var(--btn-red)">Apostar Alto</button>
       <span id="highBetMsg" class="small" style="color: #ef9a9a;"></span>
@@ -262,6 +263,19 @@ const elements = {
 // ===================================
 // 💡 FUNÇÕES AUXILIARES
 // ===================================
+
+/**
+ * Gera um número inteiro aleatório entre min (inclusivo) e max (inclusivo).
+ * @param {number} min - O valor mínimo do intervalo.
+ * @param {number} max - O valor máximo do intervalo.
+ * @returns {number} O número inteiro aleatório.
+ */
+function getRandomInt(min, max) {
+    min = Math.ceil(min);
+    max = Math.floor(max);
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
 function showTab(id){
   ['regrasTab','jogoTab','rankTab','chatTab'].forEach(t=>document.getElementById(t).style.display=(t===id?'block':'none'));
 }
@@ -351,7 +365,7 @@ auth.onAuthStateChanged(async user=>{
     });
 
     loadChat();
-    reloadRank(); // Recarrega o rank ao logar
+    reloadRank();
   }else{
     elements.signedOutUI.style.display='block';
     elements.signedInUI.style.display='none';
@@ -379,7 +393,10 @@ elements.btnWork.onclick=async ()=>{
   lastWork=now;
   
   elements.btnWork.disabled = true;
-  elements.workMsg.textContent='...';
+  elements.workMsg.textContent='Buscando Gold...';
+  
+  // Define o ganho aleatório entre 10 e 30
+  const gain = getRandomInt(10, 30); 
   
   try{
     const userRef = db.collection('users').doc(user.uid);
@@ -388,7 +405,7 @@ elements.btnWork.onclick=async ()=>{
       if(!d.exists) throw new Error('Usuário não encontrado');
       
       const currentGold = d.data().gold || 0;
-      const newGold = currentGold + 1;
+      const newGold = currentGold + gain;
       tx.update(userRef,{gold:newGold});
       
       if(newGold>=10000 && currentGold < 10000){
@@ -398,7 +415,7 @@ elements.btnWork.onclick=async ()=>{
         });
       }
     });
-    elements.workMsg.textContent='+1 gold!';
+    elements.workMsg.textContent=`💰 Você ganhou ${gain.toLocaleString('pt-BR')} gold!`;
     reloadRank();
   }catch(err){ 
     console.error(err); 
@@ -417,7 +434,7 @@ async function handleBet(amountInput, multiplier, chance, msgEl, btn) {
     if(isNaN(amt) || amt<=0){ showNotification('Insira um valor válido (mínimo 1 gold).'); return; }
     
     btn.disabled = true;
-    msgEl.textContent = 'Aguarde...';
+    msgEl.textContent = 'Aguarde, jogando os dados...';
     
     try {
         await db.runTransaction(async tx => {
@@ -428,15 +445,26 @@ async function handleBet(amountInput, multiplier, chance, msgEl, btn) {
             const currentGold = doc.data().gold || 0;
             if(currentGold < amt){ throw new Error('Gold insuficiente para esta aposta.'); }
             
+            // Lógica de sorte
             const win = Math.random() < chance;
-            const winAmount = amt * multiplier;
-            const diff = win ? winAmount : -amt;
+            
+            let winAmount = 0;
+            let diff = -amt; // Perde o valor apostado
+            
+            if (win) {
+                // Se ganhar, o lucro é o valor apostado (1x) ou 5x
+                winAmount = amt * multiplier;
+                diff = winAmount; // O diff é o lucro total (valor apostado + lucro)
+            } else {
+                // Se perder, o diff já é -amt
+            }
+
             const newGold = currentGold + diff;
 
             tx.update(userRef, { gold: newGold });
 
             if (win) {
-                msgEl.textContent = `🏆 Você ganhou ${winAmount.toLocaleString('pt-BR')} gold!`;
+                msgEl.textContent = `🏆 VITORIA! Você ganhou ${winAmount.toLocaleString('pt-BR')} gold!`;
                 if (newGold >= 10000 && currentGold < 10000) {
                     db.collection('globalNotifications').add({
                         message: `${doc.data().displayName} atingiu 10.000 gold em uma aposta!`,
@@ -444,7 +472,7 @@ async function handleBet(amountInput, multiplier, chance, msgEl, btn) {
                     });
                 }
             } else {
-                msgEl.textContent = `😔 Você perdeu ${amt.toLocaleString('pt-BR')} gold!`;
+                msgEl.textContent = `😔 DERROTA! Você perdeu ${amt.toLocaleString('pt-BR')} gold!`;
             }
         });
         reloadRank();
@@ -458,13 +486,17 @@ async function handleBet(amountInput, multiplier, chance, msgEl, btn) {
     }
 }
 
-// Aposta 50/50
+// Aposta 50/50 (1x)
 elements.btnBet.onclick=()=> {
+    // Multiplicador: 1x (Ganho: valor apostado)
+    // Chance: 0.5 (50%)
     handleBet(document.getElementById('betAmount'), 1, 0.5, elements.betMsg, elements.btnBet);
 };
 
-// Aposta Alta (chance menor)
+// Aposta Alta (5x)
 elements.btnHighBet.onclick=()=> {
+    // Multiplicador: 5x (Ganho: 5x o valor apostado)
+    // Chance: 0.2 (20% - mais difícil)
     handleBet(document.getElementById('highBetAmount'), 5, 0.2, elements.highBetMsg, elements.btnHighBet);
 };
 
@@ -625,4 +657,3 @@ document.getElementById('btnClearChat').onclick=async ()=>{
 </script>
 </body>
 </html>
-

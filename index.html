@@ -65,8 +65,8 @@ ul{padding-left:1.5rem}
 .btn:not(:disabled):hover::before { left: 125%; }
 
 /* INPUTS */
-input[type="text"],input[type="password"],input[type=number],select{width:100%;padding:.9rem;margin:.5rem 0;border-radius:8px;border:1px solid rgba(255,255,255,0.3);background:rgba(0,0,0,0.5);color:var(--text-primary);box-sizing: border-box; transition: border-color .2s;}
-input:focus{outline: none; border-color: var(--main-gold);}
+input[type="text"],input[type="password"],input[type=number],select,textarea{width:100%;padding:.9rem;margin:.5rem 0;border-radius:8px;border:1px solid rgba(255,255,255,0.3);background:rgba(0,0,0,0.5);color:var(--text-primary);box-sizing: border-box; transition: border-color .2s;}
+input:focus, textarea:focus{outline: none; border-color: var(--main-gold);}
 
 /* RANKING */
 .rank-list{max-height:420px;overflow-y:auto;padding:1rem; background: rgba(0,0,0,0.4);}
@@ -78,9 +78,15 @@ input:focus{outline: none; border-color: var(--main-gold);}
 .rank-list li:nth-child(3) strong{color: #cd7f32;}
 
 /* CHAT */
-.chat-box{max-height:280px;overflow-y:auto;background:rgba(0,0,0,0.5);padding:.75rem;margin-top:.75rem;border-radius:8px;border: 1px solid var(--border-color)}
+.chat-box{max-height:300px;overflow-y:auto;background:rgba(0,0,0,0.5);padding:.75rem;margin-top:.75rem;border-radius:8px;border: 1px solid var(--border-color)}
 .chat-msg{margin:.4rem 0; font-size: 0.9rem; word-wrap: break-word; color: #eee;}
 .chat-msg strong{color: #42a5f5; margin-right: 5px; font-weight: 600;}
+.chat-input-area{margin-top:.75rem; display: flex; gap: 5px; flex-wrap: wrap; align-items: stretch;}
+.chat-input-area input[type=text]{margin: 0; flex-grow: 1;}
+.chat-input-area button{padding: 0 1.2rem; margin: 0; font-size: 1rem;}
+#btnRecordAudio{background: var(--btn-blue); color: #fff; width: 50px; font-size: 1.2rem;}
+#btnRecordAudio.recording{background: var(--btn-red); animation: pulse 1s infinite;}
+@keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(229, 115, 115, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(229, 115, 115, 0); } 100% { box-shadow: 0 0 0 0 rgba(229, 115, 115, 0); } }
 
 /* NOTIFICAÇÃO GLOBAL */
 #globalNotice{
@@ -89,6 +95,12 @@ input:focus{outline: none; border-color: var(--main-gold);}
     animation: fadeInOut 4.5s cubic-bezier(0.19, 1, 0.22, 1) forwards;
 }
 @keyframes fadeInOut { 0%{opacity:0; transform: translateX(100px)} 5%{opacity:1; transform: translateX(0)} 95%{opacity:1; transform: translateX(0)} 100%{opacity:0; transform: translateX(100px)} }
+
+/* ABA DE TROCAS */
+.trade-item{border: 1px solid var(--border-color); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; display: flex; gap: 1rem; align-items: center; background: rgba(255,255,255,0.05);}
+.trade-item img{width: 80px; height: 80px; object-fit: cover; border-radius: 4px; border: 1px solid var(--main-gold);}
+.trade-info{flex-grow: 1;}
+.trade-info p{margin: 0.2rem 0;}
 
 @media(max-width:880px){ .container{grid-template-columns:1fr; padding:.5rem; margin-top: 1rem} .menu{order:2} }
 </style>
@@ -105,9 +117,10 @@ input:focus{outline: none; border-color: var(--main-gold);}
 <main class="container">
   <aside class="card menu">
     <button class="tabbtn active" data-tab="regrasTab">REGRAS</button>
-    <button class="tabbtn" data-tab="jogoTab">🎮 JOGUINHO</button>
+    <button class="tabbtn" data-tab="jogoTab">🎮 JOGUINHOS (Sorte Extrema)</button>
+    <button class="tabbtn" data-tab="tradeTab">🔄 TROCAS</button>
     <button class="tabbtn" data-tab="rankTab">🏆 RANK GLOBAL</button>
-    <button class="tabbtn" data-tab="chatTab">💬 CHAT</button>
+    <button class="tabbtn" data-tab="chatTab">💬 CHAT DINÂMICO</button>
     <hr style="border:none;height:1px;background:var(--border-color);margin:15px 0">
 
     <div id="authArea" class="small">
@@ -171,27 +184,74 @@ input:focus{outline: none; border-color: var(--main-gold);}
     </div>
 
     <div id="jogoTab" style="display:none">
-      <h2>🎮 Cassino & Joguinho</h2>
+      <h2>🎮 Cassino: Jogos de Sorte Extrema</h2>
       
       <div id="playerInfo" class="card" style="margin-bottom:1.5rem; padding: .8rem; background: rgba(255,255,255,0.15); display:none;">
         <p style="margin: 0;">Seu Gold: <strong id="playerGold" style="color: var(--main-gold);">0</strong></p>
       </div>
 
-      <p class="small">Clique <strong>Trabalhar</strong> para ganhar gold aleatório entre **10 e 30**. (Cooldown: 5s)</p>
-      <button id="btnWork" class="btn">Trabalhar (10-30 gold)</button>
+      <p class="small">Clique <strong>Trabalhar</strong>. Ganho varia de **1% a 100%** do seu Gold atual. (Cooldown: 5s)</p>
+      <button id="btnWork" class="btn">Trabalhar (Gold Aleatório)</button>
       <span id="workMsg" class="small" style="margin-left:1rem; color: #90caf9;"></span>
 
-      <h3 style="margin-top: 2rem;">Aposta Simples 50/50 (1x)</h3>
-      <p class="small">Chance de 50%. Ganha o que apostou.</p>
-      <input type="number" id="betAmount" placeholder="Quantos golds apostar?" min="1">
-      <button id="btnBet" class="btn">Apostar 50/50</button>
-      <span id="betMsg" class="small" style="color: #ffd54f;"></span>
+      <hr style="border:none;height:1px;background:var(--border-color);margin:20px 0">
 
-      <h3 style="margin-top: 2rem;">Aposta Alta (5x)</h3>
-      <p class="small">Chance menor (20%), mas paga **5x** o valor apostado se ganhar.</p>
-      <input type="number" id="highBetAmount" placeholder="Quantos golds apostar (chance menor)?" min="1">
-      <button id="btnHighBet" class="btn" style="background:var(--btn-red)">Apostar Alto</button>
-      <span id="highBetMsg" class="small" style="color: #ef9a9a;"></span>
+      <h3 style="margin-top: 1rem;">Aposta Simples (2x)</h3>
+      <p class="small">Chance de 50%. Ganha 2x o que apostou se acertar, perde o valor se errar.</p>
+      <input type="number" id="betAmount" placeholder="Quantos golds apostar?" min="1">
+      <button id="btnBetSimple" class="btn">Apostar 2x</button>
+      <span id="betMsgSimple" class="small" style="color: #ffd54f;"></span>
+
+      <h3 style="margin-top: 2rem;">Aposta Média (5x)</h3>
+      <p class="small">Chance de 20%. Ganha 5x o que apostou.</p>
+      <input type="number" id="betAmountMedium" placeholder="Quantos golds apostar?" min="1">
+      <button id="btnBetMedium" class="btn" style="background:var(--btn-blue)">Apostar 5x</button>
+      <span id="betMsgMedium" class="small" style="color: #90caf9;"></span>
+
+      <h3 style="margin-top: 2rem;">Aposta Alta (10x)</h3>
+      <p class="small">Chance de 10%. Ganha 10x o que apostou. Risco altíssimo!</p>
+      <input type="number" id="betAmountHigh" placeholder="Quantos golds apostar?" min="1">
+      <button id="btnBetHigh" class="btn" style="background:var(--btn-red)">Apostar 10x</button>
+      <span id="betMsgHigh" class="small" style="color: #ef9a9a;"></span>
+    </div>
+
+    <div id="tradeTab" style="display:none">
+      <h2>🔄 Trocas e Vendas</h2>
+      <p class="small">Aqui você pode publicar um item para troca ou venda por Gold. <strong style="color:var(--main-gold);">A moderação verificará as imagens.</strong></p>
+      
+      <div class="card" style="background: rgba(0,0,0,0.4); margin-bottom: 2rem;">
+        <h4>Publicar Novo Item</h4>
+        <input type="text" id="tradeTitle" placeholder="Título do Item (Ex: Conta Nível 50)">
+        <input type="number" id="tradePrice" placeholder="Valor em Gold (Ex: 5000)">
+        <textarea id="tradeDescription" placeholder="Descrição do item e termos de troca." rows="3"></textarea>
+        
+        <input type="file" id="tradeImage" accept="image/*" style="margin-bottom: 1rem;">
+        <p class="small" style="color: #e57373;">⚠️ O upload de imagens e a detecção de conteúdo sensível só funcionam com Cloud Functions (servidor), esta é uma demonstração de interface.</p>
+
+        <button id="btnSubmitTrade" class="btn" style="width: 100%;">Publicar Troca/Venda</button>
+      </div>
+
+      <h4>Itens à Venda (Mockup)</h4>
+      <div id="tradeList">
+        <div class="trade-item">
+            <img src="https://via.placeholder.com/80?text=Item" alt="Item de Troca">
+            <div class="trade-info">
+                <p><strong>Conta Rara (Troca Rápida)</strong></p>
+                <p class="small" style="color:var(--main-gold);">Valor: 85.000 Gold</p>
+                <p class="small">Vendedor: OWNER_UID</p>
+            </div>
+            <button class="btn" style="padding: .5rem 1rem; font-size: 0.9rem;">Comprar</button>
+        </div>
+        <div class="trade-item">
+            <img src="https://via.placeholder.com/80?text=Item" alt="Item de Troca">
+            <div class="trade-info">
+                <p><strong>Skin Exclusiva (Venda)</strong></p>
+                <p class="small" style="color:var(--main-gold);">Valor: 12.000 Gold</p>
+                <p class="small">Vendedor: JogadorTeste</p>
+            </div>
+            <button class="btn" style="padding: .5rem 1rem; font-size: 0.9rem;">Comprar</button>
+        </div>
+      </div>
     </div>
 
     <div id="rankTab" style="display:none">
@@ -201,12 +261,14 @@ input:focus{outline: none; border-color: var(--main-gold);}
     </div>
 
     <div id="chatTab" style="display:none">
-      <h2>💬 Chat Global</h2>
+      <h2>💬 Chat Global Dinâmico</h2>
       <div class="chat-box" id="chatBox"></div>
-      <div style="margin-top:.75rem; display: flex; gap: 5px;">
-        <input type="text" id="chatInput" placeholder="Digite sua mensagem" style="flex-grow: 1; margin: 0;">
-        <button id="btnSendChat" class="btn" style="padding: 0 1.2rem; margin: 0;">Enviar</button>
+      <div class="chat-input-area">
+        <input type="text" id="chatInput" placeholder="Digite sua mensagem ou inicie gravação..." style="margin: 0;">
+        <button id="btnRecordAudio" class="btn" title="Gravar Áudio (Funcionalidade de Servidor Necessária)">🎤</button>
+        <button id="btnSendChat" class="btn" style="padding: 0 1.2rem;">Enviar</button>
       </div>
+      <p class="small" style="margin-top: 5px; color: #ffb300;">🎤 Botão de Áudio: A interface existe, mas a gravação e envio de áudio exigem Firebase Storage e Cloud Functions.</p>
     </div>
   </section>
 </main>
@@ -252,12 +314,14 @@ const elements = {
     rankList: document.getElementById('rankList'),
     visitorCounter: document.getElementById('visitorCount'),
     workMsg: document.getElementById('workMsg'),
-    betMsg: document.getElementById('betMsg'),
-    highBetMsg: document.getElementById('highBetMsg'),
     globalNotice: document.getElementById('globalNotice'),
     btnWork: document.getElementById('btnWork'),
-    btnBet: document.getElementById('btnBet'),
-    btnHighBet: document.getElementById('btnHighBet')
+    btnBetSimple: document.getElementById('btnBetSimple'),
+    btnBetMedium: document.getElementById('btnBetMedium'),
+    btnBetHigh: document.getElementById('btnBetHigh'),
+    betMsgSimple: document.getElementById('betMsgSimple'),
+    betMsgMedium: document.getElementById('betMsgMedium'),
+    betMsgHigh: document.getElementById('betMsgHigh')
 };
 
 // ===================================
@@ -277,7 +341,7 @@ function getRandomInt(min, max) {
 }
 
 function showTab(id){
-  ['regrasTab','jogoTab','rankTab','chatTab'].forEach(t=>document.getElementById(t).style.display=(t===id?'block':'none'));
+  ['regrasTab','jogoTab','rankTab','chatTab','tradeTab'].forEach(t=>document.getElementById(t).style.display=(t===id?'block':'none'));
 }
 document.querySelectorAll('.tabbtn').forEach(b=>{
   b.addEventListener('click',e=>{
@@ -345,7 +409,7 @@ auth.onAuthStateChanged(async user=>{
             uid: user.uid,
             email: user.email,
             displayName: displayName,
-            gold: 0,
+            gold: 100, // Começa com 100 gold
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
     }
@@ -377,7 +441,7 @@ auth.onAuthStateChanged(async user=>{
 
 
 // ===================================
-// 🎮 JOGOS (Transações Garantidas)
+// 🎮 JOGOS E ALEATORIEDADE (1%-100%)
 // ===================================
 let lastWork=0;
 elements.btnWork.onclick=async ()=>{
@@ -395,9 +459,6 @@ elements.btnWork.onclick=async ()=>{
   elements.btnWork.disabled = true;
   elements.workMsg.textContent='Buscando Gold...';
   
-  // Define o ganho aleatório entre 10 e 30
-  const gain = getRandomInt(10, 30); 
-  
   try{
     const userRef = db.collection('users').doc(user.uid);
     await db.runTransaction(async tx=>{
@@ -405,17 +466,18 @@ elements.btnWork.onclick=async ()=>{
       if(!d.exists) throw new Error('Usuário não encontrado');
       
       const currentGold = d.data().gold || 0;
+      
+      // Ganho Aleatório: 1% a 100% do Gold Atual
+      const percentage = getRandomInt(1, 100); 
+      // Se o gold for zero, garante um ganho mínimo
+      const baseGold = currentGold > 0 ? currentGold : 100; 
+      const gain = Math.round(baseGold * (percentage / 100)); 
+      
       const newGold = currentGold + gain;
       tx.update(userRef,{gold:newGold});
       
-      if(newGold>=10000 && currentGold < 10000){
-        db.collection('globalNotifications').add({
-          message: `${d.data().displayName} atingiu 10.000 gold trabalhando!`,
-          timestamp: firebase.firestore.FieldValue.serverTimestamp()
-        });
-      }
+      elements.workMsg.textContent=`💰 Ganhou ${gain.toLocaleString('pt-BR')} gold! (+${percentage}%)`;
     });
-    elements.workMsg.textContent=`💰 Você ganhou ${gain.toLocaleString('pt-BR')} gold!`;
     reloadRank();
   }catch(err){ 
     console.error(err); 
@@ -426,7 +488,15 @@ elements.btnWork.onclick=async ()=>{
   }
 };
 
-async function handleBet(amountInput, multiplier, chance, msgEl, btn) {
+/**
+ * Função genérica para lidar com todas as apostas.
+ * @param {HTMLInputElement} amountInput - O campo de input do valor apostado.
+ * @param {number} multiplier - O multiplicador de ganho (1x, 2x, 5x, etc.).
+ * @param {number} winChance - A chance de vitória (0.0 a 1.0).
+ * @param {HTMLElement} msgEl - O elemento para exibir a mensagem.
+ * @param {HTMLButtonElement} btn - O botão de aposta.
+ */
+async function handleBet(amountInput, multiplier, winChance, msgEl, btn) {
     const user = auth.currentUser;
     if(!user){ showNotification('Faça login para apostar.'); return; }
     
@@ -445,18 +515,16 @@ async function handleBet(amountInput, multiplier, chance, msgEl, btn) {
             const currentGold = doc.data().gold || 0;
             if(currentGold < amt){ throw new Error('Gold insuficiente para esta aposta.'); }
             
-            // Lógica de sorte
-            const win = Math.random() < chance;
+            // Lógica de sorte com base na chance fornecida
+            const roll = Math.random(); // 0.0 a 1.0
+            const win = roll < winChance;
             
-            let winAmount = 0;
             let diff = -amt; // Perde o valor apostado
             
             if (win) {
-                // Se ganhar, o lucro é o valor apostado (1x) ou 5x
-                winAmount = amt * multiplier;
-                diff = winAmount; // O diff é o lucro total (valor apostado + lucro)
-            } else {
-                // Se perder, o diff já é -amt
+                // Ganha o valor apostado * multiplicador
+                const gain = amt * multiplier;
+                diff = gain; 
             }
 
             const newGold = currentGold + diff;
@@ -464,15 +532,9 @@ async function handleBet(amountInput, multiplier, chance, msgEl, btn) {
             tx.update(userRef, { gold: newGold });
 
             if (win) {
-                msgEl.textContent = `🏆 VITORIA! Você ganhou ${winAmount.toLocaleString('pt-BR')} gold!`;
-                if (newGold >= 10000 && currentGold < 10000) {
-                    db.collection('globalNotifications').add({
-                        message: `${doc.data().displayName} atingiu 10.000 gold em uma aposta!`,
-                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-                }
+                msgEl.textContent = `🏆 VITORIA! Você ganhou ${diff.toLocaleString('pt-BR')} gold! (Chance: ${Math.round(winChance*100)}%)`;
             } else {
-                msgEl.textContent = `😔 DERROTA! Você perdeu ${amt.toLocaleString('pt-BR')} gold!`;
+                msgEl.textContent = `😔 DERROTA! Você perdeu ${amt.toLocaleString('pt-BR')} gold. (Sorte: ${Math.round(roll*100)}%)`;
             }
         });
         reloadRank();
@@ -486,18 +548,19 @@ async function handleBet(amountInput, multiplier, chance, msgEl, btn) {
     }
 }
 
-// Aposta 50/50 (1x)
-elements.btnBet.onclick=()=> {
-    // Multiplicador: 1x (Ganho: valor apostado)
-    // Chance: 0.5 (50%)
-    handleBet(document.getElementById('betAmount'), 1, 0.5, elements.betMsg, elements.btnBet);
+// Aposta Simples (2x) - Chance de 50%
+elements.btnBetSimple.onclick=()=> {
+    handleBet(document.getElementById('betAmount'), 2, 0.5, elements.betMsgSimple, elements.btnBetSimple);
 };
 
-// Aposta Alta (5x)
-elements.btnHighBet.onclick=()=> {
-    // Multiplicador: 5x (Ganho: 5x o valor apostado)
-    // Chance: 0.2 (20% - mais difícil)
-    handleBet(document.getElementById('highBetAmount'), 5, 0.2, elements.highBetMsg, elements.btnHighBet);
+// Aposta Média (5x) - Chance de 20%
+elements.btnBetMedium.onclick=()=> {
+    handleBet(document.getElementById('betAmountMedium'), 5, 0.2, elements.betMsgMedium, elements.btnBetMedium);
+};
+
+// Aposta Alta (10x) - Chance de 10%
+elements.btnBetHigh.onclick=()=> {
+    handleBet(document.getElementById('betAmountHigh'), 10, 0.1, elements.betMsgHigh, elements.btnBetHigh);
 };
 
 // ===================================
@@ -562,6 +625,11 @@ document.getElementById('btnSendChat').onclick=async ()=>{
   }
 };
 
+document.getElementById('btnRecordAudio').onclick = () => {
+    // Apenas um alerta para simular a necessidade de servidor
+    showNotification('⚠️ Para áudio: Você precisa do Firebase Storage e Cloud Functions.');
+};
+
 // ===================================
 // 📈 CONTADOR DE VISITANTES
 // ===================================
@@ -577,20 +645,7 @@ db.collection('visitors').doc('count').onSnapshot(doc=>{
 
 
 // ===================================
-// 📢 NOTIFICAÇÕES GLOBAIS
-// ===================================
-db.collection('globalNotifications').orderBy('timestamp','desc').limit(1).onSnapshot(snapshot=>{
-  snapshot.docChanges().forEach(change => {
-    if (change.type === "added") {
-      showNotification(change.doc.data().message);
-      // Limpa após 4 segundos
-      setTimeout(() => change.doc.ref.delete().catch(console.error), 4000); 
-    }
-  });
-});
-
-// ===================================
-// 👑 PAINEL DO DONO
+// 👑 PAINEL DO DONO (Admin)
 // ===================================
 document.getElementById('btnGive').onclick=async ()=>{
   const user = auth.currentUser;
@@ -654,6 +709,43 @@ document.getElementById('btnClearChat').onclick=async ()=>{
     showNotification('Erro ao limpar o chat: '+err.message);
   }
 };
+
+// ===================================
+// 🔄 TROCAS (Mockup de Funcionalidade)
+// ===================================
+document.getElementById('btnSubmitTrade').onclick = () => {
+    const title = document.getElementById('tradeTitle').value;
+    const price = document.getElementById('tradePrice').value;
+    const description = document.getElementById('tradeDescription').value;
+    const file = document.getElementById('tradeImage').files[0];
+    
+    if (!auth.currentUser) {
+        showNotification('Faça login para publicar uma troca.');
+        return;
+    }
+    if (!title || !price || !description || !file) {
+        showNotification('Preencha todos os campos e anexe uma imagem.');
+        return;
+    }
+
+    // AVISO SOBRE MODERAÇÃO
+    showNotification('⚠️ Item publicado! Lembre-se: A moderação de imagens NSFW (banimento) e o upload real dependem do Firebase Storage e Cloud Functions.');
+
+    // Aqui iria o código real para:
+    // 1. Fazer upload da imagem para o Firebase Storage
+    // 2. Chamar a Cloud Function para analisar a imagem (NSFW Check)
+    // 3. Se a imagem for segura, salvar o link no Firestore.
+    // 4. Se a imagem for NSFW, BANIR o usuário e excluir a imagem.
+    
+    // Por enquanto, apenas limpa os campos para simular a publicação.
+    document.getElementById('tradeTitle').value = '';
+    document.getElementById('tradePrice').value = '';
+    document.getElementById('tradeDescription').value = '';
+    document.getElementById('tradeImage').value = '';
+
+};
+
 </script>
 </body>
 </html>
+

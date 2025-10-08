@@ -414,7 +414,7 @@ input[type="file"]::file-selector-button {
 
             <div class="bet-option-card">
                 <h3 style="margin-top: 0;">Cor (2x ou 4x)</h3>
-                <p class="small">Aposte no Vermelho (2x), Preto (2x) ou Verde (4x).</p>
+                <p class="small">Aposte no Vermelho (48%), Preto (48%) ou Verde (4x - 4%).</p>
                 <input type="number" id="betCorAmount" placeholder="Gold para apostar" min="1">
                 <select id="betCorColor" style="margin-bottom: 10px; padding: 10px; border-radius: 8px; width: 100%; background: rgba(0,0,0,0.7); color: var(--text-primary); border: 1px solid var(--border-color);">
                     <option value="red" style="color: red;">Vermelho (48%)</option>
@@ -548,7 +548,7 @@ let cooldowns = {
 const COOLDOWN_WORK = 5000;
 const COOLDOWN_COLLECT = 10000; // 10 segundos para caçar e minerar
 
-// CONFIGURAÇÃO FORNECIDA PELO USUÁRIO (AJUSTADA PARA FUNCIONAR)
+// CONFIGURAÇÃO FORNECIDA PELO USUÁRIO
 const firebaseConfig = {
   apiKey: "AIzaSyDxXQjbQ400wgqTW1_UfY3vPs1XES6M-78",
   authDomain: "regras-ivad.firebaseapp.com",
@@ -556,8 +556,7 @@ const firebaseConfig = {
   storageBucket: "regras-ivad.firebasestorage.app",
   messagingSenderId: "812565896201",
   appId: "1:812565896201:web:e8e6b5e6aaaf944b1aacd8",
-  // O measurementId foi removido do objeto de config principal
-  // Mas o firebase-analytics.js foi incluído acima para compatibilidade.
+  measurementId: "G-3Z5PFGMND5" // Mantido mas não usado ativamente pelo JS
 };
 
 // Certifica-se de que o Firebase SDK está carregado antes de inicializar
@@ -635,50 +634,66 @@ if (typeof firebase !== 'undefined') {
 
 
     // ----------------------------------------------------
-    // 3. AUTENTICAÇÃO E PERFIL
+    // 3. AUTENTICAÇÃO E PERFIL (CORREÇÃO DE BUGS DE EMAIL E LOGIN)
     // ----------------------------------------------------
 
     async function checkUsernameAvailability(username) {
+        // Verifica se o nome de usuário EXATO já existe no Firestore.
         const snapshot = await usersColRef.where('username', '==', username).get();
         return snapshot.empty;
     }
 
     async function signup() {
-        const username = document.getElementById('username').value.trim();
-        const email = document.getElementById('username').value.trim() + "@ivad.com"; 
+        // 1. LIMPEZA E VALIDAÇÃO DOS INPUTS
+        const rawUsername = document.getElementById('username').value.trim();
         const password = document.getElementById('pwd').value;
         
-        if (username.length < 3) {
+        // Remove caracteres que possam causar problemas no email e torna MINÚSCULO para o email do Firebase
+        const safeUsername = rawUsername.replace(/[^a-zA-Z0-9]/g, '').toLowerCase(); 
+        const email = safeUsername + "@ivad.com"; 
+        
+        if (rawUsername.length < 3) {
             return updateStatus("Nome de usuário deve ter no mínimo 3 caracteres.", true);
         }
         if (password.length < 6) {
             return updateStatus("Senha deve ter no mínimo 6 caracteres.", true);
         }
+        
+        if (rawUsername.length !== safeUsername.length || rawUsername !== rawUsername.toLowerCase()) {
+            // Notifica se o nome de usuário for ajustado para o EMAIL, mas mantemos o original no Firestore
+            updateStatus(`Atenção: Seu nome foi normalizado para segurança do login. Nome visível: "${rawUsername}".`, false);
+        }
 
-        const isAvailable = await checkUsernameAvailability(username);
+        // 2. VERIFICAÇÃO DE DISPONIBILIDADE DO NOME DE USUÁRIO (CASE-SENSITIVE)
+        const isAvailable = await checkUsernameAvailability(rawUsername); 
         if (!isAvailable) {
             return updateStatus("Nome de usuário já está em uso.", true);
         }
 
         updateStatus("Criando conta...");
         
+        // 3. CRIAÇÃO DE USUÁRIO NO FIREBASE
         auth.createUserWithEmailAndPassword(email, password)
             .then(async (userCredential) => {
                 const user = userCredential.user;
                 
                 await usersColRef.doc(user.uid).set({
-                    username: username,
+                    username: rawUsername, // Salva o nome de usuário original (como o usuário digitou)
                     gold: initialGold, 
                     wins: 0,
                     losses: 0,
-                    inventory: [], // INVENTÁRIO INICIALIZADO
+                    inventory: [], 
                     creationTime: FieldValue.serverTimestamp()
                 });
-                updateStatus(`Conta de ${username} criada com sucesso!`, false);
+                updateStatus(`Conta de ${rawUsername} criada com sucesso!`, false);
             })
             .catch(error => {
                 if (error.code === 'auth/email-already-in-use') {
-                     updateStatus("Um usuário com este nome já existe. Tente outro nome.", true);
+                     updateStatus("Erro: Nome de usuário já existe. Tente outro nome.", true);
+                } else if (error.code === 'auth/weak-password') {
+                     updateStatus("Erro: A senha é muito fraca. Use pelo menos 6 caracteres.", true);
+                } else if (error.code === 'auth/too-many-requests') {
+                    updateStatus("BLOQUEADO: Seu dispositivo/IP está temporariamente bloqueado. Tente novamente em 1 hora ou mude sua conexão.", true);
                 } else {
                      updateStatus(`Erro no registro: ${error.message}`, true);
                 }
@@ -686,12 +701,20 @@ if (typeof firebase !== 'undefined') {
     }
 
     function login() {
-        const email = document.getElementById('username').value.trim() + "@ivad.com";
+        const rawUsername = document.getElementById('username').value.trim();
         const password = document.getElementById('pwd').value;
+        
+        // Deve usar a mesma lógica de email do signup para login funcionar
+        const safeUsername = rawUsername.replace(/[^a-zA-Z0-9]/g, '').toLowerCase(); 
+        const email = safeUsername + "@ivad.com";
         
         auth.signInWithEmailAndPassword(email, password)
             .catch(error => {
-                updateStatus(`Erro no login: ${error.message}`, true);
+                if (error.code === 'auth/too-many-requests') {
+                    updateStatus("BLOQUEADO: Seu dispositivo/IP está temporariamente bloqueado. Tente novamente em 1 hora ou mude sua conexão.", true);
+                } else {
+                    updateStatus(`Erro no login: ${error.message}`, true);
+                }
             });
     }
 
@@ -708,6 +731,7 @@ if (typeof firebase !== 'undefined') {
         userRef.onSnapshot(docSnapshot => {
             if (docSnapshot.exists) {
                 const data = docSnapshot.data();
+                // Garante que o Gold não seja negativo
                 const currentGold = Math.max(0, data.gold || 0); 
                 
                 document.getElementById('myGold').textContent = currentGold.toLocaleString();
@@ -739,7 +763,10 @@ if (typeof firebase !== 'undefined') {
     // ----------------------------------------------------
 
     async function updateGold(amount, isWin = false) {
-        if (!currentUser) return false;
+        if (!currentUser) { 
+             updateStatus("Erro: Não logado. Gold não atualizado.", true);
+             return false;
+        }
         
         const updateData = {
             gold: FieldValue.increment(amount)
@@ -806,6 +833,8 @@ if (typeof firebase !== 'undefined') {
         if (!inventory || inventory.length === 0) {
             list.innerHTML = '<li id="inventoryEmptyMsg" style="text-align: center; color: var(--text-secondary);">Inventário vazio.</li>';
             totalElement.textContent = 'Valor Total: 0 Gold';
+            // Garante que o botão de venda esteja desabilitado
+            document.getElementById('btnSellInventory').disabled = true;
             return;
         }
         
@@ -831,6 +860,7 @@ if (typeof firebase !== 'undefined') {
         }
         
         totalElement.textContent = `Valor Total: ${totalValue.toLocaleString()} Gold`;
+        document.getElementById('btnSellInventory').disabled = false; // Habilita o botão
     }
 
     // Jogo Simples: Trabalho (MANTIDO COMO RECUPERAÇÃO)
@@ -841,12 +871,14 @@ if (typeof firebase !== 'undefined') {
         
         setCooldown(action, COOLDOWN_WORK, btnId);
 
-        const currentGold = parseInt(document.getElementById('myGold').textContent.replace(/[^0-9]/g, '')) || 0;
+        const currentGoldText = document.getElementById('myGold').textContent.replace(/[^0-9]/g, '');
+        const currentGold = parseInt(currentGoldText) || 0;
         
         const percentage = Math.floor(Math.random() * 100) + 1; 
         const earnings = Math.max(1, Math.floor(currentGold * (percentage / 100))); 
         
-        await updateGold(earnings, true);
+        const success = await updateGold(earnings, true);
+        if (!success) return;
 
         document.getElementById('workMsg').textContent = `Você trabalhou e ganhou +${earnings.toLocaleString()} Gold (${percentage}%).`;
         
@@ -882,7 +914,8 @@ if (typeof firebase !== 'undefined') {
         
         currentInventory.push(item);
         
-        await updateInventory(currentInventory);
+        const success = await updateInventory(currentInventory);
+        if (!success) return;
         
         updateStatus(`Caça: Você encontrou ${item.name} (Valor: ${item.goldValue.toLocaleString()} Gold)!`, false);
     }
@@ -914,7 +947,8 @@ if (typeof firebase !== 'undefined') {
         
         currentInventory.push(item);
         
-        await updateInventory(currentInventory);
+        const success = await updateInventory(currentInventory);
+        if (!success) return;
         
         updateStatus(`Mineração: Você desenterrou ${item.name} (Valor: ${item.goldValue.toLocaleString()} Gold)!`, false);
     }
@@ -934,7 +968,8 @@ if (typeof firebase !== 'undefined') {
         let totalGold = currentInventory.reduce((sum, item) => sum + item.goldValue, 0);
         
         // 1. Adiciona Gold
-        await updateGold(totalGold, true);
+        const successGold = await updateGold(totalGold, true);
+        if (!successGold) return;
         
         // 2. Limpa o inventário
         await updateInventory([]);
@@ -944,7 +979,7 @@ if (typeof firebase !== 'undefined') {
 
 
     // ----------------------------------------------------
-    // 5. OUTRAS FUNÇÕES (Não Alteradas)
+    // 5. OUTRAS FUNÇÕES (APOSTAS)
     // ----------------------------------------------------
 
     function validateBet(amount) {
@@ -984,7 +1019,7 @@ if (typeof firebase !== 'undefined') {
         }, 4000);
     }
     
-    // Jogo Simples: Multiplicador (RESTAURO)
+    // Jogo Simples: Multiplicador
     async function betSimple(multiplier, inputId, msgId, winChance) {
         const inputElement = document.getElementById(inputId);
         const amount = parseInt(inputElement.value);
@@ -993,7 +1028,8 @@ if (typeof firebase !== 'undefined') {
         const win = Math.random() * 100 < winChance;
         const result = win ? amount * (multiplier - 1) : -amount; 
         
-        await updateGold(result, win);
+        const success = await updateGold(result, win);
+        if (!success) return;
         
         const msg = win 
             ? `✅ GANHOU ${multiplier}x! Lucro de ${result.toLocaleString()} Gold.` 
@@ -1003,7 +1039,7 @@ if (typeof firebase !== 'undefined') {
         notify(msg, win);
     }
 
-    // Aposta Avançada: Cor (RESTAURO)
+    // Aposta Avançada: Cor
     async function betCor() {
         const amount = parseInt(document.getElementById('betCorAmount').value);
         const choice = document.getElementById('betCorColor').value;
@@ -1027,7 +1063,8 @@ if (typeof firebase !== 'undefined') {
         const win = choice === outcome;
         const result = win ? amount * (mult - 1) : -amount;
         
-        await updateGold(result, win);
+        const success = await updateGold(result, win);
+        if (!success) return;
         
         const msg = win 
             ? `✅ GANHOU ${mult}x! Sorteado: ${outcome.toUpperCase()}. Lucro: ${result.toLocaleString()} Gold.` 
@@ -1037,7 +1074,7 @@ if (typeof firebase !== 'undefined') {
         notify(msg, win);
     }
 
-    // Aposta Avançada: Moeda (RESTAURO)
+    // Aposta Avançada: Moeda
     async function betCoin() {
         const amount = parseInt(document.getElementById('betCoinAmount').value);
         const choice = document.getElementById('betCoinSide').value;
@@ -1047,7 +1084,8 @@ if (typeof firebase !== 'undefined') {
         const win = choice === outcome;
         const result = win ? amount : -amount;
         
-        await updateGold(result, win);
+        const success = await updateGold(result, win);
+        if (!success) return;
         
         const msg = win 
             ? `✅ GANHOU 2x! Deu ${outcome.toUpperCase()}. Lucro: ${result.toLocaleString()} Gold.` 
@@ -1057,7 +1095,7 @@ if (typeof firebase !== 'undefined') {
         notify(msg, win);
     }
 
-    // Aposta Avançada: Dice/Loteria (RESTAURO e NOVO)
+    // Aposta Avançada: Dice/Loteria
     async function betDice(maxNumber, multiplier, inputAmountId, inputChoiceId, msgId) {
         const amount = parseInt(document.getElementById(inputAmountId).value);
         const choice = parseInt(document.getElementById(inputChoiceId).value);
@@ -1070,7 +1108,8 @@ if (typeof firebase !== 'undefined') {
         const win = choice === outcome;
         const result = win ? amount * (multiplier - 1) : -amount;
         
-        await updateGold(result, win);
+        const success = await updateGold(result, win);
+        if (!success) return;
         
         const msg = win 
             ? `✅ ACERTOU ${outcome}! Lucro de ${result.toLocaleString()} Gold (${multiplier}x).` 
@@ -1080,7 +1119,7 @@ if (typeof firebase !== 'undefined') {
         notify(msg, win);
     }
 
-    // Aposta Avançada: RNG Mágico (RESTAURO)
+    // Aposta Avançada: RNG Mágico
     async function betRNG(multiplier, fixedAmount, winChance, msgId) {
         const amount = fixedAmount;
         if (!validateBet(amount)) return; 
@@ -1089,7 +1128,8 @@ if (typeof firebase !== 'undefined') {
         const win = rand < winChance;
         const result = win ? amount * (multiplier - 1) : -amount;
         
-        await updateGold(result, win);
+        const success = await updateGold(result, win);
+        if (!success) return;
         
         const msg = win 
             ? `✅ NÚMERO MÁGICO! Lucro de ${result.toLocaleString()} Gold (${multiplier}x).` 
@@ -1131,8 +1171,6 @@ if (typeof firebase !== 'undefined') {
         // Revela o resultado em todas as caixas
         boxes.forEach((box, index) => {
             const outcome = shuffledOutcomes[index];
-            box.classList.add('open');
-            box.style.borderColor = outcome.color;
 
             if (box === chosenBoxElement) {
                 // Usuário acertou ou errou
@@ -1149,12 +1187,16 @@ if (typeof firebase !== 'undefined') {
             
             // Adiciona o resultado visual
             setTimeout(() => {
+                box.classList.add('open');
+                box.style.borderColor = outcome.color;
                 box.textContent = outcome.id; 
             }, 500);
         });
 
         // Atualiza o Gold e notifica
-        await updateGold(result, isWin);
+        const success = await updateGold(result, isWin);
+        if (!success) return;
+
         msgElement.textContent = finalMsg;
         notify(finalMsg, isWin);
 
@@ -1173,7 +1215,7 @@ if (typeof firebase !== 'undefined') {
 
 
     // ----------------------------------------------------
-    // 6. RANKING GLOBAL (Não Alterado)
+    // 6. RANKING GLOBAL
     // ----------------------------------------------------
 
     function loadRanking() {
@@ -1211,7 +1253,7 @@ if (typeof firebase !== 'undefined') {
 
 
     // ----------------------------------------------------
-    // 7. CHAT GLOBAL (Não Alterado)
+    // 7. CHAT GLOBAL
     // ----------------------------------------------------
 
     async function sendMessage() {
@@ -1224,7 +1266,15 @@ if (typeof firebase !== 'undefined') {
         }
         
         document.getElementById('chatError').textContent = "";
-        const userData = (await usersColRef.doc(currentUser.uid).get()).data();
+        
+        // Verifica se o usuário está logado e pega os dados (evita crash se o usuário não tiver doc no firestore)
+        let userData;
+        try {
+             userData = (await usersColRef.doc(currentUser.uid).get()).data();
+             if (!userData || !userData.username) throw new Error("Dados de usuário incompletos.");
+        } catch (e) {
+             return document.getElementById('chatError').textContent = "Erro ao enviar: Falha ao obter dados do usuário.";
+        }
         
         chatColRef.add({
             username: userData.username,
@@ -1263,7 +1313,7 @@ if (typeof firebase !== 'undefined') {
 
 
     // ----------------------------------------------------
-    // 8. SISTEMA DE VENDAS (Com Upload de Imagem - Não Alterado)
+    // 8. SISTEMA DE VENDAS (Com Upload de Imagem)
     // ----------------------------------------------------
 
     async function postSale() {
@@ -1333,9 +1383,11 @@ if (typeof firebase !== 'undefined') {
                 let buttons = '';
 
                 if (data.contact) {
-                     if (data.contact.toLowerCase().includes('discord')) {
-                        buttons += `<a href="#" onclick="updateStatus('Contato: ${data.contact} - Copiado!', false); navigator.clipboard.writeText('${data.contact}')" class="sale-contact-btn" style="background: #7289da;">VER DISCORD</a>`;
-                     } else if (data.contact.toLowerCase().includes('wa.me') || data.contact.match(/^\+?\d{10,15}$/)) {
+                     // Lógica para detecção de contato
+                     const contactText = data.contact.toLowerCase();
+                     if (contactText.includes('discord')) {
+                        buttons += `<a href="#" onclick="navigator.clipboard.writeText('${data.contact}'); updateStatus('Contato Discord copiado!', false);" class="sale-contact-btn" style="background: #7289da;">VER DISCORD</a>`;
+                     } else if (contactText.includes('wa.me') || data.contact.match(/^\+?\d{10,15}$/)) {
                          const waLink = data.contact.startsWith('https://wa.me') ? data.contact : `https://wa.me/${data.contact.replace(/[^\d+]/g, '')}?text=Tenho%20interesse%20no%20seu%20item%20'${data.title}'%20no%20IVAD!`;
                          buttons += `<a href="${waLink}" target="_blank" class="sale-contact-btn" style="background: #25d366;">CHAMAR NO WHATSAPP</a>`;
                      } else {
@@ -1379,11 +1431,11 @@ if (typeof firebase !== 'undefined') {
 
 
     // ----------------------------------------------------
-    // 9. FUNÇÕES DE ADMINISTRADOR (Não Alterado)
+    // 9. FUNÇÕES DE ADMINISTRADOR
     // ----------------------------------------------------
 
     async function adminGiveGold() {
-        if (currentUser.uid !== OWNER_UID) return;
+        if (!currentUser || currentUser.uid !== OWNER_UID) return;
 
         const targetUsername = document.getElementById('adminName').value.trim();
         const amount = parseInt(document.getElementById('adminAmount').value);
@@ -1415,7 +1467,7 @@ if (typeof firebase !== 'undefined') {
     }
 
     async function adminClearChat() {
-        if (currentUser.uid !== OWNER_UID) return;
+        if (!currentUser || currentUser.uid !== OWNER_UID) return;
         if (!confirm("Tem certeza que deseja apagar TODAS as mensagens do Chat Global?")) return;
         
         chatColRef.limit(200).get().then(snapshot => {
@@ -1431,7 +1483,7 @@ if (typeof firebase !== 'undefined') {
 
 
     // ----------------------------------------------------
-    // 10. CONTADOR DE USUÁRIOS ONLINE (Não Alterado)
+    // 10. CONTADOR DE USUÁRIOS ONLINE
     // ----------------------------------------------------
 
     function trackOnlineStatus(uid) {
@@ -1446,6 +1498,7 @@ if (typeof firebase !== 'undefined') {
             timestamp: FieldValue.serverTimestamp() 
         });
         
+        // Define o status offline no logoff
         window.addEventListener('beforeunload', () => isOnlineRef.delete());
         auth.onAuthStateChanged(user => {
             if (!user && isOnlineRef) isOnlineRef.delete();
@@ -1454,7 +1507,7 @@ if (typeof firebase !== 'undefined') {
         onlineUsersColRef.onSnapshot(snapshot => {
             let count = 0;
             const now = firebase.firestore.Timestamp.now().toMillis();
-            const timeout = 5 * 60 * 1000; 
+            const timeout = 5 * 60 * 1000; // 5 minutos
             const batch = db.batch();
             let hasCleanup = false;
 
@@ -1478,7 +1531,7 @@ if (typeof firebase !== 'undefined') {
 
 
     // ----------------------------------------------------
-    // 11. LISTENERS GLOBAIS (Não Alterado)
+    // 11. LISTENERS GLOBAIS
     // ----------------------------------------------------
 
     auth.onAuthStateChanged(user => {
@@ -1486,12 +1539,11 @@ if (typeof firebase !== 'undefined') {
             loadUserData(user);
         } else {
             currentUser = null;
-            document.getElementById('signedOutUI').style.display = 'block'; // Mostra o login se deslogado
+            document.getElementById('signedOutUI').style.display = 'block'; 
             document.getElementById('signedInUI').style.display = 'none';
             document.getElementById('ownerPanel').style.display = 'none';
             document.getElementById('playerInfoSocial').style.display = 'none';
             if (isOnlineRef) { isOnlineRef.delete(); isOnlineRef = null; }
-            // Mantenha o status de erro se necessário, mas evite mostrar se for apenas a primeira carga.
         }
     });
 
@@ -1500,7 +1552,7 @@ if (typeof firebase !== 'undefined') {
     });
 } else {
     document.addEventListener('DOMContentLoaded', () => {
-        alert("ERRO: O SDK do Firebase não carregou. Verifique a conexão com a internet e se os links <script> do Firebase estão corretos.");
+        alert("ERRO CRÍTICO: O SDK do Firebase não carregou. Verifique sua conexão e os links do SDK.");
     });
 }
 

@@ -200,8 +200,8 @@ input[type="file"]{padding: 10px; background: rgba(255,255,255,0.05); border-rad
         <input id="username" type="text" placeholder="Nome de Usuário (único)">
         <input id="pwd" type="password" placeholder="Senha (mín. 6 caracteres)">
         <div style="display:flex;gap:.5rem; margin-top: 10px;">
-          <button id="btnSignup" class="btn" style="background:var(--btn-blue); flex-grow: 1; padding: .8rem;">Criar conta</button>
-          <button id="btnLogin" class="btn" style="flex-grow: 1; padding: .8rem;">Entrar</button>
+          <button id="btnSignup" class="btn" onclick="signup()" style="background:var(--btn-blue); flex-grow: 1; padding: .8rem;">Criar conta</button>
+          <button id="btnLogin" class="btn" onclick="login()" style="flex-grow: 1; padding: .8rem;">Entrar</button>
         </div>
         <p class="small" style="margin-top: 8px;">Nome de usuário é único e não pode ser alterado.</p>
       </div>
@@ -209,7 +209,7 @@ input[type="file"]{padding: 10px; background: rgba(255,255,255,0.05); border-rad
       <div id="signedInUI" style="display:none">
         <p style="margin-bottom: .8rem; font-size: 1.1rem;"><strong id="userLabel"></strong></p>
         <div style="display:flex;gap:.5rem;align-items:center">
-          <button id="btnLogout" class="btn" style="background:var(--btn-red); padding: .7rem 1.2rem; font-size: 0.9rem;">Sair</button>
+          <button id="btnLogout" class="btn" onclick="auth.signOut()" style="background:var(--btn-red); padding: .7rem 1.2rem; font-size: 0.9rem;">Sair</button>
           <div style="margin-left:auto; font-size: 1.3rem;"><span class="small" style="color:var(--main-gold); font-size: 0.9em;">Gold: </span><strong id="myGold" style="color: var(--main-gold);">0</strong></div>
         </div>
       </div>
@@ -268,7 +268,7 @@ input[type="file"]{padding: 10px; background: rgba(255,255,255,0.05); border-rad
     <div id="jogoSimplesTab" style="display:none">
         <h2>💰 Gold Simples (Trabalho e Apostas)</h2>
       
-        <div id="playerInfo" class="card" style="margin-bottom:1.5rem; padding: 1rem; background: rgba(255,255,255,0.1); display:none; border: 1px solid var(--main-gold);">
+        <div id="playerInfo" class="card" style="margin-bottom:1.5rem; padding: 1rem; background: rgba(255,255,255,0.1); display:block; border: 1px solid var(--main-gold);">
             <p style="margin: 0; font-size: 1.1rem;">Seu Gold: <strong id="playerGold" style="color: var(--main-gold);">0</strong></p>
         </div>
 
@@ -299,7 +299,7 @@ input[type="file"]{padding: 10px; background: rgba(255,255,255,0.05); border-rad
             </div>
             
             <div class="bet-option-card">
-                <h4 style="color: var(--btn-red); margin-top: 0;'>10x (Aposta Extrema)</h4>
+                <h4 style="color: var(--btn-red); margin-top: 0;">10x (Aposta Extrema)</h4>
                 <p class="small">Altíssimo risco. Chance de 10%.</p>
                 <input type="number" id="betAmount_10x" placeholder="Quantos golds apostar?" min="1">
                 <button onclick="betSimple(10, 'betAmount_10x', 'betMsg_10x', 10)" class="btn" style="background:var(--btn-red); width: 100%; margin-top: 10px;">Apostar 10x</button>
@@ -344,7 +344,7 @@ input[type="file"]{padding: 10px; background: rgba(255,255,255,0.05); border-rad
                 <p class="small">Acerte um número de 1 a 12. Paga 12x a aposta. (8.3% chance)</p>
                 <input type="number" id="betDice12Amount" placeholder="Gold para apostar" min="1">
                 <input type="number" id="betDice12Number" placeholder="Seu Número (1-12)" min="1" max="12">
-                <button onclick="betDice(12, 12, 'betDice12Amount', 'betDice12Msg')" class="btn" style="width: 100%; background: var(--btn-red);">Rolar Alto Risco</button>
+                <button onclick="betDice(12, 12, 'betDice12Amount', 'betDice12Number', 'betDice12Msg')" class="btn" style="width: 100%; background: var(--btn-red);">Rolar Alto Risco</button>
                 <span id="betDice12Msg" class="small" style="display: block; margin-top: 5px;"></span>
             </div>
             
@@ -360,982 +360,764 @@ input[type="file"]{padding: 10px; background: rgba(255,255,255,0.05); border-rad
                 <p class="small">Custo 100 Gold. (Em desenvolvimento: Funcionalidade visual da roleta)</p>
                 <div style="position: relative; text-align: center; margin-bottom: 20px;">
                     <div class="wheel-pointer"></div>
-                    <div id="prizeWheel" class="prize-wheel"></div>
+                    <button class="btn" disabled>Girar Roleta (Em Breve)</button>
                 </div>
-                <button id="btnSpin" onclick="showGlobalNotice('Funcionalidade em desenvolvimento!', 'var(--btn-red)')" class="btn" style="width: 100%; background: var(--main-gold); color: #111;" disabled>Girar Roleta (Custo: 100 Gold)</button>
-                <span id="spinMsg" class="small" style="display: block; margin-top: 5px;"></span>
             </div>
         </div>
     </div>
 
     <div id="habilidadeTab" style="display:none">
         <h2>🧠 Jogos de Habilidade</h2>
-        <p class="small">Em construção. Jogue o Quiz Rápido abaixo para testar sua sorte e reflexos.</p>
-        
+        <p class="small">Jogos que dependem da sua capacidade e não da sorte.</p>
         <div class="game-area">
-            <div class="card" style="background: rgba(0,0,0,0.4); padding: 1.5rem;">
-                <h4>Quiz Rápido: Qual o Gold do Campeão?</h4>
-                <p class="small">Aposte 10 Gold. Acerte a pergunta em 5s e ganhe 50 Gold. Erre ou estoure o tempo e perca.</p>
-                <p id="quizQuestion">Clique em "Começar" para iniciar.</p>
-                <div id="quizOptions" class="quiz-options"></div>
-                <button id="btnStartQuiz" class="btn" onclick="showGlobalNotice('Quiz em breve!', 'var(--btn-red)')" style="background: var(--btn-blue);">Começar Quiz (Aposta: 10 Gold)</button>
-                <span id="quizMsg" class="small" style="display: block; margin-top: 5px;"></span>
+            <div class="bet-option-card" style="opacity: 0.5;">
+                <h3 style="margin-top: 0;">Jogo de Memória</h3>
+                <p class="small">Combine os pares em 60 segundos para ganhar 2x a aposta.</p>
+                <button class="btn" disabled>Jogar (Em Breve)</button>
             </div>
-
-            <div class="card" style="background: rgba(0,0,0,0.4); padding: 1.5rem;">
-                <h4>Mini Torneio: Jogo da Velha (PvP)</h4>
-                <p class="small">Convidar amigos para disputar gold em tempo real. (Em desenvolvimento)</p>
-                
-                <div id="tictactoeLobby">
-                    <input type="text" id="tttFriendId" placeholder="ID Único do Amigo" disabled>
-                    <input type="number" id="tttBetAmount" placeholder="Gold para apostar (min 100)" min="100" disabled>
-                    <button id="btnInviteTTT" class="btn" style="width: 100%; opacity: 0.5;" disabled>Convidar para Jogo</button>
-                    <span id="tttMsg" class="small" style="display: block; margin-top: 5-px;"></span>
-                </div>
+            <div class="bet-option-card" style="opacity: 0.5;">
+                <h3 style="margin-top: 0;">Quiz Global</h3>
+                <p class="small">Responda a 10 perguntas em 30 segundos para ganhar 3x.</p>
+                <button class="btn" disabled>Jogar (Em Breve)</button>
             </div>
         </div>
     </div>
 
     <div id="salesTab" style="display:none">
-        <h2>🛒 Vendas e Compras (Dinheiro Real)</h2>
-        <p class="small">Use este espaço para negociar itens com dinheiro real (R$). **TODO CONTEÚDO É MONITORADO POR IA.** Proibido imagens ou textos de partes íntimas. O sistema de análise da IVAD aciona **banimento permanente** e a remoção automática do anúncio.</p>
+        <h2>🛒 Mercado de Vendas (Dinheiro Real)</h2>
+        <p class="small">Publique suas contas, skins ou itens de jogos para venda.</p>
         
-        <h3 style="margin-top: 1.5rem; color: var(--green-win);">Criar Novo Anúncio</h3>
-        <input type="text" id="saleTitle" placeholder="Título do item (ex: Conta MAX TH15)" maxlength="80">
-        <input type="text" id="salePrice" placeholder="Preço em R$ (Ex: R$ 50,00)">
-        <input type="tel" id="saleWhatsapp" placeholder="Seu WhatsApp para contato (Ex: 5511987654321)">
-        <label for="salePhoto" class="small" style="display: block; margin-top: 10px;">Foto do Item/Conta (OBRIGATÓRIO):</label>
-        <input type="file" id="salePhoto" accept="image/*">
-        <textarea id="saleDescription" placeholder="Descrição e forma de pagamento (máx: 300 caracteres)" maxlength="300"></textarea>
-        <button id="btnPublishSale" onclick="publishSale()" class="btn" style="width: 100%;">Publicar Anúncio</button>
-        <span id="saleStatusMsg" class="small" style="display: block; margin-top: 10px;"></span>
+        <div class="sale-post" style="background: var(--card-bg); border: 1px solid var(--main-gold); margin-bottom: 2rem;">
+            <h3>📝 Criar Nova Postagem</h3>
+            <input type="text" id="saleTitle" placeholder="Título do Item (Ex: Conta Free Fire Elite)">
+            <input type="text" id="saleContact" placeholder="Seu Contato (WhatsApp, Discord, etc.)">
+            <textarea id="saleDescription" placeholder="Descrição Detalhada do Item e Condições de Venda." rows="3"></textarea>
+            <input type="number" id="salePrice" placeholder="Preço em R$ (Ex: 150.00)" step="0.01">
+            <input type="file" id="saleImage" accept="image/*">
+            <button id="btnPostSale" class="btn" onclick="postSale()" style="width: 100%; margin-top: 1rem;">Postar Venda</button>
+        </div>
 
-        <h3 style="margin-top: 2rem; color: var(--main-gold);">Anúncios Recentes</h3>
+        <h3>Itens Ativos no Mercado</h3>
         <div id="salesList" class="sales-grid">
-             <p class="small" style="grid-column: 1 / -1;">Carregando anúncios...</p>
+            <p class="small" style="grid-column: 1 / -1; text-align: center;">Carregando vendas...</p>
         </div>
     </div>
 
     <div id="rankTab" style="display:none">
-        <h2>🏆 Rank Global (Top 10)</h2>
-        <p class="small">Os 10 melhores da comunidade. Prova de dedicação e sorte!</p>
-        <div class="rank-list">
-            <ol>
-                <li style="color: var(--text-secondary);">Carregando...</li>
-            </ol>
-        </div>
+        <h2>🏆 Rank Global</h2>
+        <p class="small" style="color: var(--green-win);">Ranking atualizado em tempo real pelo Gold. Competição acirrada!</p>
+        <ol id="rankingList" class="rank-list">
+            <li>Carregando ranking...</li>
+        </ol>
     </div>
 
     <div id="chatTab" style="display:none">
-        <h2>💬 Chat Global (Tempo Real)</h2>
-        <p class="small">Conecte-se com a comunidade. Proibido palavras de baixo calão e spam.</p>
-        
-        <div class="chat-box" id="chatMessages">
-            Aguardando conexão com o chat...
-        </div>
-
+        <h2>💬 Chat Global</h2>
+        <p class="small">Mensagens em tempo real. Máximo de 200 caracteres por mensagem.</p>
+        <div id="chatWindow" class="chat-box">
+            </div>
         <div class="chat-input-area">
-            <input type="text" id="chat-message-input" placeholder="Digite sua mensagem..." />
-            <button onclick="sendMessage()" class="btn" style="background:var(--btn-gradient)">Enviar</button>
-            <button id="btnRecordAudio" class="btn" style="background:var(--btn-blue)">🎤</button>
+            <input type="text" id="chatInput" placeholder="Digite sua mensagem...">
+            <button id="btnSendMsg" class="btn" onclick="sendMessage()">Enviar</button>
+            <button id="btnRecordAudio" class="btn">🎤</button>
         </div>
-        <span id="audioStatusMsg" class="small" style="display:block; margin-top: 5px;">Clique no microfone para gravar uma mensagem de 60s.</span>
+        <p id="chatError" class="small" style="color: var(--red-loss); margin-top: 5px;"></p>
     </div>
-
   </section>
 </main>
 
-<div id="globalNotice"></div>
-
-<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script>
+<div id="globalNotice" style="display:none"></div>
 
 <script>
-    // ----------------------------------------------------
-    // 1. CONFIGURAÇÃO DO FIREBASE (CRÍTICO)
-    // ----------------------------------------------------
-    const firebaseConfig = {
-        // ATENÇÃO: SUBSTITUA ESTAS CHAVES PELAS SUAS!
-        apiKey: "AIzaSyCkmyMqEJaM8jVvmTN8I3gLnbC8YtMPWOI", 
-        authDomain: "regras-ivad.firebaseapp.com", 
-        projectId: "regras-ivad", 
-        storageBucket: "regras-ivad.firebasestorage.app", 
-        messagingSenderId: "812565896201", 
-        appId: "1:812565896201:web:d82f7e02e861d9a2a3b05a" 
-    };
+// ----------------------------------------------------
+// 1. CONFIGURAÇÃO E INICIALIZAÇÃO DO FIREBASE (v8)
+// ----------------------------------------------------
+// SEU UID DE ADMINISTRADOR! ESSENCIAL PARA O PAINEL E REGRAS!
+const OWNER_UID = "m3h06woQv2V7lrNu1p8fDQCZ8IW2"; 
+let currentUser = null; 
+let initialGold = 1000; 
+let isOnlineRef = null; 
+const CHAT_LIMIT = 50;
+let isWorkingCooldown = false;
 
-    const app = firebase.initializeApp(firebaseConfig);
-    const db = app.firestore();
-    const auth = app.auth();
-    const storage = app.storage();
-    const serverTimestamp = firebase.firestore.FieldValue.serverTimestamp;
-    const increment = firebase.firestore.FieldValue.increment;
+// ATENÇÃO: SUBSTITUA OS VALORES ABAIXO PELOS SEUS DADOS REAIS DO FIREBASE
+const firebaseConfig = {
+    apiKey: "SEU_API_KEY", 
+    authDomain: "SEU_AUTH_DOMAIN",
+    projectId: "SEU_PROJECT_ID",
+    storageBucket: "SEU_STORAGE_BUCKET",
+    messagingSenderId: "SEU_MESSAGING_SENDER_ID",
+    appId: "SEU_APP_ID"
+};
 
-    // ** SUBSTITUA PELO SEU UID DE ADMIN REAL **
-    const OWNER_UID = 'm3h06woQv2V7lrNu1p8fDQCZ8IW2'; 
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+const FieldValue = firebase.firestore.FieldValue;
+const storage = firebase.storage(); // Adicionando Storage para Vendas (Imagens)
 
-    let lastWorkTime = 0;
-    let currentGold = 0; // Variável global para rastrear o gold
+// Referências Comuns
+const usersColRef = db.collection('users');
+const chatColRef = db.collection('chat');
+const salesColRef = db.collection('sales');
+const onlineUsersColRef = db.collection('onlineUsers');
+const storageRef = storage.ref('sales_images');
 
-    // ----------------------------------------------------
-    // 2. FUNÇÕES DE UTILIDADE E SEGURANÇA
-    // ----------------------------------------------------
 
-    // Notificação Global
-    window.showGlobalNotice = function(message, color = 'var(--main-gold)') {
-        const notice = document.getElementById('globalNotice');
-        notice.textContent = message;
-        notice.style.backgroundColor = color;
-        notice.style.display = 'block';
-        
-        notice.style.animation = 'none';
-        void notice.offsetWidth; 
-        notice.style.animation = 'fadeInOut 4.5s cubic-bezier(0.19, 1, 0.22, 1) forwards';
-    }
+// ----------------------------------------------------
+// 2. FUNÇÕES DE UTILIDADE E UI
+// ----------------------------------------------------
 
-    // Checagem de Conteúdo Proibido (Texto)
-    function checkNSFW(text) {
-        const nsfwKeywords = [
-            'porn', 'sexo', 'nudes', 'anal', 'vagina', 'penis', 'hentai', 'explícito', 'cu', 'boceta', 'rola', 
-            'pica', 'vazamento', 'desrespeito', 'fudeu', 'puta', 'viado', 'otário', 'burro', 'babaca',
-            'putaria', 'zoofilia', 'pedofilia', 'agressão', 'xingamento', 'maconha', 'cocaína', 'drogas'
-        ];
-        const normalizedText = text.toLowerCase().replace(/[^a-z0-9]/g, ''); 
-        
-        for (const keyword of nsfwKeywords) {
-            if (normalizedText.includes(keyword)) {
-                return true;
-            }
-        }
-        return false;
-    }
+function updateStatus(message, isError = false) {
+    const statusElement = document.getElementById('globalNotice');
+    statusElement.textContent = message;
+    statusElement.style.backgroundColor = isError ? var(--red-loss) : var(--main-gold);
+    statusElement.style.color = isError ? 'white' : '#111';
+    statusElement.style.display = 'block';
 
-    // Banimento (CLIENT-SIDE)
-    window.banUser = function(uid, displayName, reason = 'NSFW ou Desrespeito no texto') {
-        console.error(`USUÁRIO BANIDO: ${displayName} (${uid}) por: ${reason}`);
-        
-        // 1. Registrar no Firestore (para banimento permanente no backend)
-        db.collection('bannedUsers').doc(uid).set({
-            uid: uid,
-            displayName: displayName,
-            reason: reason,
-            bannedAt: serverTimestamp()
-        }).then(() => {
-            // 2. Deslogar o usuário
-            auth.signOut().then(() => {
-                alert(`⚠️ CONTEÚDO PROIBIDO DETECTADO. Você foi BANIDO permanentemente do sistema. Motivo: ${reason}`);
-            });
-        });
-    }
+    clearTimeout(window.noticeTimeout);
+    window.noticeTimeout = setTimeout(() => {
+        statusElement.style.display = 'none';
+    }, 4000);
+}
 
-    // ----------------------------------------------------
-    // 3. LÓGICA DE AUTENTICAÇÃO E CONTA (CORREÇÃO DE UI)
-    // ----------------------------------------------------
+function switchTab(tabId) {
+    // 1. Esconde todos os conteúdos
+    document.querySelectorAll('.content > div').forEach(tab => {
+        tab.style.display = 'none';
+    });
+    // 2. Desativa todos os botões
+    document.querySelectorAll('.tabbtn').forEach(btn => {
+        btn.classList.remove('active');
+    });
 
-    // Checa a unicidade do nome de usuário no Firestore
-    async function checkUsernameUnique(username) {
-        const snapshot = await db.collection("users").where("displayName", "==", username).limit(1).get();
-        return snapshot.empty; 
-    }
-
-    // CORRIGIDO: Atualiza a UI de autenticação (logado vs deslogado)
-    function updateAuthUI(user) {
-        const signedOutUI = document.getElementById('signedOutUI');
-        const signedInUI = document.getElementById('signedInUI');
-        const ownerPanel = document.getElementById('ownerPanel');
-        const playerInfo = document.getElementById('playerInfo');
-        const playerInfoSocial = document.getElementById('playerInfoSocial');
-
-        // Se houver um usuário REAL logado (não anônimo)
-        if (user && !user.isAnonymous) {
-            signedOutUI.style.display = 'none'; // Esconde a tela de Login/Cadastro
-            signedInUI.style.display = 'block'; // Mostra o botão 'Sair' e o Gold
-            playerInfo.style.display = 'block';
-            playerInfoSocial.style.display = 'block';
-
-            const displayName = user.displayName || 'Usuário';
-            document.getElementById('userLabel').textContent = `Bem-vindo(a), ${displayName}!`;
-            document.getElementById('socialUsername').textContent = displayName;
-            document.getElementById('socialUserId').textContent = user.uid;
-
-            ownerPanel.style.display = (user.uid === OWNER_UID) ? 'block' : 'none';
-            loadUserGold(user.uid); // Chama a função para carregar o Gold
+    // 3. Mostra o conteúdo da aba selecionada
+    const content = document.getElementById(tabId);
+    if (content) {
+        content.style.display = 'block';
+        // Ajuste para o grid de ranking/chat
+        if (tabId === 'rankTab' || tabId === 'chatTab') {
+            document.querySelector('.content').style.display = 'grid';
+            document.querySelector('.content').style.gridTemplateColumns = tabId === 'rankTab' ? '1fr' : '1fr'; // Ajuste aqui se quiser 2 colunas para rank e chat
         } else {
-            // Se não houver usuário logado ou for anônimo
-            signedOutUI.style.display = 'block'; // Mostra a tela de Login/Cadastro
-            signedInUI.style.display = 'none'; // Esconde o botão 'Sair'
-            ownerPanel.style.display = 'none';
-            playerInfo.style.display = 'none';
-            playerInfoSocial.style.display = 'none';
+             document.querySelector('.content').style.display = 'block';
         }
     }
 
-    // CORRIGIDO: Carrega o Gold do usuário e atualiza a UI (Listener em tempo real)
-    window.loadUserGold = function(uid) {
-        db.collection("users").doc(uid).onSnapshot(doc => {
-            if (doc.exists) {
-                const data = doc.data();
-                const gold = data.gold || 0;
-                
-                // Atualiza o Gold em todos os lugares
-                document.getElementById('myGold').textContent = gold.toLocaleString('pt-BR');
-                document.getElementById('playerGold').textContent = gold.toLocaleString('pt-BR');
-                window.currentGold = gold; 
-            } else {
-                console.warn("Documento do usuário não encontrado no Firestore. Criando documento...");
-                // Se o doc não existir, cria com 100 de gold.
-                db.collection("users").doc(uid).set({
-                    uid: uid,
-                    displayName: auth.currentUser.displayName,
-                    gold: 100, 
-                    wins: 0,
-                    losses: 0,
-                    createdAt: serverTimestamp()
-                }, { merge: true });
-            }
-        });
-    }
+    // 4. Ativa o botão selecionado
+    document.querySelector(`.tabbtn[data-tab="${tabId}"]`).classList.add('active');
+}
+
+
+// ----------------------------------------------------
+// 3. AUTENTICAÇÃO E PERFIL (Sincronizado com Regras)
+// ----------------------------------------------------
+
+async function checkUsernameAvailability(username) {
+    const snapshot = await usersColRef.where('username', '==', username).get();
+    return snapshot.empty;
+}
+
+async function signup() {
+    const username = document.getElementById('username').value.trim();
+    const email = document.getElementById('username').value.trim() + "@ivad.com"; // Usando username como parte do email
+    const password = document.getElementById('pwd').value;
     
-    // Listener de Cadastro (Mantido)
-    document.getElementById('btnSignup').addEventListener('click', async () => {
-        const username = document.getElementById('username').value.trim();
-        const password = document.getElementById('pwd').value.trim();
-        const btnSignup = document.getElementById('btnSignup');
-        
-        if (username.length < 3) return showGlobalNotice("Nome de usuário muito curto (mín. 3).", 'var(--btn-red)');
-        if (password.length < 6) return showGlobalNotice("Senha muito curta (mín. 6).", 'var(--btn-red)');
+    if (username.length < 3) {
+        return updateStatus("Nome de usuário deve ter no mínimo 3 caracteres.", true);
+    }
+    if (password.length < 6) {
+        return updateStatus("Senha deve ter no mínimo 6 caracteres.", true);
+    }
 
-        btnSignup.disabled = true;
+    // 1. Verifica se o username é único
+    const isAvailable = await checkUsernameAvailability(username);
+    if (!isAvailable) {
+        return updateStatus("Nome de usuário já está em uso.", true);
+    }
 
-        try {
-            showGlobalNotice("Checando nome de usuário...", 'var(--main-gold)');
-            const isUnique = await checkUsernameUnique(username);
-            if (!isUnique) {
-                showGlobalNotice("Nome de usuário já existe. Tente outro.", 'var(--btn-red)');
-                return; 
-            }
-
-            showGlobalNotice("Criando conta...", 'var(--btn-blue)');
-            const userCredential = await auth.createUserWithEmailAndPassword(`${username}@ivad.com`, password);
+    updateStatus("Criando conta...");
+    
+    // 2. Cria usuário no Auth
+    auth.createUserWithEmailAndPassword(email, password)
+        .then(async (userCredential) => {
             const user = userCredential.user;
-
-            await user.updateProfile({ displayName: username });
             
-            await db.collection("users").doc(user.uid).set({
-                uid: user.uid,
-                displayName: username,
-                gold: 100, 
+            // 3. Cria documento no Firestore (permitido pelas Regras)
+            await usersColRef.doc(user.uid).set({
+                username: username,
+                gold: initialGold,
                 wins: 0,
                 losses: 0,
-                createdAt: serverTimestamp()
+                creationTime: FieldValue.serverTimestamp()
             });
-            
-            showGlobalNotice(`🎉 Conta criada e Gold inicial de 100 recebido!`, 'var(--green-win)');
-            document.getElementById('pwd').value = '';
-
-        } catch (error) {
-            let message = "Erro desconhecido. Tente novamente.";
-            if (error.code === 'auth/weak-password') {
-                message = "Senha muito fraca (mínimo de 6 caracteres).";
-            } else if (error.code === 'auth/email-already-in-use') {
-                message = "Nome de usuário já está em uso."; 
+            updateStatus(`Conta de ${username} criada com sucesso!`, false);
+        })
+        .catch(error => {
+            // Se o email (username + @ivad.com) já existir
+            if (error.code === 'auth/email-already-in-use') {
+                 updateStatus("Um usuário com este nome já existe. Tente outro nome.", true);
             } else {
-                console.error("Erro de cadastro:", error.code, error.message);
-                message = `Falha no cadastro: ${error.message}`;
+                 updateStatus(`Erro no registro: ${error.message}`, true);
             }
-            showGlobalNotice(`❌ ${message}`, 'var(--btn-red)');
-        } finally {
-            btnSignup.disabled = false;
-        }
-    });
-
-    // Listener de Login (Mantido)
-    document.getElementById('btnLogin').addEventListener('click', async () => {
-        const username = document.getElementById('username').value.trim();
-        const password = document.getElementById('pwd').value.trim();
-        const btnLogin = document.getElementById('btnLogin');
-        
-        if (username.length < 3 || password.length < 6) return showGlobalNotice("Preencha Usuário e Senha corretamente.", 'var(--btn-red)');
-
-        btnLogin.disabled = true;
-        showGlobalNotice("Acessando conta...", 'var(--main-gold)');
-
-        try {
-            await auth.signInWithEmailAndPassword(`${username}@ivad.com`, password);
-            
-            // A UI será atualizada automaticamente pelo listener auth.onAuthStateChanged
-
-            showGlobalNotice(`✅ Login bem-sucedido! Bem-vindo(a) ${username}.`, 'var(--green-win)');
-            document.getElementById('pwd').value = ''; 
-
-        } catch (error) {
-            let message = "Erro desconhecido. Tente novamente.";
-
-            if (error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
-                message = "Nome de usuário ou senha incorretos.";
-            } else {
-                console.error("Erro de login:", error.code, error.message);
-                message = `Falha no login: ${error.message}`;
-            }
-
-            showGlobalNotice(`❌ ${message}`, 'var(--btn-red)');
-        } finally {
-            btnLogin.disabled = false;
-        }
-    });
-
-
-    // Listener para o botão de Logout (Mantido)
-    document.getElementById('btnLogout').addEventListener('click', () => {
-        auth.signOut().then(() => {
-            showGlobalNotice("Você foi desconectado(a).", 'var(--btn-blue)');
-            // A UI será atualizada automaticamente pelo listener auth.onAuthStateChanged
-        }).catch(error => {
-            showGlobalNotice(`Erro ao desconectar: ${error.message}`, 'var(--btn-red)');
         });
+}
+
+function login() {
+    const email = document.getElementById('username').value.trim() + "@ivad.com";
+    const password = document.getElementById('pwd').value;
+    
+    auth.signInWithEmailAndPassword(email, password)
+        .catch(error => {
+            updateStatus(`Erro no login: ${error.message}`, true);
+        });
+}
+
+async function loadUserData(user) {
+    currentUser = user;
+    
+    // 1. Troca a UI
+    document.getElementById('signedOutUI').style.display = 'none';
+    document.getElementById('signedInUI').style.display = 'block';
+
+    // 2. Verifica e mostra o Painel do Dono
+    document.getElementById('ownerPanel').style.display = user.uid === OWNER_UID ? 'block' : 'none';
+
+    const userRef = usersColRef.doc(user.uid);
+    
+    // 3. Listener em tempo real para Gold e Username
+    userRef.onSnapshot(docSnapshot => {
+        if (docSnapshot.exists) {
+            const data = docSnapshot.data();
+            document.getElementById('myGold').textContent = data.gold ? data.gold.toLocaleString() : '0';
+            document.getElementById('playerGold').textContent = data.gold ? data.gold.toLocaleString() : '0';
+            document.getElementById('userLabel').textContent = `Bem-vindo, ${data.username}!`;
+            document.getElementById('socialUsername').textContent = data.username;
+            document.getElementById('socialUserId').textContent = user.uid;
+            document.getElementById('playerInfoSocial').style.display = 'block';
+
+            // Atualiza o nome de usuário se o admin mudou
+            if (data.username !== document.getElementById('username').value.trim()) {
+                document.getElementById('username').value = data.username; 
+            }
+        }
     });
 
-    // ----------------------------------------------------
-    // 4. LÓGICA DE ABAS (Mantido)
-    // ----------------------------------------------------
+    // 4. Ativar funções de tempo real
+    loadRanking(); 
+    loadChat();    
+    loadSales();
+    trackOnlineStatus(user.uid);
+}
 
-    // Função para trocar de aba
-    function switchTab(tabId) {
-        document.querySelectorAll('.tabbtn').forEach(btn => btn.classList.remove('active'));
-        document.querySelectorAll('.content > div').forEach(div => div.style.display = 'none');
-        
-        const newTab = document.getElementById(tabId);
-        const newButton = document.querySelector(`.tabbtn[data-tab="${tabId}"]`);
-        
-        if (newTab) newTab.style.display = 'block';
-        if (newButton) newButton.classList.add('active');
 
-        // Chamadas específicas para recarregar conteúdo em tempo real
-        if (tabId === 'rankTab') loadRank(); 
-        if (tabId === 'chatTab') loadChat();
-        if (tabId === 'salesTab') loadSales(); 
-    }
+// ----------------------------------------------------
+// 4. JOGOS E SISTEMA ANTI-HACK DE GOLD
+// ----------------------------------------------------
 
-    // ----------------------------------------------------
-    // 5. LÓGICA DE JOGOS E RANKING (Mantido)
-    // ----------------------------------------------------
+async function updateGold(amount) {
+    if (!currentUser) return false;
+    // O uso de FieldValue.increment garante que as Regras Anti-Hack sejam respeitadas.
+    return usersColRef.doc(currentUser.uid).update({
+        gold: FieldValue.increment(amount)
+    }).catch(error => {
+        updateStatus(`Erro ao atualizar Gold: ${error.message}`, true);
+        return false;
+    });
+}
 
-    // Função Trabalhar (Work)
-    window.work = async function() {
-        const user = auth.currentUser;
-        if (!user || user.isAnonymous) return showGlobalNotice("Faça login para trabalhar.", 'var(--btn-red)');
-        
-        const now = Date.now();
-        if (now - lastWorkTime < 5000) {
-            const remaining = Math.ceil((5000 - (now - lastWorkTime)) / 1000);
-            return showGlobalNotice(`Aguarde ${remaining}s para trabalhar novamente.`, 'var(--btn-red)');
-        }
+function validateBet(amount) {
+    const currentGold = parseInt(document.getElementById('myGold').textContent.replace(/,/g, ''));
+    if (!currentUser) { updateStatus("Faça login para apostar.", true); return false; }
+    if (isNaN(amount) || amount <= 0) { updateStatus("A aposta deve ser um valor positivo.", true); return false; }
+    if (amount > currentGold) { updateStatus("Gold insuficiente para esta aposta.", true); return false; }
+    return true;
+}
 
-        lastWorkTime = now;
-        const btnWork = document.getElementById('btnWork');
-        const workMsg = document.getElementById('workMsg');
-        btnWork.disabled = true;
+function notify(message, isWin) {
+    const element = document.getElementById('globalNotice');
+    element.textContent = message;
+    element.style.backgroundColor = isWin ? var(--green-win) : var(--red-loss);
+    element.style.color = 'white';
+    element.style.display = 'block';
 
-        try {
-            const currentGold = window.currentGold || 0;
-            const maxGain = Math.max(10, Math.floor(currentGold * 1.0)); // 100% do gold, mínimo de 10
-            const gain = Math.floor(Math.random() * maxGain) + 1;
+    clearTimeout(window.noticeTimeout);
+    window.noticeTimeout = setTimeout(() => {
+        element.style.display = 'none';
+    }, 4000);
+}
 
-            await db.collection("users").doc(user.uid).update({
-                gold: increment(gain)
-            });
-
-            workMsg.textContent = `Você trabalhou e ganhou ${gain.toLocaleString('pt-BR')} Gold!`;
-            showGlobalNotice(`+${gain.toLocaleString('pt-BR')} Gold`, 'var(--green-win)');
-
-        } catch (error) {
-            workMsg.textContent = 'Erro ao trabalhar. Tente novamente.';
-            console.error("Erro ao trabalhar:", error);
-        } finally {
-            setTimeout(() => {
-                btnWork.disabled = false;
-                workMsg.textContent = '';
-            }, 5000);
-        }
-    }
-
-    // Função Aposta Simples (Multiplicador)
-    window.betSimple = async function(multiplier, amountId, msgId, winChance = 45) {
-        const user = auth.currentUser;
-        if (!user || user.isAnonymous) return showGlobalNotice("Faça login para apostar.", 'var(--btn-red)');
-
-        const amountInput = document.getElementById(amountId);
-        const amount = parseInt(amountInput.value);
-        const betMsg = document.getElementById(msgId);
-        
-        if (isNaN(amount) || amount <= 0) return betMsg.textContent = "Aposta inválida.";
-        if (window.currentGold < amount) return betMsg.textContent = "Gold insuficiente.";
-        
-        amountInput.disabled = true;
-        betMsg.textContent = `Apostando ${amount.toLocaleString('pt-BR')} Gold...`;
-
-        const isWin = Math.random() * 100 < winChance;
-        const netChange = isWin ? (amount * multiplier) - amount : -amount;
-        const color = isWin ? 'var(--green-win)' : 'var(--red-loss)';
-        const statusText = isWin ? `GANHOU! Você ganhou ${netChange.toLocaleString('pt-BR')} Gold.` : `PERDEU! Você perdeu ${amount.toLocaleString('pt-BR')} Gold.`;
-
-        try {
-            await db.collection("users").doc(user.uid).update({
-                gold: increment(netChange),
-                wins: isWin ? increment(1) : increment(0),
-                losses: isWin ? increment(0) : increment(1),
-            });
-            
-            betMsg.innerHTML = `<span style="color:${color}; font-weight: bold;">${statusText}</span>`;
-            showGlobalNotice(statusText, color);
-
-        } catch (error) {
-            betMsg.textContent = 'Erro ao processar a aposta. Tente novamente.';
-            console.error("Erro na aposta simples:", error);
-        } finally {
-            setTimeout(() => {
-                amountInput.disabled = false;
-                amountInput.value = '';
-            }, 1000);
-        }
-    }
+// Jogo Simples: Trabalho
+async function work() {
+    if (isWorkingCooldown) return updateStatus("Aguarde o cooldown (5 segundos).", true);
+    if (!currentUser) return updateStatus("Você precisa estar logado para trabalhar.", true);
     
-    // Função Carregar Ranking
-    window.loadRank = function(forceReload = false) {
-        const rankList = document.querySelector('.rank-list ol');
-        
-        // Limpar e mostrar carregando
-        if (forceReload) {
-             rankList.innerHTML = '<li style="color: var(--text-secondary);">Carregando...</li>';
-        }
+    isWorkingCooldown = true;
+    document.getElementById('btnWork').disabled = true;
 
-        db.collection("users")
-            .orderBy("gold", "desc")
-            .limit(10)
-            .onSnapshot(snapshot => {
-                rankList.innerHTML = '';
-                if (snapshot.empty) {
-                    rankList.innerHTML = '<li style="color: var(--text-secondary);">Nenhum jogador no ranking.</li>';
-                    return;
-                }
-                
-                snapshot.forEach((doc, index) => {
-                    const data = doc.data();
-                    const rank = index + 1;
-                    const style = rank === 1 ? 'color: var(--main-gold); font-weight: bold; font-size: 1.1em;' : 'color: var(--text-primary);';
-                    
-                    rankList.innerHTML += `
-                        <li style="${style}">
-                            #${rank} - ${data.displayName || 'Anônimo'} (${data.gold.toLocaleString('pt-BR')} Gold)
-                        </li>
-                    `;
-                });
-            }, error => {
-                rankList.innerHTML = `<li style="color: var(--red-loss);">Erro ao carregar rank: ${error.message}</li>`;
-                console.error("Erro ao carregar ranking:", error);
-            });
+    const currentGold = parseInt(document.getElementById('myGold').textContent.replace(/,/g, ''));
+    const percentage = Math.floor(Math.random() * 100) + 1; // 1% a 100%
+    const earnings = Math.max(1, Math.floor(currentGold * (percentage / 100))); // Mínimo de 1 Gold
+    
+    await updateGold(earnings);
+
+    document.getElementById('workMsg').textContent = `Você trabalhou e ganhou +${earnings.toLocaleString()} Gold (${percentage}%).`;
+    
+    setTimeout(() => {
+        isWorkingCooldown = false;
+        document.getElementById('btnWork').disabled = false;
+        document.getElementById('workMsg').textContent = '';
+    }, 5000); // 5 segundos de cooldown
+}
+
+// Jogo Simples: Multiplicador
+async function betSimple(multiplier, inputId, msgId, winChance) {
+    const amount = parseInt(document.getElementById(inputId).value);
+    if (!validateBet(amount)) return;
+    
+    const win = Math.random() * 100 < winChance;
+    const result = win ? amount * (multiplier - 1) : -amount; // Lucro: (Mult - 1) * Aposta
+    
+    await updateGold(result);
+    
+    const msg = win 
+        ? `✅ GANHOU ${multiplier}x! Lucro de ${result.toLocaleString()} Gold.` 
+        : `❌ PERDEU. Menos ${amount.toLocaleString()} Gold.`;
+    
+    document.getElementById(msgId).textContent = msg;
+    notify(msg, win);
+}
+
+// Aposta Avançada: Cor (48% 2x, 4% 4x)
+async function betCor() {
+    const amount = parseInt(document.getElementById('betCorAmount').value);
+    const choice = document.getElementById('betCorColor').value;
+    if (!validateBet(amount)) return;
+
+    const rand = Math.random();
+    let outcome = 'black';
+    let mult = 0;
+
+    if (rand < 0.48) { // 48%
+        outcome = 'red';
+        mult = 2;
+    } else if (rand < 0.96) { // 48%
+        outcome = 'black';
+        mult = 2;
+    } else { // 4%
+        outcome = 'green';
+        mult = 4;
     }
 
-    // ----------------------------------------------------
-    // 6. LÓGICA DE VENDAS E MODERAÇÃO DE FOTOS (Mantido)
-    // ----------------------------------------------------
+    const win = choice === outcome;
+    const result = win ? amount * (mult - 1) : -amount;
+    
+    await updateGold(result);
+    
+    const msg = win 
+        ? `✅ GANHOU ${mult}x! Sorteado: ${outcome.toUpperCase()}. Lucro: ${result.toLocaleString()} Gold.` 
+        : `❌ PERDEU. Sorteado: ${outcome.toUpperCase()}. Menos ${amount.toLocaleString()} Gold.`;
+    
+    document.getElementById('betCorMsg').textContent = msg;
+    notify(msg, win);
+}
 
-    window.publishSale = async function() {
-        const user = auth.currentUser;
-        if (!user || user.isAnonymous) return showGlobalNotice("Faça login para publicar anúncios.", 'var(--btn-red)');
+// Aposta Avançada: Moeda (50% 2x)
+async function betCoin() {
+    const amount = parseInt(document.getElementById('betCoinAmount').value);
+    const choice = document.getElementById('betCoinSide').value;
+    if (!validateBet(amount)) return;
 
-        const title = document.getElementById('saleTitle').value.trim();
-        const price = document.getElementById('salePrice').value.trim();
-        const whatsapp = document.getElementById('saleWhatsapp').value.trim();
-        const description = document.getElementById('saleDescription').value.trim();
-        const file = document.getElementById('salePhoto').files[0];
-        const btnPublish = document.getElementById('btnPublishSale');
-        const statusMsg = document.getElementById('saleStatusMsg');
+    const outcome = Math.random() < 0.5 ? 'cara' : 'coroa';
+    const win = choice === outcome;
+    const result = win ? amount : -amount;
+    
+    await updateGold(result);
+    
+    const msg = win 
+        ? `✅ GANHOU 2x! Deu ${outcome.toUpperCase()}. Lucro: ${result.toLocaleString()} Gold.` 
+        : `❌ PERDEU. Deu ${outcome.toUpperCase()}. Menos ${amount.toLocaleString()} Gold.`;
+    
+    document.getElementById('betCoinMsg').textContent = msg;
+    notify(msg, win);
+}
 
-        statusMsg.textContent = '';
-        if (!title || !price || !whatsapp || !file) {
-            statusMsg.textContent = "Preencha todos os campos e anexe uma Foto.";
+// Aposta Avançada: Dice (12x)
+async function betDice(maxNumber, multiplier, inputAmountId, inputChoiceId, msgId) {
+    const amount = parseInt(document.getElementById(inputAmountId).value);
+    const choice = parseInt(document.getElementById(inputChoiceId).value);
+    
+    if (!validateBet(amount) || isNaN(choice) || choice < 1 || choice > maxNumber) {
+        return updateStatus(`Número de ${maxNumber} lados inválido (1-${maxNumber}).`, true);
+    }
+
+    const outcome = Math.floor(Math.random() * maxNumber) + 1;
+    const win = choice === outcome;
+    const result = win ? amount * (multiplier - 1) : -amount;
+    
+    await updateGold(result);
+    
+    const msg = win 
+        ? `✅ ACERTOU ${outcome}! Lucro de ${result.toLocaleString()} Gold (${multiplier}x).` 
+        : `❌ ERROU ${outcome}. Perdeu ${amount.toLocaleString()} Gold.`;
+    
+    document.getElementById(msgId).textContent = msg;
+    notify(msg, win);
+}
+
+// Aposta Avançada: RNG Mágico (4x)
+async function betRNG(multiplier, fixedAmount, winChance) {
+    const amount = fixedAmount;
+    if (!validateBet(amount)) return; // Valida se o Gold atual é suficiente
+
+    const rand = Math.random() * 100;
+    const win = rand < winChance;
+    const result = win ? amount * (multiplier - 1) : -amount;
+    
+    await updateGold(result);
+    
+    const msg = win 
+        ? `✅ NÚMERO MÁGICO! Lucro de ${result.toLocaleString()} Gold (${multiplier}x).` 
+        : `❌ NÃO FOI DESSA VEZ. Perdeu ${amount.toLocaleString()} Gold.`;
+    
+    document.getElementById('betRNGMsg_4x').textContent = msg;
+    notify(msg, win);
+}
+
+
+// ----------------------------------------------------
+// 5. RANKING GLOBAL
+// ----------------------------------------------------
+
+function loadRanking() {
+    // Leitura permitida pelas regras 'allow read: if true;'
+    usersColRef.orderBy('gold', 'desc').limit(15).onSnapshot(snapshot => {
+        const rankingList = document.getElementById('rankingList');
+        rankingList.innerHTML = ''; 
+        
+        if (snapshot.empty) {
+            rankingList.innerHTML = '<li>Nenhum usuário no ranking ainda.</li>';
             return;
         }
 
-        // 1. CHECAGEM DE NSFW no TEXTO
-        if (checkNSFW(title) || checkNSFW(description)) {
-            statusMsg.textContent = "❌ Conteúdo PROIBIDO detectado no texto. Banimento imediato acionado.";
-            return banUser(user.uid, user.displayName, 'Conteúdo Proibido no Texto do Anúncio');
-        }
+        snapshot.forEach((doc, index) => {
+            const data = doc.data();
+            const li = document.createElement('li');
+            li.style.color = doc.id === currentUser.uid ? var(--main-gold) : var(--text-primary);
+            li.style.fontWeight = doc.id === currentUser.uid ? 'bold' : 'normal';
+
+            li.innerHTML = `
+                <span style="width: 30px; display: inline-block;">#${index + 1}</span>
+                <span style="color: ${doc.id === OWNER_UID ? '#ff00ff' : 'inherit'};">${data.username}</span>
+                <span style="color: var(--main-gold);">${data.gold ? data.gold.toLocaleString() : '0'} Gold</span>
+            `;
+            rankingList.appendChild(li);
+        });
+    }, error => {
+        updateStatus(`Erro ao carregar ranking: ${error.message}. Verifique as Regras de Segurança.`, true);
+    });
+}
+
+
+// ----------------------------------------------------
+// 6. CHAT GLOBAL
+// ----------------------------------------------------
+
+async function sendMessage() {
+    const input = document.getElementById('chatInput');
+    const message = input.value.trim();
+    if (!message || !currentUser) return;
+    
+    if (message.length > 200) {
+        return document.getElementById('chatError').textContent = "Mensagem muito longa (Máx. 200).";
+    }
+    
+    document.getElementById('chatError').textContent = "";
+    const userData = (await usersColRef.doc(currentUser.uid).get()).data();
+    
+    // A regra verifica se o username enviado é o mesmo do perfil
+    chatColRef.add({
+        username: userData.username,
+        text: message,
+        uid: currentUser.uid,
+        timestamp: FieldValue.serverTimestamp()
+    })
+    .then(() => input.value = '')
+    .catch(error => {
+        document.getElementById('chatError').textContent = `Erro: ${error.message}.`;
+    });
+}
+
+function loadChat() {
+    chatColRef.orderBy('timestamp', 'desc').limit(CHAT_LIMIT).onSnapshot(snapshot => {
+        const chatWindow = document.getElementById('chatWindow');
+        chatWindow.innerHTML = '';
         
-        btnPublish.disabled = true;
-        statusMsg.textContent = 'Carregando foto (e preparando para análise de IA)...';
-
-        try {
-            // 2. UPLOAD DA FOTO para o Storage
-            const fileExtension = file.name.split('.').pop();
-            const fileName = `${user.uid}_${Date.now()}.${fileExtension}`; 
-            const storageRef = storage.ref(`sales_photos/${user.uid}/${fileName}`);
+        const messages = [];
+        snapshot.forEach(doc => messages.push(doc.data()));
+        messages.reverse().forEach(data => {
+            const div = document.createElement('div');
+            div.className = 'chat-message';
             
-            const snapshot = await storageRef.put(file);
-            const photoURL = await snapshot.ref.getDownloadURL();
+            const usernameSpan = document.createElement('span');
+            usernameSpan.className = 'chat-user';
             
-            statusMsg.textContent = 'Publicando anúncio e iniciando moderação de imagem...';
+            let nameColor = data.uid === OWNER_UID ? '#ff00ff' : var(--text-secondary);
+            let nameDisplay = data.uid === OWNER_UID ? `${data.username} [DONO]:` : `${data.username}:`;
 
-            // 3. CRIAÇÃO DO ANÚNCIO no Firestore
-            await db.collection("sales").doc().set({
-                userId: user.uid,
-                userName: user.displayName,
-                title: title,
-                price: price,
-                whatsapp: whatsapp,
-                description: description,
-                photoURL: photoURL,
-                timestamp: serverTimestamp(),
-                moderationStatus: 'pending' 
-            });
-
-            // 4. SUCESSO
-            statusMsg.textContent = '✅ Anúncio publicado. Foto enviada para análise de IA. Será visível em breve.';
+            usernameSpan.textContent = nameDisplay;
+            usernameSpan.style.color = nameColor;
             
-            document.getElementById('saleTitle').value = document.getElementById('salePrice').value = document.getElementById('saleWhatsapp').value = document.getElementById('saleDescription').value = document.getElementById('salePhoto').value = '';
-
-            showGlobalNotice("Novo anúncio publicado! Aguardando análise de IA.", 'var(--main-gold)');
-            loadSales(); 
+            const textSpan = document.createElement('span');
+            textSpan.className = 'chat-text';
+            textSpan.textContent = data.text;
             
-        } catch (error) {
-            statusMsg.textContent = `❌ Erro ao publicar: ${error.message}`;
-            console.error("Erro ao publicar anúncio:", error);
-        } finally {
-            btnPublish.disabled = false;
-        }
+            div.appendChild(usernameSpan);
+            div.appendChild(textSpan);
+            chatWindow.appendChild(div);
+        });
+        
+        chatWindow.scrollTop = chatWindow.scrollHeight;
+    }, error => console.error("Erro ao carregar chat: ", error));
+}
+
+
+// ----------------------------------------------------
+// 7. SISTEMA DE VENDAS (Com Upload de Imagem)
+// ----------------------------------------------------
+
+async function postSale() {
+    if (!currentUser) return updateStatus("Faça login para postar.", true);
+
+    const title = document.getElementById('saleTitle').value.trim();
+    const contact = document.getElementById('saleContact').value.trim();
+    const description = document.getElementById('saleDescription').value.trim();
+    const price = parseFloat(document.getElementById('salePrice').value);
+    const imageFile = document.getElementById('saleImage').files[0];
+
+    if (!title || !contact || !description || isNaN(price) || price <= 0 || !imageFile) {
+        return updateStatus("Preencha todos os campos e anexe uma imagem.", true);
     }
 
-    window.loadSales = function() {
+    document.getElementById('btnPostSale').disabled = true;
+    updateStatus("Subindo imagem e postando...");
+
+    try {
+        const userData = (await usersColRef.doc(currentUser.uid).get()).data();
+        const fileName = `${currentUser.uid}_${Date.now()}_${imageFile.name}`;
+        const imageRef = storageRef.child(fileName);
+        
+        // 1. Upload da Imagem
+        const snapshot = await imageRef.put(imageFile);
+        const imageUrl = await snapshot.ref.getDownloadURL();
+
+        // 2. Criação do Documento no Firestore (permitido pelas Regras)
+        await salesColRef.add({
+            title: title,
+            description: description,
+            contact: contact,
+            price: price,
+            imageUrl: imageUrl,
+            sellerUid: currentUser.uid,
+            sellerUsername: userData.username,
+            timestamp: FieldValue.serverTimestamp()
+        });
+
+        updateStatus("Item postado no mercado com sucesso!", false);
+        document.getElementById('saleTitle').value = '';
+        document.getElementById('saleContact').value = '';
+        document.getElementById('saleDescription').value = '';
+        document.getElementById('salePrice').value = '';
+        document.getElementById('saleImage').value = '';
+
+    } catch (error) {
+        updateStatus(`Erro ao postar venda: ${error.message}`, true);
+    } finally {
+        document.getElementById('btnPostSale').disabled = false;
+    }
+}
+
+function loadSales() {
+    // Leitura permitida 'allow read: if true;'
+    salesColRef.orderBy('timestamp', 'desc').onSnapshot(snapshot => {
         const salesList = document.getElementById('salesList');
-        salesList.innerHTML = '<p class="small" style="grid-column: 1 / -1;">Buscando anúncios...</p>';
+        salesList.innerHTML = '';
 
-        // Filtra APENAS anúncios com status 'approved' pela Cloud Function
-        db.collection("sales")
-            .where('moderationStatus', '==', 'approved') 
-            .orderBy("timestamp", "desc")
-            .limit(10)
-            .onSnapshot(snapshot => { 
-                salesList.innerHTML = '';
-                if (snapshot.empty) {
-                    salesList.innerHTML = '<p class="small" style="grid-column: 1 / -1;">Nenhum anúncio de venda encontrado.</p>';
-                    return;
-                }
-                
-                snapshot.forEach(doc => {
-                    const data = doc.data();
-                    const whatsappLink = `https://api.whatsapp.com/send?phone=${data.whatsapp.replace(/\D/g,'')}&text=Olá! Vi seu anúncio "${data.title}" na IVAD e tenho interesse.`;
-                    
-                    salesList.innerHTML += `
-                        <div class="sale-post">
-                            <img src="${data.photoURL}" alt="Foto do item">
-                            <h4>${data.title}</h4>
-                            <p class="sale-price">${data.price}</p>
-                            <p class="small">Vendedor: ${data.userName}</p>
-                            <p>${data.description}</p>
-                            <a href="${whatsappLink}" target="_blank" class="sale-contact-btn">CHAMAR NO WHATSAPP</a>
-                        </div>
-                    `;
-                });
-            }, error => {
-                salesList.innerHTML = `<p class="small" style="grid-column: 1 / -1;">Erro ao carregar anúncios: ${error.message}</p>`;
-                console.error("Erro ao carregar vendas:", error);
-            });
-    }
-
-    // ----------------------------------------------------
-    // 7. LÓGICA DE CHAT (Mantido)
-    // ----------------------------------------------------
-    
-    window.sendMessage = async function() {
-        const user = auth.currentUser;
-        const chatInput = document.getElementById('chat-message-input');
-        let message = chatInput.value.trim();
-
-        if (!user || user.isAnonymous) return showGlobalNotice("Faça login para enviar mensagens.", 'var(--btn-red)');
-        if (!message) return;
-        
-        // Checagem de NSFW no chat
-        if (checkNSFW(message)) {
-            chatInput.value = '';
-            showGlobalNotice("❌ Mensagem bloqueada: Conteúdo proibido!", 'var(--btn-red)');
-            return banUser(user.uid, user.displayName, 'Conteúdo Proibido no Chat');
-        }
-
-        try {
-            await db.collection("chat").add({
-                text: message,
-                uid: user.uid,
-                displayName: user.displayName || 'Anônimo',
-                timestamp: serverTimestamp()
-            });
-
-            chatInput.value = '';
-            document.getElementById('chatMessages').scrollTop = document.getElementById('chatMessages').scrollHeight;
-        } catch (error) {
-            showGlobalNotice("Erro ao enviar mensagem.", 'var(--btn-red)');
-            console.error("Erro ao enviar mensagem:", error);
-        }
-    }
-
-    window.loadChat = function() {
-        const chatBox = document.getElementById('chatMessages');
-        let initialLoad = true;
-
-        db.collection("chat")
-            .orderBy("timestamp", "desc")
-            .limit(15) // Limita as últimas 15 mensagens
-            .onSnapshot(snapshot => {
-                let messagesHtml = '';
-                const messages = [];
-                snapshot.forEach(doc => messages.push(doc.data()));
-                
-                // Inverte a ordem para mostrar o mais novo embaixo
-                messages.reverse().forEach(data => {
-                    const isOwner = data.uid === OWNER_UID ? 'color: var(--main-gold); font-weight: bold;' : '';
-                    const username = data.displayName || 'Anônimo';
-                    
-                    messagesHtml += `
-                        <p style="margin: 5px 0; font-size: 0.9em;">
-                            <strong style="${isOwner}">${username}:</strong> ${data.text}
-                        </p>
-                    `;
-                });
-
-                chatBox.innerHTML = messagesHtml;
-                
-                // Rola para o final apenas no carregamento inicial e quando o usuário não está rolando
-                if (initialLoad) {
-                    chatBox.scrollTop = chatBox.scrollHeight;
-                    initialLoad = false;
-                }
-            }, error => {
-                chatBox.innerHTML = `<p style="color: var(--red-loss);">Erro ao carregar chat: ${error.message}</p>`;
-                console.error("Erro ao carregar chat:", error);
-            });
-    }
-    
-    // --- Funções de Aposta Avançadas (Mantido) ---
-    
-    // Roleta de Cor (48% Vermelho, 48% Preto, 4% Verde)
-    window.betCor = async function() {
-        const user = auth.currentUser;
-        if (!user || user.isAnonymous) return showGlobalNotice("Faça login para apostar.", 'var(--btn-red)');
-
-        const amountInput = document.getElementById('betCorAmount');
-        const colorSelect = document.getElementById('betCorColor');
-        const amount = parseInt(amountInput.value);
-        const selectedColor = colorSelect.value;
-        const betMsg = document.getElementById('betCorMsg');
-
-        if (isNaN(amount) || amount <= 0) return betMsg.textContent = "Aposta inválida.";
-        if (window.currentGold < amount) return betMsg.textContent = "Gold insuficiente.";
-        
-        amountInput.disabled = true;
-        
-        // Lógica de sorteio
-        const roll = Math.random() * 100;
-        let winColor, multiplier = 0;
-
-        if (roll < 4) { // 4%
-            winColor = 'green';
-            multiplier = 4;
-        } else if (roll < 52) { // 48% (4 + 48 = 52)
-            winColor = 'red';
-            multiplier = 2;
-        } else { // 48%
-            winColor = 'black';
-            multiplier = 2;
-        }
-
-        const isWin = winColor === selectedColor;
-        const netChange = isWin ? (amount * multiplier) - amount : -amount;
-        const color = isWin ? 'var(--green-win)' : 'var(--red-loss)';
-        const statusText = isWin 
-            ? `GANHOU! Caiu no ${winColor.toUpperCase()}! Você ganhou ${netChange.toLocaleString('pt-BR')} Gold.` 
-            : `PERDEU. Caiu no ${winColor.toUpperCase()}. Você perdeu ${amount.toLocaleString('pt-BR')} Gold.`;
-
-        try {
-            await db.collection("users").doc(user.uid).update({
-                gold: increment(netChange),
-                wins: isWin ? increment(1) : increment(0),
-                losses: isWin ? increment(0) : increment(1),
-            });
-            
-            betMsg.innerHTML = `<span style="color:${color}; font-weight: bold;">${statusText}</span>`;
-            showGlobalNotice(statusText, color);
-
-        } catch (error) {
-            betCorMsg.textContent = 'Erro ao processar a aposta. Tente novamente.';
-        } finally {
-            setTimeout(() => { amountInput.disabled = false; amountInput.value = ''; }, 1000);
-        }
-    }
-    
-    // Moeda da Sorte (50/50)
-    window.betCoin = async function() {
-        const user = auth.currentUser;
-        if (!user || user.isAnonymous) return showGlobalNotice("Faça login para apostar.", 'var(--btn-red)');
-
-        const amountInput = document.getElementById('betCoinAmount');
-        const sideSelect = document.getElementById('betCoinSide');
-        const amount = parseInt(amountInput.value);
-        const selectedSide = sideSelect.value;
-        const betCoinMsg = document.getElementById('betCoinMsg');
-
-        if (isNaN(amount) || amount <= 0) return betCoinMsg.textContent = "Aposta inválida.";
-        if (window.currentGold < amount) return betCoinMsg.textContent = "Gold insuficiente.";
-        
-        amountInput.disabled = true;
-        
-        const winSide = Math.random() < 0.5 ? 'cara' : 'coroa';
-        const isWin = winSide === selectedSide;
-        const multiplier = 2;
-        const netChange = isWin ? (amount * multiplier) - amount : -amount;
-        const color = isWin ? 'var(--green-win)' : 'var(--red-loss)';
-        const statusText = isWin 
-            ? `GANHOU! Caiu em ${winSide.toUpperCase()}! Você ganhou ${netChange.toLocaleString('pt-BR')} Gold.` 
-            : `PERDEU. Caiu em ${winSide.toUpperCase()}. Você perdeu ${amount.toLocaleString('pt-BR')} Gold.`;
-
-        try {
-            await db.collection("users").doc(user.uid).update({
-                gold: increment(netChange),
-                wins: isWin ? increment(1) : increment(0),
-                losses: isWin ? increment(0) : increment(1),
-            });
-            
-            betCoinMsg.innerHTML = `<span style="color:${color}; font-weight: bold;">${statusText}</span>`;
-            showGlobalNotice(statusText, color);
-
-        } catch (error) {
-            betCoinMsg.textContent = 'Erro ao processar a aposta. Tente novamente.';
-        } finally {
-            setTimeout(() => { amountInput.disabled = false; amountInput.value = ''; }, 1000);
-        }
-    }
-
-    // DICE 12x
-    window.betDice = async function(maxNumber, multiplier, amountId, msgId) {
-        const user = auth.currentUser;
-        if (!user || user.isAnonymous) return showGlobalNotice("Faça login para apostar.", 'var(--btn-red)');
-
-        const amountInput = document.getElementById(amountId);
-        const numberInput = document.getElementById('betDice12Number');
-        const amount = parseInt(amountInput.value);
-        const selectedNumber = parseInt(numberInput.value);
-        const betMsg = document.getElementById(msgId);
-        
-        if (isNaN(amount) || amount <= 0) return betMsg.textContent = "Aposta inválida.";
-        if (isNaN(selectedNumber) || selectedNumber < 1 || selectedNumber > maxNumber) return betMsg.textContent = `Número inválido (1-${maxNumber}).`;
-        if (window.currentGold < amount) return betMsg.textContent = "Gold insuficiente.";
-        
-        amountInput.disabled = true;
-        
-        const roll = Math.floor(Math.random() * maxNumber) + 1;
-        const isWin = roll === selectedNumber;
-        const netChange = isWin ? (amount * multiplier) - amount : -amount;
-        const color = isWin ? 'var(--green-win)' : 'var(--red-loss)';
-        const statusText = isWin 
-            ? `GANHOU! O dado rolou ${roll}! Você ganhou ${netChange.toLocaleString('pt-BR')} Gold.` 
-            : `PERDEU. O dado rolou ${roll}. Você perdeu ${amount.toLocaleString('pt-BR')} Gold.`;
-
-        try {
-            await db.collection("users").doc(user.uid).update({
-                gold: increment(netChange),
-                wins: isWin ? increment(1) : increment(0),
-                losses: isWin ? increment(0) : increment(1),
-            });
-            
-            betMsg.innerHTML = `<span style="color:${color}; font-weight: bold;">${statusText}</span>`;
-            showGlobalNotice(statusText, color);
-
-        } catch (error) {
-            betMsg.textContent = 'Erro ao processar a aposta. Tente novamente.';
-        } finally {
-            setTimeout(() => { amountInput.disabled = false; amountInput.value = ''; }, 1000);
-        }
-    }
-    
-    // Número Mágico (RNG Genérico)
-    window.betRNG = async function(multiplier, fixedAmount, winChance) {
-        const user = auth.currentUser;
-        if (!user || user.isAnonymous) return showGlobalNotice("Faça login para apostar.", 'var(--btn-red)');
-
-        const amount = fixedAmount;
-        const betMsg = document.getElementById('betRNGMsg_4x');
-
-        if (window.currentGold < amount) return betMsg.textContent = "Gold insuficiente.";
-        
-        // Lógica de sorteio
-        const isWin = Math.random() * 100 < winChance;
-        const netChange = isWin ? (amount * multiplier) - amount : -amount;
-        const color = isWin ? 'var(--green-win)' : 'var(--red-loss)';
-        const statusText = isWin 
-            ? `GANHOU! Você acertou e ganhou ${netChange.toLocaleString('pt-BR')} Gold.` 
-            : `PERDEU. Você errou e perdeu ${amount.toLocaleString('pt-BR')} Gold.`;
-
-        try {
-            await db.collection("users").doc(user.uid).update({
-                gold: increment(netChange),
-                wins: isWin ? increment(1) : increment(0),
-                losses: isWin ? increment(0) : increment(1),
-            });
-            
-            betMsg.innerHTML = `<span style="color:${color}; font-weight: bold;">${statusText}</span>`;
-            showGlobalNotice(statusText, color);
-
-        } catch (error) {
-            betMsg.textContent = 'Erro ao processar a aposta. Tente novamente.';
-        }
-    }
-
-    // ----------------------------------------------------
-    // 8. ADMIN FUNCTIONS (Painel do Dono) (Mantido)
-    // ----------------------------------------------------
-
-    window.adminGiveGold = async function() {
-        const user = auth.currentUser;
-        if (user.uid !== OWNER_UID) return showGlobalNotice("Acesso Negado.", 'var(--btn-red)');
-        
-        const targetUsername = document.getElementById('adminName').value.trim();
-        const amount = parseInt(document.getElementById('adminAmount').value);
-
-        if (!targetUsername || isNaN(amount) || amount === 0) return showGlobalNotice("Preencha o nome e o valor.", 'var(--btn-red)');
-
-        try {
-            // Encontra o usuário pelo nome de exibição no Firestore (não é possível no Auth SDK)
-            const snapshot = await db.collection("users").where("displayName", "==", targetUsername).limit(1).get();
-            if (snapshot.empty) return showGlobalNotice(`Usuário ${targetUsername} não encontrado.`, 'var(--btn-red)');
-
-            const targetUid = snapshot.docs[0].id;
-
-            await db.collection("users").doc(targetUid).update({
-                gold: increment(amount)
-            });
-
-            const action = amount > 0 ? `DEU ${amount.toLocaleString('pt-BR')} Gold` : `REMOVEU ${Math.abs(amount).toLocaleString('pt-BR')} Gold`;
-            showGlobalNotice(`✅ Sucesso! ${action} para ${targetUsername}.`, 'var(--green-win)');
-            document.getElementById('adminName').value = '';
-            document.getElementById('adminAmount').value = '';
-
-        } catch (error) {
-            showGlobalNotice("Erro na transação Admin.", 'var(--btn-red)');
-            console.error("Erro Admin Give Gold:", error);
-        }
-    }
-    
-    window.adminResetRank = async function() {
-        const user = auth.currentUser;
-        if (user.uid !== OWNER_UID) return showGlobalNotice("Acesso Negado.", 'var(--btn-red)');
-
-        if (!confirm("Tem certeza que deseja RESETAR o GOLD, WINS e LOSSES de TODOS os usuários? Esta ação é irreversível!")) {
+        if (snapshot.empty) {
+            salesList.innerHTML = '<p class="small" style="grid-column: 1 / -1; text-align: center;">Nenhum item à venda no momento.</p>';
             return;
         }
 
-        showGlobalNotice("Iniciando reset de ranking...", 'var(--btn-red)');
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            const div = document.createElement('div');
+            div.className = 'sale-post';
+            
+            let buttons = `<a href="https://wa.me/?text=Tenho interesse no seu item '${data.title}' no IVAD!" target="_blank" class="sale-contact-btn">CHAMAR NO WHATSAPP</a>`;
+            if (data.contact && data.contact.toLowerCase().includes('discord')) {
+                 buttons = `<a href="#" onclick="updateStatus('Contato: ${data.contact}', false)" class="sale-contact-btn" style="background: #7289da;">VER DISCORD</a>`;
+            } else if (data.contact) {
+                 buttons = `<a href="#" onclick="updateStatus('Contato: ${data.contact}', false)" class="sale-contact-btn" style="background: #4A90E2;">VER CONTATO</a>`;
+            }
+            
+            if (currentUser && (data.sellerUid === currentUser.uid || currentUser.uid === OWNER_UID)) {
+                buttons = `<button onclick="deleteSale('${doc.id}', '${data.imageUrl}')" class="btn" style="background: var(--btn-red); width: 100%;">Excluir Postagem</button>`;
+            }
 
-        try {
-            // Obter todos os documentos da coleção 'users'
-            const usersSnapshot = await db.collection("users").get();
-            const batch = db.batch();
+            div.innerHTML = `
+                <img src="${data.imageUrl || 'https://via.placeholder.com/320x240?text=Sem+Imagem'}" alt="${data.title}">
+                <h4 style="margin-top: 0; color: var(--text-primary);">${data.title}</h4>
+                <p class="small" style="color: var(--text-primary);">${data.description}</p>
+                <div class="sale-price">R$ ${data.price.toFixed(2).replace('.', ',')}</div>
+                <p class="small" style="margin-top: 5px; color: var(--text-secondary);">Vendedor: ${data.sellerUsername}</p>
+                ${buttons}
+            `;
+            salesList.appendChild(div);
+        });
+    }, error => updateStatus(`Erro ao carregar vendas: ${error.message}`, true));
+}
 
-            usersSnapshot.forEach(doc => {
-                const userRef = db.collection("users").doc(doc.id);
-                batch.update(userRef, {
-                    gold: 100, // Volta para o gold inicial
-                    wins: 0,
-                    losses: 0
-                });
-            });
-
-            await batch.commit();
-            showGlobalNotice("🏆 Ranking RESETADO com sucesso! Todos voltaram a 100 Gold.", 'var(--main-gold)');
-
-        } catch (error) {
-            showGlobalNotice("❌ Erro ao resetar ranking.", 'var(--btn-red)');
-            console.error("Erro Admin Reset Rank:", error);
+async function deleteSale(saleId, imageUrl) {
+    if (!currentUser) return;
+    if (!confirm("Tem certeza que deseja excluir esta postagem?")) return;
+    
+    try {
+        // 1. Excluir imagem do Storage
+        if (imageUrl) {
+            const fileRef = storage.refFromURL(imageUrl);
+            await fileRef.delete();
         }
+        
+        // 2. Excluir documento do Firestore (Regras verificam permissão)
+        await salesColRef.doc(saleId).delete();
+        updateStatus("Postagem excluída com sucesso.", false);
+    } catch (error) {
+        updateStatus(`Erro ao excluir postagem: ${error.message}`, true);
+    }
+}
+
+
+// ----------------------------------------------------
+// 8. FUNÇÕES DE ADMINISTRADOR
+// ----------------------------------------------------
+
+async function adminGiveGold() {
+    if (currentUser.uid !== OWNER_UID) return;
+
+    const targetUsername = document.getElementById('adminName').value.trim();
+    const amount = parseInt(document.getElementById('adminAmount').value);
+
+    if (!targetUsername || isNaN(amount) || amount === 0) {
+        return updateStatus("[ADMIN] Preencha o nome do usuário e a quantidade de Gold.", true);
     }
     
-    window.adminClearChat = async function() {
-        const user = auth.currentUser;
-        if (user.uid !== OWNER_UID) return showGlobalNotice("Acesso Negado.", 'var(--btn-red)');
-        
-        if (!confirm("Tem certeza que deseja limpar o CHAT GLOBAL?")) return;
-
-        showGlobalNotice("Limpando chat...", 'var(--btn-red)');
-
-        try {
-            // Deleta os documentos em lotes
-            const chatSnapshot = await db.collection("chat").limit(100).get(); // Limita a 100 por lote
-            const batch = db.batch();
-
-            if (chatSnapshot.empty) {
-                showGlobalNotice("Chat já está vazio.", 'var(--green-win)');
-                return;
-            }
-
-            chatSnapshot.forEach(doc => {
-                batch.delete(doc.ref);
-            });
-
-            await batch.commit();
-            showGlobalNotice("✅ Chat Global limpo com sucesso!", 'var(--green-win)');
-
-        } catch (error) {
-            showGlobalNotice("❌ Erro ao limpar chat.", 'var(--btn-red)');
-            console.error("Erro Admin Clear Chat:", error);
+    try {
+        // 1. Busca o UID pelo username (sempre busca no backend)
+        const snapshot = await usersColRef.where('username', '==', targetUsername).limit(1).get();
+        if (snapshot.empty) {
+            return updateStatus(`[ADMIN] Usuário '${targetUsername}' não encontrado.`, true);
         }
-    }
+        const targetUid = snapshot.docs[0].id;
 
-    // ----------------------------------------------------
-    // 9. INICIALIZAÇÃO
-    // ----------------------------------------------------
-
-    document.addEventListener('DOMContentLoaded', () => {
-        // CORREÇÃO CRÍTICA PARA AS ABAS: Adiciona o listener de clique
-        document.querySelectorAll('.tabbtn').forEach(button => {
-            button.addEventListener('click', function() {
-                switchTab(this.dataset.tab);
-            });
+        // 2. Atualiza o Gold (Regras permitem esta alteração por ser OWNER_UID)
+        await usersColRef.doc(targetUid).update({
+            gold: FieldValue.increment(amount) 
         });
-        
-        // Garante que a primeira aba ('regrasTab') esteja ativa ao carregar
-        switchTab('regrasTab');
 
-        // Escuta o estado de autenticação (logado, deslogado, anônimo)
-        auth.onAuthStateChanged(user => {
-            // Checa se o usuário é banido ANTES de atualizar a UI (simulação de check inicial)
-            if (user && !user.isAnonymous) {
-                 db.collection('bannedUsers').doc(user.uid).get().then(doc => {
-                    if (doc.exists) {
-                        auth.signOut();
-                        alert(`⚠️ Sua conta está BANIDA. Motivo: ${doc.data().reason}`);
-                        return;
-                    }
-                    updateAuthUI(user);
-                }).catch(error => {
-                    console.error("Erro ao checar banimento:", error);
-                    updateAuthUI(user); // Tenta carregar mesmo se der erro no ban check
-                });
-            } else {
-                updateAuthUI(user);
-                // Se não houver usuário logado, tenta logar anonimamente
-                if (!user) {
-                    auth.signInAnonymously().catch(error => console.error("Erro ao logar anonimamente:", error));
-                }
+        updateStatus(`[ADMIN] ${amount > 0 ? 'DADO' : 'REMOVIDO'} ${Math.abs(amount).toLocaleString()} Gold para ${targetUsername}.`);
+        document.getElementById('adminName').value = '';
+        document.getElementById('adminAmount').value = '';
+    } catch (error) {
+        updateStatus(`[ADMIN] Erro: ${error.message}`, true);
+    }
+}
+
+async function adminClearChat() {
+    if (currentUser.uid !== OWNER_UID) return;
+    if (!confirm("Tem certeza que deseja apagar TODAS as mensagens do Chat Global?")) return;
+    
+    chatColRef.get().then(snapshot => {
+        const batch = db.batch();
+        snapshot.docs.forEach(doc => {
+            batch.delete(doc.ref);
+        });
+        return batch.commit();
+    })
+    .then(() => updateStatus("[ADMIN] Chat Global limpo com sucesso!", false))
+    .catch(error => updateStatus(`[ADMIN] Erro ao limpar chat: ${error.message}`, true));
+}
+
+// TODO: Implementar adminResetRank (resetar gold e wins/losses de todos)
+
+
+// ----------------------------------------------------
+// 9. CONTADOR DE USUÁRIOS ONLINE
+// ----------------------------------------------------
+
+function trackOnlineStatus(uid) {
+    if (isOnlineRef) return; 
+    
+    isOnlineRef = onlineUsersColRef.doc(uid);
+    
+    // 1. Marca como online
+    isOnlineRef.set({ 
+        username: document.getElementById('userLabel').textContent.split(', ')[1].replace('!', ''), // Pega o nome do label
+        timestamp: FieldValue.serverTimestamp() 
+    });
+    
+    // 2. Marca como offline (limpeza)
+    window.addEventListener('beforeunload', () => isOnlineRef.delete());
+    auth.onAuthStateChanged(user => {
+        if (!user && isOnlineRef) isOnlineRef.delete();
+    });
+
+    // 3. Listener do contador em tempo real
+    onlineUsersColRef.onSnapshot(snapshot => {
+        let count = snapshot.size;
+        
+        // Limpeza de documentos antigos
+        const now = firebase.firestore.Timestamp.now().toMillis();
+        const timeout = 5 * 60 * 1000; // 5 minutos
+
+        let cleanupCount = 0;
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            if (data.timestamp && (now - data.timestamp.toMillis() > timeout)) {
+                // Não precisa apagar imediatamente aqui; a regra de segurança pode ser usada
+                // para garantir que a leitura de documentos antigos seja bloqueada
+                cleanupCount++;
             }
         });
         
-        // Contagem de visitantes online (Placeholder - apenas para demonstração)
-        db.collection('visitors').doc('online').onSnapshot(doc => {
-             document.getElementById('visitorCount').textContent = doc.data() ? doc.data().count : '0';
-        });
+        document.getElementById('visitorCount').textContent = Math.max(0, count - cleanupCount).toLocaleString();
+    }, error => console.error("Erro no contador online: ", error));
+}
 
-    });
+
+// ----------------------------------------------------
+// 10. LISTENERS GLOBAIS
+// ----------------------------------------------------
+
+auth.onAuthStateChanged(user => {
+    if (user) {
+        // user.uid está logado, agora carrega o perfil do firestore
+        loadUserData(user);
+    } else {
+        currentUser = null;
+        document.getElementById('signedOutUI').style.display = 'block';
+        document.getElementById('signedInUI').style.display = 'none';
+        document.getElementById('ownerPanel').style.display = 'none';
+        document.getElementById('playerInfoSocial').style.display = 'none';
+        updateStatus("Desconectado. Faça login para usar o sistema.", true);
+    }
+});
+
+// Inicializa a primeira aba
+document.addEventListener('DOMContentLoaded', () => {
+    switchTab('regrasTab');
+});
+
 </script>
+
 </body>
 </html>

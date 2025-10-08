@@ -1,1562 +1,1650 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>IVAD TROCAS E VENDAS - MULTIJOGOS SUPREMO</title>
-<style>
-/* VARS */
-:root{
-  --card-bg: rgba(15, 10, 30, 0.95); /* Deep Violet Transparent */
-  --btn-gradient: linear-gradient(90deg, #5EEAD4, #10B981); /* Teal/Green */
-  --btn-blue: linear-gradient(90deg, #8B5CF6, #6D28D9); /* Deep Purple Blue */
-  --btn-red: linear-gradient(90deg, #F87171, #EF4444); /* Red */
-  --text-primary: #E5E7EB;
-  --text-secondary: #C4B5FD; /* Light purple for secondary text */
-  --main-gold: #FCD34D; /* Light Gold */
-  --border-color: rgba(139, 92, 246, 0.3); /* Purple Border */
-  --green-win: #10B981;
-  --red-loss: #EF4444;
-  --extreme-bet: #FF69B4; /* Hot Pink */
-}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IVAD - Jogo de Regras e Social</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
+    
+    <style>
+        /* Variáveis de Cores (CSS Custom Properties) */
+        :root {
+            --bg-dark: #1e1e2d;
+            --bg-medium: #27293d;
+            --bg-light: #373950;
+            --main-gold: #ffc107;
+            --btn-blue: #007bff;
+            --btn-red: #dc3545;
+            --text-primary: #f0f0f0;
+            --text-secondary: #aaaaaa;
+            --red-loss: #dc3545;
+            --green-win: #28a745;
+            --btn-disabled: #4a4d6b;
+        }
 
-/* BASE & LAYOUT */
-html,body{height:100%;margin:0;font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;color:var(--text-primary);background:#05050A}
-body{perspective:1000px;overflow-x:hidden}
+        /* Reset Básico */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
 
-.bg3d{
-  position:fixed;inset:0;
-  background:url('https://i.imgur.com/gK2g2f7.jpeg') no-repeat center center; 
-  background-size:cover;z-index:-2;
-  filter:contrast(1.2) saturate(1.5) brightness(0.65); 
-  transform-origin:center center;animation:float3d 18s ease-in-out infinite alternate;
-}
-@keyframes float3d{
-  0%{transform:translateZ(0px) rotateY(0deg) rotateX(0deg) scale(1.05)}
-  50%{transform:translateZ(15px) rotateY(2deg) rotateX(1deg) scale(1.06)}
-  100%{transform:translateZ(0px) rotateY(-1deg) rotateX(-1deg) scale(1.05)}
-}
-.overlay{position:fixed;inset:0;z-index:-1;background:linear-gradient(135deg, rgba(5,5,10,0.95), rgba(5,5,10,0.6))}
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
 
-header{
-    background:var(--card-bg);padding:1.4rem;text-align:center;position:relative;z-index:2;
-    border-bottom: 3px solid var(--main-gold); box-shadow: 0 4px 25px rgba(0,0,0,0.9);
-}
-header h1{margin:.2rem;font-size:2.4rem; letter-spacing: 5px; text-shadow: 0 0 18px rgba(252,211,77,0.9); font-weight: 900; }
-header p{margin:.1rem;color:var(--text-secondary);font-size:1rem; font-style: italic;}
+        /* Estrutura Principal */
+        .container {
+            width: 100%;
+            max-width: 900px;
+            background-color: var(--bg-medium);
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
 
-.container{max-width:1200px;margin:3rem auto;padding:1rem;display:grid;grid-template-columns:280px 1fr;gap:2.5rem}
-.card{background:var(--card-bg);padding:2rem;border-radius:15px;box-shadow:0 15px 50px rgba(0,0,0,0.95);border: 1px solid var(--border-color); transition: transform 0.3s, box-shadow 0.3s;}
+        /* Cabeçalho */
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--bg-light);
+            padding-bottom: 10px;
+        }
 
-/* MENU E ABAS */
-.menu button{
-    display:block;width:100%;margin-bottom:.9rem;padding:1rem 1rem;border-radius:12px;border:none;
-    background:rgba(255,255,255,0.08);color:var(--text-primary);font-weight:600;cursor:pointer;
-    transition:all .3s ease; box-shadow: 0 5px 15px rgba(0,0,0,0.6); text-align: left;
-}
-.menu button:hover{
-    transform:translateY(-3px);
-    background:rgba(255,255,255,0.12);
-    box-shadow:0 10px 25px rgba(252,211,77,0.4);
-}
-.menu button.active{
-    background:var(--btn-blue); 
-    color:var(--text-primary);
-    transform:translateY(0);
-    box-shadow:0 4px 15px rgba(0,0,0,0.8); font-weight: 700;
-}
+        header h1 {
+            color: var(--main-gold);
+            font-size: 2.5rem;
+            text-shadow: 0 0 10px rgba(255, 193, 7, 0.5);
+        }
 
-/* CONTEÚDO */
-.content h2{
-    margin-top:0; border-bottom: 3px solid var(--main-gold); padding-bottom: 15px; 
-    margin-bottom: 2rem; color: var(--main-gold); font-size: 2rem; font-weight: 800;
-}
-.content h3 { color: var(--text-primary); margin-top: 2rem; border-left: 4px solid var(--green-win); padding-left: 10px; }
-ul{padding-left:1.5rem}
-.small{font-size:.88rem;color:var(--text-secondary)}
+        /* Notificação Global */
+        #globalNotice {
+            display: none;
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: bold;
+            z-index: 1000;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+        }
 
-/* BOTÕES GERAIS (Efeito Neon Glow Reforçado) */
-.btn{
-  display:inline-block;padding:1rem 2rem;border-radius:12px;border:none;background:var(--btn-gradient);
-  color:#111;font-weight:800;cursor:pointer; transition: all .3s; position: relative; overflow: hidden;
-  box-shadow: 0 0 20px rgba(94, 237, 212, 0.5); 
-}
-.btn:hover:not(:disabled){
-    box-shadow: 0 0 40px rgba(94, 237, 212, 1), 0 0 15px rgba(0,0,0,0.7); 
-    transform: scale(1.03) translateY(-2px);
-}
-.btn:disabled{opacity:0.4; cursor: not-allowed; filter: grayscale(100%); box-shadow: none;}
+        /* UI Deslogada (Auth) */
+        #signedOutUI {
+            display: block;
+            background-color: var(--bg-light);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        #signedOutUI h2 {
+            margin-bottom: 15px;
+            color: var(--main-gold);
+        }
 
-/* INPUTS */
-input[type="text"],input[type="password"],input[type=number],select,textarea{
-    width:100%;padding:1rem;margin:.6rem 0;border-radius:10px;
-    border:1px solid var(--border-color);background:rgba(0,0,0,0.6);
-    color:var(--text-primary);box-sizing: border-box; transition: border-color .3s, box-shadow .3s;
-}
-input:focus, textarea:focus{
-    outline: none; border-color: var(--main-gold); 
-    box-shadow: 0 0 8px var(--main-gold);
-}
-input[type="file"]{
-    padding: 10px; 
-    background: rgba(255,255,255,0.05); 
-    border-radius: 10px; 
-    border: 1px dashed var(--border-color); 
-    color: var(--text-secondary);
-}
-input[type="file"]::-webkit-file-upload-button {
-    background: var(--btn-blue);
-    color: white;
-    padding: 8px 15px;
-    border-radius: 8px;
-    border: none;
-    outline: none;
-    cursor: pointer;
-    margin-right: 10px;
-}
-input[type="file"]::file-selector-button { 
-    background: var(--btn-blue);
-    color: white;
-    padding: 8px 15px;
-    border-radius: 8px;
-    border: none;
-    outline: none;
-    cursor: pointer;
-    margin-right: 10px;
-}
+        .auth-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .auth-form input {
+            padding: 10px;
+            border: 1px solid var(--bg-dark);
+            border-radius: 5px;
+            background-color: var(--bg-dark);
+            color: var(--text-primary);
+            font-size: 1rem;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            color: var(--text-primary);
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .btn:hover:not(:disabled) {
+            filter: brightness(1.1);
+        }
+
+        .btn:disabled {
+            background-color: var(--btn-disabled) !important;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        /* UI Logada (Main) */
+        #signedInUI {
+            display: none;
+        }
+
+        .user-info {
+            background-color: var(--bg-light);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .user-info span {
+            font-size: 1.1rem;
+            font-weight: bold;
+        }
+        
+        .user-info #myGold {
+            color: var(--main-gold);
+            font-size: 1.3rem;
+        }
+
+        /* Navegação */
+        .tabs {
+            display: flex;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--bg-light);
+        }
+
+        .tabbtn {
+            background-color: var(--bg-light);
+            color: var(--text-secondary);
+            padding: 10px 15px;
+            border: none;
+            border-radius: 8px 8px 0 0;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            margin-right: 5px;
+            font-weight: bold;
+        }
+
+        .tabbtn:hover {
+            background-color: var(--bg-dark);
+            color: var(--text-primary);
+        }
+
+        .tabbtn.active {
+            background-color: var(--bg-medium);
+            color: var(--main-gold);
+            border-bottom: 2px solid var(--main-gold);
+        }
+
+        /* Conteúdo Geral */
+        .content > div {
+            display: none;
+            padding-top: 10px;
+        }
+
+        h3 {
+            border-bottom: 1px solid var(--bg-light);
+            padding-bottom: 5px;
+            margin-bottom: 15px;
+            color: var(--text-primary);
+        }
+
+        .section-box {
+            background-color: var(--bg-light);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        /* Ranking */
+        #rankingList {
+            list-style: none;
+            padding: 0;
+        }
+
+        #rankingList li {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px dashed var(--bg-dark);
+        }
+
+        #rankingList li:last-child {
+            border-bottom: none;
+        }
+
+        /* Chat */
+        #chatBox {
+            height: 300px;
+            background-color: var(--bg-dark);
+            border-radius: 8px;
+            padding: 10px;
+            overflow-y: auto;
+            margin-bottom: 10px;
+            display: flex;
+            flex-direction: column-reverse; /* Mensagens novas no topo visual, mas scroll para baixo */
+        }
+        
+        #chatWindow {
+             display: flex;
+             flex-direction: column;
+             min-height: 100%;
+        }
+
+        .chat-message {
+            padding: 5px 0;
+            border-bottom: 1px dotted var(--bg-light);
+            word-wrap: break-word;
+        }
+
+        .chat-input-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .chat-input-group input {
+            flex-grow: 1;
+            padding: 10px;
+            border-radius: 5px;
+            border: none;
+            background-color: var(--bg-light);
+            color: var(--text-primary);
+        }
+
+        #chatError {
+            color: var(--red-loss);
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+
+        /* Jogos */
+        .game-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+
+        .game-card {
+            background-color: var(--bg-dark);
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 5px solid var(--main-gold);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .game-card input, .game-card select {
+            padding: 8px;
+            border-radius: 4px;
+            border: none;
+            background-color: var(--bg-light);
+            color: var(--text-primary);
+        }
+        
+        .game-card p {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+        
+        .cooldown {
+            cursor: not-allowed;
+            background-color: var(--btn-disabled) !important;
+            filter: none !important;
+        }
+        
+        /* Inventário */
+        #inventoryList {
+            list-style: none;
+            padding: 0;
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid var(--bg-dark);
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+        
+        #inventoryList li {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 10px;
+            border-bottom: 1px solid var(--bg-dark);
+        }
+        
+        #inventoryTotal {
+            font-weight: bold;
+            display: block;
+            margin-bottom: 10px;
+            color: var(--main-gold);
+        }
+
+        /* Mercado (Sales) */
+        #salesList {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+        
+        .sale-post {
+            background-color: var(--bg-dark);
+            padding: 15px;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid var(--bg-light);
+        }
+        
+        .sale-post img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 6px;
+            margin-bottom: 10px;
+        }
+
+        .sale-price {
+            font-size: 1.5rem;
+            color: var(--green-win);
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        
+        .sale-contact-btn {
+            display: block;
+            text-align: center;
+            padding: 10px;
+            border-radius: 5px;
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        /* Caça ao Tesouro */
+        .treasure-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .treasure-box {
+            background-color: var(--bg-light);
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--main-gold);
+            transition: all 0.3s ease;
+            border: 4px solid transparent;
+        }
+
+        .treasure-box:hover {
+            filter: brightness(1.2);
+        }
+
+        .treasure-box.open {
+            background-color: var(--bg-dark);
+            color: var(--text-primary);
+        }
 
 
-/* VENDAS GRID */
-.sales-grid {
-    display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 30px;
-}
-.sale-post {
-    background: rgba(255,255,255,0.05); padding: 1.5rem; border-radius: 15px;
-    border: 1px solid var(--border-color);
-    box-shadow: 0 6px 20px rgba(0,0,0,0.7); transition: transform 0.4s, box-shadow 0.4s;
-}
-.sale-post:hover { transform: translateY(-7px); box-shadow: 0 12px 35px rgba(0,0,0,0.9); }
-
-.sale-post img {
-    width: 100%; height: 240px; object-fit: cover; border-radius: 10px; margin-bottom: 15px;
-    border: 3px solid var(--main-gold);
-}
-.sale-price {
-    font-size: 1.8rem; color: var(--green-win); font-weight: bold; margin: 5px 0;
-}
-.sale-contact-btn {
-    display: block; width: 100%; margin-top: 15px; 
-    padding: 14px; border-radius: 10px; text-decoration: none; text-align: center;
-    font-weight: bold; font-size: 1.1rem; transition: background .3s, transform .2s;
-    border: none; cursor: pointer;
-}
-.sale-contact-btn:hover { transform: scale(1.02); }
-
-
-/* RANKING */
-.rank-list{max-height:500px;overflow-y:auto;padding:1.5rem; background: rgba(0,0,0,0.6); border-radius: 10px;}
-.rank-list li{padding: 5px 0; border-bottom: 1px dotted var(--border-color); transition: background-color 0.2s, padding-left 0.2s; display: flex; justify-content: space-between; align-items: center;}
-.rank-list li:last-child { border-bottom: none; }
-.rank-list li:hover { background-color: rgba(255,255,255,0.1); padding-left: 15px; border-radius: 6px; }
-
-/* CHAT */
-.chat-box{max-height:380px;overflow-y:auto;background:rgba(0,0,0,0.5);padding:1rem;margin-top:1rem;border-radius:12px;border: 1px solid var(--border-color)}
-.chat-input-area{margin-top:1rem; display: flex; gap: 8px; align-items: stretch;}
-.chat-input-area input[type=text]{margin: 0; flex-grow: 1; padding: 1rem; border-radius: 12px;}
-.chat-input-area button{padding: 0 1.5rem; margin: 0; font-size: 1.2rem; border-radius: 12px;}
-#btnRecordAudio{background: var(--btn-blue); color: #fff; width: 65px; font-size: 1.6rem; opacity: 0.5;} 
-
-/* JOGOS */
-.game-area{
-    display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 25px;
-}
-.bet-option-card {
-    background: rgba(255,255,255,0.08); padding: 1.8rem; border-radius: 15px;
-    border: 1px solid var(--main-gold); 
-}
-.bet-option-card h3 { color: var(--main-gold); font-size: 1.5rem; margin-bottom: 0.8rem; }
-.treasure-box-container {
-    display: flex; gap: 15px; margin-top: 15px;
-}
-.treasure-box {
-    flex-grow: 1; padding: 1.5rem; border-radius: 10px; background: rgba(80, 50, 160, 0.7);
-    color: white; font-weight: bold; text-align: center; font-size: 1.8rem; cursor: pointer;
-    transition: transform 0.3s, background 0.3s; border: 3px solid transparent;
-}
-.treasure-box:hover {
-    transform: translateY(-5px);
-    background: rgba(120, 70, 200, 0.9);
-}
-.treasure-box.open {
-    transform: scale(1.05);
-}
-
-
-/* NOTIFICAÇÃO GLOBAL */
-#globalNotice{
-    position:fixed;top:20px;right:20px;background:var(--main-gold);color:#111;padding:1.2rem 2.2rem;border-radius:12px;display:none;z-index:9999;
-    font-weight:900;box-shadow:0 8px 30px rgba(0,0,0,0.9);
-    animation: fadeInOut 4.5s cubic-bezier(0.19, 1, 0.22, 1) forwards;
-}
-/* Requisito de Cooldown para o Trabalho */
-#btnWork.cooldown, #btnHunt.cooldown, #btnMine.cooldown {
-    opacity: 0.6;
-    cursor: not-allowed;
-    background: var(--btn-red);
-}
-
-@keyframes fadeInOut {
-    0% { opacity: 0; transform: translateY(-20px); }
-    10% { opacity: 1; transform: translateY(0); }
-    90% { opacity: 1; transform: translateY(0); }
-    100% { opacity: 0; transform: translateY(-20px); }
-}
-
-/* ESTILOS DE INVENTÁRIO */
-#inventoryList {
-    list-style: none; padding: 0; max-height: 200px; overflow-y: auto;
-    border: 1px solid var(--border-color); border-radius: 10px; padding: 10px;
-    background: rgba(0,0,0,0.3);
-}
-#inventoryList li {
-    padding: 8px 0; border-bottom: 1px dotted rgba(255,255,255,0.1); 
-    display: flex; justify-content: space-between; font-size: 0.95rem;
-}
-#inventoryList li:last-child { border-bottom: none; }
-#inventoryTotal {
-    color: var(--main-gold); font-size: 1.2rem; font-weight: bold; display: block; margin-top: 10px;
-}
-
-
-@media(max-width:880px){ 
-    .container{grid-template-columns:1fr; padding:.5rem; margin-top: 1.5rem} 
-    .menu{order:2} 
-    header h1 { font-size: 1.8rem; letter-spacing: 3px; }
-    .game-area { grid-template-columns: 1fr; }
-    .sales-grid { grid-template-columns: 1fr; }
-    .menu button { text-align: center; }
-}
-</style>
+        /* Responsividade */
+        @media (max-width: 600px) {
+            .tabs {
+                flex-direction: column;
+            }
+            .tabbtn {
+                margin-right: 0;
+                margin-bottom: 5px;
+                border-radius: 8px;
+            }
+            .btn-group {
+                flex-direction: column;
+            }
+        }
+    </style>
 </head>
 <body>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-analytics.js"></script> 
 
-<div class="bg3d" aria-hidden="true"></div>
-<div class="overlay" aria-hidden="true"></div>
+    <div id="globalNotice"></div>
 
-<header>
-  <h1>IVAD TROCAS E VENDAS</h1>
-  <p>O melhor ambiente multijogos de compra e venda.</p>
-</header>
+    <div class="container">
+        <header>
+            <h1>IVAD - Regras & Jogo Social</h1>
+            <p style="color: var(--text-secondary);">Onde a comunidade é o valor.</p>
+            <p class="small" style="margin-top: 5px;">Usuários Online: <span id="visitorCount">0</span></p>
+        </header>
 
-<main class="container">
-  <aside class="card menu">
-    <button class="tabbtn active" data-tab="regrasTab">📜 REGRAS</button>
-    <button class="tabbtn" data-tab="socialTab">🤝 SOCIAL (ID e Amigos)</button>
-    <button class="tabbtn" data-tab="jogoSimplesTab">💰 GOLD SIMPLES</button>
-    <button class="tabbtn" data-tab="apostasAvancadasTab">🎲 APOSTAS AVANÇADAS</button>
-    <button class="tabbtn" data-tab="habilidadeTab">🧠 JOGOS DE HABILIDADE</button>
-    <button class="tabbtn" data-tab="salesTab">🛒 VENDAS (Dinheiro Real)</button>
-    <button class="tabbtn" data-tab="rankTab">🏆 RANK GLOBAL</button>
-    <button class="tabbtn" data-tab="chatTab">💬 CHAT GLOBAL</button>
-    <hr style="border:none;height:1px;background:var(--border-color);margin:15px 0">
-
-    <div id="authArea" class="small">
-      <div id="signedOutUI">
-        <input id="username" type="text" placeholder="Nome de Usuário (único)">
-        <input id="pwd" type="password" placeholder="Senha (mín. 6 caracteres)">
-        <div style="display:flex;gap:.5rem; margin-top: 10px;">
-          <button id="btnSignup" class="btn" onclick="signup()" style="background:var(--btn-blue); flex-grow: 1; padding: .8rem;">Criar conta</button>
-          <button id="btnLogin" class="btn" onclick="login()" style="flex-grow: 1; padding: .8rem;">Entrar</button>
-        </div>
-        <p class="small" style="margin-top: 8px;">Nome de usuário é único e não pode ser alterado.</p>
-      </div>
-
-      <div id="signedInUI" style="display:none">
-        <p style="margin-bottom: .8rem; font-size: 1.1rem;"><strong id="userLabel"></strong></p>
-        <div style="display:flex;gap:.5rem;align-items:center">
-          <button id="btnLogout" class="btn" onclick="auth.signOut()" style="background:var(--btn-red); padding: .7rem 1.2rem; font-size: 0.9rem;">Sair</button>
-          <div style="margin-left:auto; font-size: 1.3rem;"><span class="small" style="color:var(--main-gold); font-size: 0.9em;">Gold: </span><strong id="myGold" style="color: var(--main-gold);">0</strong></div>
-        </div>
-      </div>
-    </div>
-
-    <hr style="border:none;height:1px;background:var(--border-color);margin:15px 0">
-    <div id="ownerPanel" style="display:none">
-      <h4 style="margin:.3rem 0; color: #e57373;">🛠️ Painel do Dono</h4>
-      <input id="adminName" placeholder="Nome do Usuário (exato)">
-      <input id="adminAmount" type="number" placeholder="Gold (+/-)">
-      <button id="btnGive" class="btn" onclick="adminGiveGold()" style="width: 100%; margin-top: .5rem; background: var(--btn-blue);">Dar/Remover Gold</button>
-      <button id="btnClearChat" class="btn" onclick="adminClearChat()" style="background:var(--btn-red);margin-top:.5rem; width: 100%;">Limpar Chat Global</button>
-      <p class="small" style="margin-top: 5px; color: #F87171;">Apenas para OWNER_UID.</p>
-    </div>
-    <hr style="border:none;height:1px;background:var(--border-color);margin:15px 0">
-    <p class="small">Visitantes online: <strong id="visitorCount">0</strong></p>
-  </aside>
-
-  <section class="card content">
-    <div id="regrasTab">
-      <h2>📜 Regras da Comunidade</h2>
-      <h3 style="color: var(--red-loss);">🚫 Proibido (Banimento Imediato)</h3>
-      <ul>
-        <li>**Conteúdo NSFW:** Fotos ou links de **partes íntimas** ou explícito. (Análise de IA e banimento acionados).</li>
-        <li>**Ofensas Graves/Racismo:** Qualquer forma de desrespeito ou preconceito.</li>
-        <li>**Golpes/Scam:** Tentar enganar outros membros.</li>
-        <li>**Spam** ou flood excessivo.</li>
-      </ul>
-      <h3 style="color: var(--green-win);">✅ Permitido</h3>
-      <ul>
-        <li>Anunciar itens e contas de jogo na aba Vendas.</li>
-        <li>Negociar e interagir de forma educada e transparente.</li>
-        <li>Usar o Chat Global para assuntos da comunidade.</li>
-      </ul>
-      <h3 style="color: var(--main-gold);">⚠️ Observações de Venda</h3>
-      <ul>
-        <li>Negociações são **responsabilidade das partes**.</li>
-        <li>O descumprimento das regras de conteúdo resulta em **banimento permanente**.</li>
-      </ul>
-    </div>
-
-    <div id="socialTab" style="display:none">
-      <h2>🤝 Social: Amigos e ID</h2>
-      <div id="playerInfoSocial" class="user-id-box card" style="display:none; background: rgba(0,0,0,0.4); padding: 1.5rem;">
-          <p style="margin: 0;"><span class="small" style="color:var(--main-gold);">Seu Nome: </span><strong id="socialUsername"></strong></p>
-          <p style="margin: 5px 0 0 0;"><span class="small" style="color:var(--main-gold);">Seu ID Único: </span><strong id="socialUserId"></strong></p>
-          <p class="small" style="margin-top: 10px;">Compartilhe este ID para ser adicionado.</p>
-      </div>
-      <h3 style="color: var(--btn-blue);">Minha Lista de Amigos</h3>
-      <ul class="friend-list" id="friendList">
-        <p class="small" style="text-align: center; margin: 10px 0;">Funcionalidade de amigos será implementada em breve.</p>
-      </ul>
-    </div>
-
-    <div id="jogoSimplesTab" style="display:none">
-        <h2>💰 Gold Simples (Trabalho e Apostas)</h2>
-      
-        <div id="playerInfo" class="card" style="margin-bottom:1.5rem; padding: 1rem; background: rgba(255,255,255,0.1); display:block; border: 1px solid var(--main-gold);">
-            <p style="margin: 0; font-size: 1.1rem;">Seu Gold: <strong id="playerGold" style="color: var(--main-gold);">0</strong></p>
-        </div>
-
-        <h3 style="margin-top: 1rem;">🌳 Ações de Coleta e Inventário</h3>
-        <p class="small">Reúna itens caçando ou minerando e venda-os de uma vez para ganhar Gold.</p>
-        
-        <div style="display: flex; gap: 15px; margin-bottom: 20px;">
-            <button id="btnHunt" class="btn" onclick="hunt()" style="background: var(--green-win); flex-grow: 1; padding: 1rem;">Caçar (Cooldown: 10s)</button>
-            <button id="btnMine" class="btn" onclick="mine()" style="background: #4A90E2; flex-grow: 1; padding: 1rem;">Minerar (Cooldown: 10s)</button>
-        </div>
-
-        <div class="card" style="background: rgba(0,0,0,0.4); padding: 1.5rem; margin-bottom: 25px;">
-            <h4 style="margin-top: 0; color: var(--main-gold);">📦 Seu Inventário</h4>
-            <ul id="inventoryList">
-                <li id="inventoryEmptyMsg" style="text-align: center; color: var(--text-secondary);">Inventário vazio.</li>
-            </ul>
-            <span id="inventoryTotal">Valor Total: 0 Gold</span>
-            <button id="btnSellInventory" class="btn" onclick="sellInventory()" style="width: 100%; margin-top: 15px; background: var(--btn-red);">Vender Inventário</button>
-        </div>
-        
-        <hr style="border:none;height:1px;background:var(--border-color);margin:25px 0">
-        
-        <h3 style="margin-top: 1rem;">💼 Trabalhar (Recuperação)</h3>
-        <p class="small">Ganho varia de **1% a 100%** do seu Gold atual. **Garante no mínimo 1 Gold.** (Cooldown: 5s)</p>
-        <button id="btnWork" class="btn" onclick="work()">Trabalhar (Gold Aleatório)</button>
-        <span id="workMsg" class="small" style="margin-left:1rem; color: #5EEAD4;"></span>
-
-        <hr style="border:none;height:1px;background:var(--border-color);margin:25px 0">
-
-        <h3 style="margin-top: 1rem;">Apostas Rápidas (Multiplicadores)</h3>
-        
-        <div class="game-area">
-            <div class="bet-option-card">
-                <h4 style="color: var(--main-gold); margin-top: 0;">2x (Mediano)</h4>
-                <p class="small">Tente dobrar sua aposta. 45% de chance.</p>
-                <input type="number" id="betAmount_2x" placeholder="Quantos golds apostar?" min="1">
-                <button onclick="betSimple(2, 'betAmount_2x', 'betMsg_2x', 45)" class="btn" style="background: var(--btn-gradient); width: 100%; margin-top: 10px;">Apostar 2x</button>
-                <span id="betMsg_2x" class="small" style="display: block; margin-top: 8px;"></span>
-            </div>
-            
-            <div class="bet-option-card">
-                <h4 style="color: var(--btn-blue); margin-top: 0;">5x (Alto Risco)</h4>
-                <p class="small">Arrisque por 5x. Chance de 20%.</p>
-                <input type="number" id="betAmount_5x" placeholder="Quantos golds apostar?" min="1">
-                <button onclick="betSimple(5, 'betAmount_5x', 'betMsg_5x', 20)" class="btn" style="background:var(--btn-blue); width: 100%; margin-top: 10px;">Apostar 5x</button>
-                <span id="betMsg_5x" class="small" style="display: block; margin-top: 8px;"></span>
-            </div>
-            
-            <div class="bet-option-card">
-                <h4 style="color: var(--btn-red); margin-top: 0;">10x (Aposta Extrema)</h4>
-                <p class="small">Altíssimo risco. Chance de 10%.</p>
-                <input type="number" id="betAmount_10x" placeholder="Quantos golds apostar?" min="1">
-                <button onclick="betSimple(10, 'betAmount_10x', 'betMsg_10x', 10)" class="btn" style="background:var(--btn-red); width: 100%; margin-top: 10px;">Apostar 10x</button>
-                <span id="betMsg_10x" class="small" style="display: block; margin-top: 8px;"></span>
-            </div>
-        </div>
-    </div>
-
-    <div id="apostasAvancadasTab" style="display:none">
-        <h2>🎲 Apostas Avançadas e Extremas</h2>
-
-        <p class="small">Jogos mais elaborados com maior interação e potencial de ganho/perda. **NOVAS FUNÇÕES EXTREMAS ADICIONADAS!**</p>
-
-        <div class="game-area">
-            
-            <div class="bet-option-card" style="border-color: var(--extreme-bet);">
-                <h3 style="margin-top: 0; color: var(--extreme-bet);">👑 LOTERIA 100x (MAX ROULETTE)</h3>
-                <p class="small">Escolha um número de 1 a 100. Paga **100x** a aposta. (1% chance)</p>
-                <input type="number" id="bet100xAmount" placeholder="Gold para apostar" min="1">
-                <input type="number" id="bet100xNumber" placeholder="Seu Número (1-100)" min="1" max="100">
-                <button onclick="betDice(100, 100, 'bet100xAmount', 'bet100xNumber', 'bet100xMsg')" class="btn" style="width: 100%; background: var(--extreme-bet);">GANHE 100X</button>
-                <span id="bet100xMsg" class="small" style="display: block; margin-top: 5px;"></span>
-            </div>
-
-            <div class="bet-option-card">
-                <h3 style="margin-top: 0;">Cor (2x ou 4x)</h3>
-                <p class="small">Aposte no Vermelho (48%), Preto (48%) ou Verde (4x - 4%).</p>
-                <input type="number" id="betCorAmount" placeholder="Gold para apostar" min="1">
-                <select id="betCorColor" style="margin-bottom: 10px; padding: 10px; border-radius: 8px; width: 100%; background: rgba(0,0,0,0.7); color: var(--text-primary); border: 1px solid var(--border-color);">
-                    <option value="red" style="color: red;">Vermelho (48%)</option>
-                    <option value="black" style="color: #333;">Preto (48%)</option>
-                    <option value="green" style="color: green;">Verde (4%)</option>
-                </select>
-                <button onclick="betCor()" class="btn" style="width: 100%;">Girar</button>
-                <span id="betCorMsg" class="small" style="display: block; margin-top: 5px;"></span>
-            </div>
-            
-            <div class="bet-option-card">
-                <h3 style="margin-top: 0;">Moeda da Sorte (2x)</h3>
-                <p class="small">Aposte cara ou coroa. 50% de chance. (Exclusivo)</p>
-                <input type="number" id="betCoinAmount" placeholder="Gold para apostar" min="1">
-                <select id="betCoinSide" style="margin-bottom: 10px; padding: 10px; border-radius: 8px; width: 100%; background: rgba(0,0,0,0.7); color: var(--text-primary); border: 1px solid var(--border-color);">
-                    <option value="cara">Cara</option>
-                    <option value="coroa">Coroa</option>
-                </select>
-                <button onclick="betCoin()" class="btn" style="width: 100%;">Lançar Moeda</button>
-                <span id="betCoinMsg" class="small" style="display: block; margin-top: 5px;"></span>
-            </div>
-            
-            <div class="bet-option-card">
-                <h3 style="margin-top: 0;">DICE 12x (Extremo)</h3>
-                <p class="small">Acerte um número de 1 a 12. Paga 12x a aposta. (8.3% chance)</p>
-                <input type="number" id="betDice12Amount" placeholder="Gold para apostar" min="1">
-                <input type="number" id="betDice12Number" placeholder="Seu Número (1-12)" min="1" max="12">
-                <button onclick="betDice(12, 12, 'betDice12Amount', 'betDice12Number', 'betDice12Msg')" class="btn" style="width: 100%; background: var(--btn-red);">Rolar Alto Risco</button>
-                <span id="betDice12Msg" class="small" style="display: block; margin-top: 5px;"></span>
-            </div>
-            
-            <div class="bet-option-card">
-                <h3 style="margin-top: 0;">Número Mágico (4x)</h3>
-                <p class="small">Aposta fixa de 50 Gold. Chance de 25% de acertar.</p>
-                <button onclick="betRNG(4, 50, 25, 'betRNGMsg_4x')" class="btn" style="width: 100%; background: var(--btn-blue);">Apostar 50 Gold (4x)</button>
-                <span id="betRNGMsg_4x" class="small" style="display: block; margin-top: 5px;"></span>
-            </div>
-            
-            <div class="bet-option-card" style="border-color: var(--green-win);">
-                <h3 style="margin-top: 0; color: var(--green-win);">📦 Caça ao Tesouro (3x)</h3>
-                <p class="small">Escolha uma caixa: **Tesouro (3x)**, **Pequeno Prêmio (1.5x)** ou **Armadilha (Perde)**.</p>
-                <input type="number" id="betTreasureAmount" placeholder="Gold para apostar" min="1">
-                <div class="treasure-box-container">
-                    <div class="treasure-box" data-box="A" onclick="betTreasureHunt(this)">A</div>
-                    <div class="treasure-box" data-box="B" onclick="betTreasureHunt(this)">B</div>
-                    <div class="treasure-box" data-box="C" onclick="betTreasureHunt(this)">C</div>
+        <div id="signedOutUI">
+            <h2>Acesso ao Servidor</h2>
+            <div class="auth-form">
+                <input type="text" id="username" placeholder="Nome de Usuário" required>
+                <input type="password" id="pwd" placeholder="Senha (Mín. 6 caracteres)" required>
+                <div class="btn-group">
+                    <button class="btn" onclick="login()" style="background: var(--btn-blue); flex-grow: 1;">Entrar</button>
+                    <button id="btnSignup" class="btn" onclick="signup()" style="background:var(--main-gold); color: #111; flex-grow: 1;">Criar Conta</button>
                 </div>
-                <span id="betTreasureMsg" class="small" style="display: block; margin-top: 15px;"></span>
             </div>
+            <p id="authError" style="color: var(--red-loss); margin-top: 10px;"></p>
         </div>
-    </div>
 
-    <div id="habilidadeTab" style="display:none">
-        <h2>🧠 Jogos de Habilidade</h2>
-        <p class="small">Jogos que dependem da sua capacidade e não da sorte.</p>
-        <div class="game-area">
-            <div class="bet-option-card" style="opacity: 0.5;">
-                <h3 style="margin-top: 0;">Jogo de Memória</h3>
-                <p class="small">Combine os pares em 60 segundos para ganhar 2x a aposta. (Em Breve)</p>
-                <button class="btn" disabled>Jogar (Em Breve)</button>
+        <div id="signedInUI">
+            <div class="user-info">
+                <span id="userLabel">Bem-vindo, Jogador!</span>
+                <span>Gold: <span id="myGold">0</span></span>
+                <button class="btn" onclick="firebase.auth().signOut()" style="background: var(--btn-red);">Sair</button>
             </div>
-            <div class="bet-option-card" style="opacity: 0.5;">
-                <h3 style="margin-top: 0;">Quiz Global</h3>
-                <p class="small">Responda a 10 perguntas em 30 segundos para ganhar 3x. (Em Breve)</p>
-                <button class="btn" disabled>Jogar (Em Breve)</button>
+
+            <div class="tabs">
+                <button class="tabbtn active" data-tab="regrasTab">Regras</button>
+                <button class="tabbtn" data-tab="profileTab">Meu Perfil</button>
+                <button class="tabbtn" data-tab="gamesTab">Jogos & Coleta</button>
+                <button class="tabbtn" data-tab="socialTab">Chat & Ranking</button>
+                <button class="tabbtn" data-tab="salesTab">Mercado</button>
             </div>
-        </div>
-    </div>
 
-    <div id="salesTab" style="display:none">
-        <h2>🛒 Mercado de Vendas (Dinheiro Real)</h2>
-        <p class="small">Publique suas contas, skins ou itens de jogos para venda.</p>
-        
-        <div class="sale-post" style="background: var(--card-bg); border: 1px solid var(--main-gold); margin-bottom: 2rem;">
-            <h3>📝 Criar Nova Postagem</h3>
-            <input type="text" id="saleTitle" placeholder="Título do Item (Ex: Conta Free Fire Elite)">
-            <input type="text" id="saleContact" placeholder="Seu Contato (WhatsApp, Discord, etc.)">
-            <textarea id="saleDescription" placeholder="Descrição Detalhada do Item e Condições de Venda." rows="3"></textarea>
-            <input type="number" id="salePrice" placeholder="Preço em R$ (Ex: 150.00)" step="0.01">
-            <input type="file" id="saleImage" accept="image/*">
-            <button id="btnPostSale" class="btn" onclick="postSale()" style="width: 100%; margin-top: 1rem;">Postar Venda</button>
-        </div>
-
-        <h3>Itens Ativos no Mercado</h3>
-        <div id="salesList" class="sales-grid">
-            <p class="small" style="grid-column: 1 / -1; text-align: center;">Carregando vendas...</p>
-        </div>
-    </div>
-
-    <div id="rankTab" style="display:none">
-        <h2>🏆 Rank Global</h2>
-        <p class="small" style="color: var(--green-win);">Ranking atualizado em tempo real pelo Gold. Competição acirrada!</p>
-        <ol id="rankingList" class="rank-list">
-            <li>Carregando ranking...</li>
-        </ol>
-    </div>
-
-    <div id="chatTab" style="display:none">
-        <h2>💬 Chat Global</h2>
-        <p class="small">Mensagens em tempo real. Máximo de 200 caracteres por mensagem.</p>
-        <div id="chatWindow" class="chat-box">
-            </div>
-        <div class="chat-input-area">
-            <input type="text" id="chatInput" placeholder="Digite sua mensagem...">
-            <button id="btnSendMsg" class="btn" onclick="sendMessage()">Enviar</button>
-            <button id="btnRecordAudio" class="btn" disabled>🎤</button>
-        </div>
-        <p id="chatError" class="small" style="color: var(--red-loss); margin-top: 5px;"></p>
-    </div>
-  </section>
-</main>
-
-<div id="globalNotice" style="display:none"></div>
-
-<script>
-// ----------------------------------------------------
-// 1. CONFIGURAÇÃO E INICIALIZAÇÃO DO FIREBASE (v8)
-// ----------------------------------------------------
-// SEU UID DE ADMINISTRADOR! ESSENCIAL PARA O PAINEL E REGRAS!
-const OWNER_UID = "m3h06woQv2V7lrNu1p8fDQCZ8IW2"; // SUBSTITUA PELO SEU UID DE ADMIN!
-let currentUser = null; 
-// GOLD INICIAL
-let initialGold = 5000; 
-let isOnlineRef = null; 
-const CHAT_LIMIT = 50;
-let cooldowns = {
-    work: false,
-    hunt: false,
-    mine: false
-};
-const COOLDOWN_WORK = 5000;
-const COOLDOWN_COLLECT = 10000; // 10 segundos para caçar e minerar
-
-// CONFIGURAÇÃO FORNECIDA PELO USUÁRIO
-const firebaseConfig = {
-  apiKey: "AIzaSyDxXQjbQ400wgqTW1_UfY3vPs1XES6M-78",
-  authDomain: "regras-ivad.firebaseapp.com",
-  projectId: "regras-ivad",
-  storageBucket: "regras-ivad.firebasestorage.app",
-  messagingSenderId: "812565896201",
-  appId: "1:812565896201:web:e8e6b5e6aaaf944b1aacd8",
-  measurementId: "G-3Z5PFGMND5" // Mantido mas não usado ativamente pelo JS
-};
-
-// Certifica-se de que o Firebase SDK está carregado antes de inicializar
-if (typeof firebase !== 'undefined') {
-    try {
-        firebase.initializeApp(firebaseConfig);
-    } catch (e) {
-        console.error("Erro ao inicializar Firebase. Verifique sua configuração.", e);
-        document.addEventListener('DOMContentLoaded', () => {
-             updateStatus("ERRO: Configuração do Firebase inválida. Verifique o console.", true);
-        });
-        throw e; // Interrompe o script se a config falhar
-    }
-    
-    const auth = firebase.auth();
-    const db = firebase.firestore();
-    const FieldValue = firebase.firestore.FieldValue;
-    const storage = firebase.storage(); 
-
-    // Referências Comuns
-    const usersColRef = db.collection('users');
-    const chatColRef = db.collection('chat');
-    const salesColRef = db.collection('sales');
-    const onlineUsersColRef = db.collection('onlineUsers');
-    const storageRef = storage.ref('sales_images');
-
-
-    // ----------------------------------------------------
-    // 2. FUNÇÕES DE UTILIDADE E UI
-    // ----------------------------------------------------
-
-    function updateStatus(message, isError = false) {
-        const statusElement = document.getElementById('globalNotice');
-        statusElement.textContent = message;
-        
-        if (isError) {
-             statusElement.style.backgroundColor = 'var(--red-loss)';
-             statusElement.style.color = 'white';
-        } else {
-             statusElement.style.backgroundColor = 'var(--main-gold)';
-             statusElement.style.color = '#111';
-        }
-
-        statusElement.style.display = 'block';
-
-        clearTimeout(window.noticeTimeout);
-        window.noticeTimeout = setTimeout(() => {
-            statusElement.style.display = 'none';
-        }, 4000);
-    }
-
-    function switchTab(tabId) {
-        document.querySelectorAll('.content > div').forEach(tab => {
-            tab.style.display = 'none';
-        });
-        document.querySelectorAll('.tabbtn').forEach(btn => {
-            btn.classList.remove('active');
-        });
-
-        const content = document.getElementById(tabId);
-        if (content) {
-            content.style.display = 'block';
-            document.querySelector('.content').style.display = 'block';
-        }
-
-        document.querySelector(`.tabbtn[data-tab="${tabId}"]`).classList.add('active');
-    }
-
-    // Listener para as abas
-    document.querySelectorAll('.tabbtn').forEach(button => {
-        button.addEventListener('click', () => {
-            switchTab(button.getAttribute('data-tab'));
-        });
-    });
-
-
-    // ----------------------------------------------------
-    // 3. AUTENTICAÇÃO E PERFIL (CORREÇÃO DE BUGS DE EMAIL E LOGIN)
-    // ----------------------------------------------------
-
-    async function checkUsernameAvailability(username) {
-        // Verifica se o nome de usuário EXATO já existe no Firestore.
-        const snapshot = await usersColRef.where('username', '==', username).get();
-        return snapshot.empty;
-    }
-
-    async function signup() {
-        // 1. LIMPEZA E VALIDAÇÃO DOS INPUTS
-        const rawUsername = document.getElementById('username').value.trim();
-        const password = document.getElementById('pwd').value;
-        
-        // Remove caracteres que possam causar problemas no email e torna MINÚSCULO para o email do Firebase
-        const safeUsername = rawUsername.replace(/[^a-zA-Z0-9]/g, '').toLowerCase(); 
-        const email = safeUsername + "@ivad.com"; 
-        
-        if (rawUsername.length < 3) {
-            return updateStatus("Nome de usuário deve ter no mínimo 3 caracteres.", true);
-        }
-        if (password.length < 6) {
-            return updateStatus("Senha deve ter no mínimo 6 caracteres.", true);
-        }
-        
-        if (rawUsername.length !== safeUsername.length || rawUsername !== rawUsername.toLowerCase()) {
-            // Notifica se o nome de usuário for ajustado para o EMAIL, mas mantemos o original no Firestore
-            updateStatus(`Atenção: Seu nome foi normalizado para segurança do login. Nome visível: "${rawUsername}".`, false);
-        }
-
-        // 2. VERIFICAÇÃO DE DISPONIBILIDADE DO NOME DE USUÁRIO (CASE-SENSITIVE)
-        const isAvailable = await checkUsernameAvailability(rawUsername); 
-        if (!isAvailable) {
-            return updateStatus("Nome de usuário já está em uso.", true);
-        }
-
-        updateStatus("Criando conta...");
-        
-        // 3. CRIAÇÃO DE USUÁRIO NO FIREBASE
-        auth.createUserWithEmailAndPassword(email, password)
-            .then(async (userCredential) => {
-                const user = userCredential.user;
+            <div class="content">
                 
-                await usersColRef.doc(user.uid).set({
-                    username: rawUsername, // Salva o nome de usuário original (como o usuário digitou)
-                    gold: initialGold, 
-                    wins: 0,
-                    losses: 0,
-                    inventory: [], 
-                    creationTime: FieldValue.serverTimestamp()
-                });
-                updateStatus(`Conta de ${rawUsername} criada com sucesso!`, false);
-            })
-            .catch(error => {
-                if (error.code === 'auth/email-already-in-use') {
-                     updateStatus("Erro: Nome de usuário já existe. Tente outro nome.", true);
-                } else if (error.code === 'auth/weak-password') {
-                     updateStatus("Erro: A senha é muito fraca. Use pelo menos 6 caracteres.", true);
-                } else if (error.code === 'auth/too-many-requests') {
-                    updateStatus("BLOQUEADO: Seu dispositivo/IP está temporariamente bloqueado. Tente novamente em 1 hora ou mude sua conexão.", true);
-                } else {
-                     updateStatus(`Erro no registro: ${error.message}`, true);
-                }
-            });
-    }
+                <div id="regrasTab" style="display: block;">
+                    <h3>Regras Oficiais do Servidor IVAD</h3>
+                    <div class="section-box">
+                        <ol>
+                            <li>**Respeito:** Mantenha a cordialidade com todos os jogadores. Assédio e discurso de ódio resultam em banimento.</li>
+                            <li>**Gold:** O Gold do jogo é estritamente virtual. Qualquer tentativa de usar hacks ou exploits para ganhar Gold será punida com a exclusão da conta.</li>
+                            <li>**Comércio:** Apenas o comércio de itens virtuais é permitido no chat e mercado. O comércio de Gold por dinheiro real é por sua conta e risco, e pode resultar em banimento se houver fraude comprovada.</li>
+                            <li>**Contas:** É proibida a criação de múltiplas contas (smurfing) para farmar Gold.</li>
+                            <li>**Abuso de Bugs:** Se encontrar um bug, reporte-o ao administrador (UID: m3h06woQv2V7lrNu1p8fDQCZ8IW2). Não explorá-lo.</li>
+                        </ol>
+                        <p style="margin-top: 15px; color: var(--main-gold);">Ao criar uma conta, você concorda com as regras acima.</p>
+                    </div>
+                </div>
 
-    function login() {
-        const rawUsername = document.getElementById('username').value.trim();
-        const password = document.getElementById('pwd').value;
-        
-        // Deve usar a mesma lógica de email do signup para login funcionar
-        const safeUsername = rawUsername.replace(/[^a-zA-Z0-9]/g, '').toLowerCase(); 
-        const email = safeUsername + "@ivad.com";
-        
-        auth.signInWithEmailAndPassword(email, password)
-            .catch(error => {
-                if (error.code === 'auth/too-many-requests') {
-                    updateStatus("BLOQUEADO: Seu dispositivo/IP está temporariamente bloqueado. Tente novamente em 1 hora ou mude sua conexão.", true);
-                } else {
-                    updateStatus(`Erro no login: ${error.message}`, true);
-                }
-            });
-    }
+                <div id="profileTab">
+                    <h3>Meu Perfil & Inventário</h3>
+                    <div class="section-box" id="playerInfoSocial">
+                        <p>ID: <span id="socialUserId" style="color: var(--text-secondary);"></span></p>
+                        <p>Nome: <span id="socialUsername" style="color: var(--main-gold);"></span></p>
+                        <p>Gold Atual: <span id="playerGold" style="color: var(--main-gold);">0</span></p>
+                    </div>
 
-    async function loadUserData(user) {
-        currentUser = user;
-        
-        document.getElementById('signedOutUI').style.display = 'none';
-        document.getElementById('signedInUI').style.display = 'block';
+                    <h3 style="margin-top: 25px;">Inventário de Itens Coletados</h3>
+                    <div class="section-box">
+                        <ul id="inventoryList">
+                            <li id="inventoryEmptyMsg" style="text-align: center; color: var(--text-secondary);">Inventário vazio.</li>
+                        </ul>
+                        <span id="inventoryTotal">Valor Total: 0 Gold</span>
+                        <button id="btnSellInventory" class="btn" onclick="sellInventory()" style="background: var(--green-win); width: 100%; margin-top: 10px;" disabled>Vender Tudo por Gold</button>
+                    </div>
+                </div>
 
-        document.getElementById('ownerPanel').style.display = user.uid === OWNER_UID ? 'block' : 'none';
+                <div id="gamesTab">
+                    <h3>Atividades e Minijogos</h3>
+                    
+                    <h4 style="margin-bottom: 10px;">Coleta e Ganho Passivo (Cooldown de 5s / 10s)</h4>
+                    <div class="game-grid">
+                        <div class="game-card" style="border-left-color: var(--btn-blue);">
+                            <strong>Trabalho Simples</strong>
+                            <p>Ganhe Gold com base em uma porcentagem do seu Gold atual. (Rápido)</p>
+                            <button id="btnWork" class="btn" onclick="work()" style="background: var(--btn-blue);">Trabalhar</button>
+                            <p id="workMsg" style="color: var(--main-gold);"></p>
+                        </div>
+                        <div class="game-card" style="border-left-color: #ff8800;">
+                            <strong>Caçar / Coletar</strong>
+                            <p>Encontre itens valiosos para vender no mercado ou para a loja do jogo.</p>
+                            <button id="btnHunt" class="btn" onclick="hunt()" style="background: #ff8800;">Caçar</button>
+                        </div>
+                        <div class="game-card" style="border-left-color: #888888;">
+                            <strong>Mineração</strong>
+                            <p>Desenterre minérios e pedras preciosas. (Alto valor)</p>
+                            <button id="btnMine" class="btn" onclick="mine()" style="background: #888888;">Minerar</button>
+                        </div>
+                    </div>
+                    
+                    <h4 style="margin-top: 25px; margin-bottom: 10px;">Apostas e Sorte</h4>
+                    <div class="game-grid">
+                        <div class="game-card" style="border-left-color: var(--green-win);">
+                            <strong>Aposta Segura (2x)</strong>
+                            <p>50% de chance de dobrar sua aposta. Mínima chance de perder.</p>
+                            <input type="number" id="betSimple2Amount" placeholder="Quantia de Gold" min="1" value="100">
+                            <button class="btn" onclick="betSimple(2, 'betSimple2Amount', 'betSimple2Msg', 49.5)" style="background: var(--green-win);">Apostar (49.5% chance)</button>
+                            <p id="betSimple2Msg"></p>
+                        </div>
+                        
+                        <div class="game-card" style="border-left-color: var(--red-loss);">
+                            <strong>Aposta Arriscada (10x)</strong>
+                            <p>10% de chance de ganhar 10x o Gold apostado. Alto risco.</p>
+                            <input type="number" id="betSimple10Amount" placeholder="Quantia de Gold" min="1" value="500">
+                            <button class="btn" onclick="betSimple(10, 'betSimple10Amount', 'betSimple10Msg', 9.9)" style="background: var(--red-loss);">Apostar (9.9% chance)</button>
+                            <p id="betSimple10Msg"></p>
+                        </div>
 
-        const userRef = usersColRef.doc(user.uid);
-        
-        userRef.onSnapshot(docSnapshot => {
-            if (docSnapshot.exists) {
-                const data = docSnapshot.data();
-                // Garante que o Gold não seja negativo
-                const currentGold = Math.max(0, data.gold || 0); 
-                
-                document.getElementById('myGold').textContent = currentGold.toLocaleString();
-                document.getElementById('playerGold').textContent = currentGold.toLocaleString();
-                document.getElementById('userLabel').textContent = `Bem-vindo, ${data.username}!`;
-                document.getElementById('socialUsername').textContent = data.username;
-                document.getElementById('socialUserId').textContent = user.uid;
-                document.getElementById('playerInfoSocial').style.display = 'block';
+                        <div class="game-card" style="border-left-color: #f7a048;">
+                            <strong>Caça ao Tesouro (3 caixas)</strong>
+                            <p>Aposte Gold e escolha 1 de 3 caixas. (3x, 1.5x, ou 0x)</p>
+                            <input type="number" id="betTreasureAmount" placeholder="Quantia de Gold" min="1" value="100">
+                            <div class="treasure-grid">
+                                <div class="treasure-box" data-box="A" onclick="betTreasureHunt(this)">A</div>
+                                <div class="treasure-box" data-box="B" onclick="betTreasureHunt(this)">B</div>
+                                <div class="treasure-box" data-box="C" onclick="betTreasureHunt(this)">C</div>
+                            </div>
+                            <p id="betTreasureMsg" style="text-align: center;"></p>
+                        </div>
+                    </div>
+                </div>
 
-                if (data.username !== document.getElementById('username').value.trim()) {
-                    document.getElementById('username').value = data.username; 
-                }
-                
-                // ATUALIZA INVENTÁRIO
-                renderInventory(data.inventory || []); 
+                <div id="socialTab">
+                    <h3 style="margin-bottom: 10px;">Chat Global</h3>
+                    <div id="chatBox">
+                        <div id="chatWindow">
+                            </div>
+                    </div>
+                    <div class="chat-input-group">
+                        <input type="text" id="chatInput" placeholder="Digite sua mensagem no chat (Máx. 200 caracteres)">
+                        <button class="btn" onclick="sendMessage()" style="background: var(--btn-blue);">Enviar</button>
+                    </div>
+                    <p id="chatError"></p>
 
-            }
-        });
+                    <h3 style="margin-top: 25px;">Ranking Global (Top 15 por Gold)</h3>
+                    <div class="section-box">
+                        <ul id="rankingList">
+                            </ul>
+                    </div>
+                </div>
 
-        loadRanking(); 
-        loadChat();    
-        loadSales();
-        trackOnlineStatus(user.uid);
-    }
+                <div id="salesTab">
+                    <h3>Postar Item no Mercado</h3>
+                    <div class="section-box">
+                        <div class="form-group">
+                            <label for="saleTitle" style="display: block; margin-bottom: 5px;">Título do Item:</label>
+                            <input type="text" id="saleTitle" placeholder="Ex: Conta IVAD Premium" style="width: 100%;">
+                        </div>
+                        <div class="form-group">
+                            <label for="saleDescription" style="display: block; margin-bottom: 5px;">Descrição:</label>
+                            <textarea id="saleDescription" placeholder="Detalhes da venda." rows="3" style="width: 100%; padding: 10px; border-radius: 5px; border: none; background-color: var(--bg-dark); color: var(--text-primary);"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="saleContact" style="display: block; margin-bottom: 5px;">Seu Contato (Discord, WhatsApp, etc.):</label>
+                            <input type="text" id="saleContact" placeholder="Ex: Usuário#1234 (Discord) ou +55XXXXXXXXXX (WhatsApp)" style="width: 100%;">
+                        </div>
+                        <div class="form-group" style="display: flex; gap: 20px;">
+                             <div style="flex-grow: 1;">
+                                <label for="salePrice" style="display: block; margin-bottom: 5px;">Preço (R$):</label>
+                                <input type="number" id="salePrice" placeholder="Preço em Reais (R$)" min="0.01" step="0.01" style="width: 100%;">
+                             </div>
+                             <div style="flex-grow: 1;">
+                                <label for="saleImage" style="display: block; margin-bottom: 5px;">Imagem (Obrigatório):</label>
+                                <input type="file" id="saleImage" accept="image/*" style="width: 100%; border: 1px solid var(--bg-dark); padding: 5px; border-radius: 5px;">
+                             </div>
+                        </div>
+                        <button id="btnPostSale" class="btn" onclick="postSale()" style="background: #28a745; width: 100%;">Postar Venda</button>
+                    </div>
 
+                    <h3 style="margin-top: 25px;">Itens à Venda</h3>
+                    <div id="salesList">
+                        </div>
+                </div>
 
-    // ----------------------------------------------------
-    // 4. JOGOS E SISTEMA ANTI-HACK DE GOLD
-    // ----------------------------------------------------
+                <div id="ownerPanel" style="display: none;">
+                    <h3>Painel de Administrador</h3>
+                    <p style="color: var(--red-loss); font-weight: bold; margin-bottom: 15px;">Atenção: Apenas para uso administrativo!</p>
+                    
+                    <div class="section-box">
+                        <h4>Gerenciar Gold</h4>
+                        <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                            <input type="text" id="adminName" placeholder="Nome de Usuário Alvo" style="flex-grow: 1;">
+                            <input type="number" id="adminAmount" placeholder="Quantia (ex: 5000 ou -100)" style="width: 150px;">
+                        </div>
+                        <button class="btn" onclick="adminGiveGold()" style="background: var(--btn-red); width: 100%;">Dar / Remover Gold</button>
+                    </div>
+                    
+                    <div class="section-box">
+                        <h4>Limpar Chat</h4>
+                        <button class="btn" onclick="adminClearChat()" style="background: var(--btn-red); width: 100%;">Limpar Mensagens do Chat</button>
+                    </div>
+                </div>
 
-    async function updateGold(amount, isWin = false) {
-        if (!currentUser) { 
-             updateStatus("Erro: Não logado. Gold não atualizado.", true);
-             return false;
-        }
-        
-        const updateData = {
-            gold: FieldValue.increment(amount)
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ----------------------------------------------------
+        // 1. CONFIGURAÇÃO E INICIALIZAÇÃO DO FIREBASE (v8)
+        // ----------------------------------------------------
+        // SEU UID DE ADMINISTRADOR! ESSENCIAL PARA O PAINEL E REGRAS!
+        const OWNER_UID = "m3h06woQv2V7lrNu1p8fDQCZ8IW2"; // SUBSTITUA PELO SEU UID DE ADMIN!
+        let currentUser = null; 
+        // GOLD INICIAL
+        let initialGold = 5000; 
+        let isOnlineRef = null; 
+        const CHAT_LIMIT = 50;
+        let cooldowns = {
+            work: false,
+            hunt: false,
+            mine: false
+        };
+        const COOLDOWN_WORK = 5000;
+        const COOLDOWN_COLLECT = 10000; // 10 segundos para caçar e minerar
+
+        // CONFIGURAÇÃO FORNECIDA PELO USUÁRIO
+        const firebaseConfig = {
+          apiKey: "AIzaSyDxXQjbQ400wgqTW1_UfY3vPs1XES6M-78",
+          authDomain: "regras-ivad.firebaseapp.com",
+          projectId: "regras-ivad",
+          storageBucket: "regras-ivad.firebasestorage.app",
+          messagingSenderId: "812565896201",
+          appId: "1:812565896201:web:e8e6b5e6aaaf944b1aacd8",
+          measurementId: "G-3Z5PFGMND5" 
         };
 
-        if (isWin && amount > 0) {
-            updateData.wins = FieldValue.increment(1);
-        } else if (!isWin && amount < 0) {
-            updateData.losses = FieldValue.increment(1);
-        }
-
-        return usersColRef.doc(currentUser.uid).update(updateData)
-            .catch(error => {
-                updateStatus(`Erro ao atualizar Gold: ${error.message}`, true);
-                return false;
-            });
-    }
-    
-    // NOVO: Função para atualizar o inventário
-    async function updateInventory(newInventory) {
-        if (!currentUser) return false;
-        
-        return usersColRef.doc(currentUser.uid).update({
-            inventory: newInventory 
-        }).catch(error => {
-            updateStatus(`Erro ao atualizar inventário: ${error.message}`, true);
-            return false;
-        });
-    }
-    
-    // NOVO: Funções de Cooldown
-    function checkCooldown(action) {
-        if (!currentUser) { updateStatus("Você precisa estar logado.", true); return true; }
-        if (cooldowns[action]) {
-            updateStatus(`Aguarde o cooldown (${COOLDOWN_COLLECT / 1000} segundos) para ${action}.`, true);
-            return true;
-        }
-        return false;
-    }
-    
-    function setCooldown(action, duration, btnId) {
-        cooldowns[action] = true;
-        const btn = document.getElementById(btnId);
-        if(btn) {
-            btn.disabled = true;
-            btn.classList.add('cooldown');
-        }
-
-        setTimeout(() => {
-            cooldowns[action] = false;
-            if(btn) {
-                btn.disabled = false;
-                btn.classList.remove('cooldown');
-            }
-        }, duration);
-    }
-    
-    // NOVO: Renderiza o inventário na tela
-    function renderInventory(inventory) {
-        const list = document.getElementById('inventoryList');
-        const totalElement = document.getElementById('inventoryTotal');
-        list.innerHTML = '';
-        
-        if (!inventory || inventory.length === 0) {
-            list.innerHTML = '<li id="inventoryEmptyMsg" style="text-align: center; color: var(--text-secondary);">Inventário vazio.</li>';
-            totalElement.textContent = 'Valor Total: 0 Gold';
-            // Garante que o botão de venda esteja desabilitado
-            document.getElementById('btnSellInventory').disabled = true;
-            return;
-        }
-        
-        let totalValue = 0;
-        
-        // Agrupa itens com o mesmo nome para exibição limpa
-        const groupedInventory = inventory.reduce((acc, item) => {
-            acc[item.name] = acc[item.name] || { count: 0, totalValue: 0 };
-            acc[item.name].count += 1;
-            acc[item.name].totalValue += item.goldValue;
-            totalValue += item.goldValue;
-            return acc;
-        }, {});
-        
-        for (const name in groupedInventory) {
-            const item = groupedInventory[name];
-            const li = document.createElement('li');
-            li.innerHTML = `
-                <span>${name} (x${item.count})</span>
-                <span style="color: var(--main-gold);">${item.totalValue.toLocaleString()} Gold</span>
-            `;
-            list.appendChild(li);
-        }
-        
-        totalElement.textContent = `Valor Total: ${totalValue.toLocaleString()} Gold`;
-        document.getElementById('btnSellInventory').disabled = false; // Habilita o botão
-    }
-
-    // Jogo Simples: Trabalho (MANTIDO COMO RECUPERAÇÃO)
-    async function work() {
-        const action = 'work';
-        const btnId = 'btnWork';
-        if (checkCooldown(action)) return;
-        
-        setCooldown(action, COOLDOWN_WORK, btnId);
-
-        const currentGoldText = document.getElementById('myGold').textContent.replace(/[^0-9]/g, '');
-        const currentGold = parseInt(currentGoldText) || 0;
-        
-        const percentage = Math.floor(Math.random() * 100) + 1; 
-        const earnings = Math.max(1, Math.floor(currentGold * (percentage / 100))); 
-        
-        const success = await updateGold(earnings, true);
-        if (!success) return;
-
-        document.getElementById('workMsg').textContent = `Você trabalhou e ganhou +${earnings.toLocaleString()} Gold (${percentage}%).`;
-        
-        setTimeout(() => {
-            document.getElementById('workMsg').textContent = '';
-        }, COOLDOWN_WORK); 
-    }
-    
-    // NOVO: Caçar/Coletar
-    async function hunt() {
-        const action = 'hunt';
-        const btnId = 'btnHunt';
-        if (checkCooldown(action)) return;
-        
-        setCooldown(action, COOLDOWN_COLLECT, btnId);
-        
-        const huntingItems = [
-            { name: "Pele de Urso Rara", min: 1000, max: 1800 },
-            { name: "Carne de Cervo", min: 150, max: 400 },
-            { name: "Tronco de Carvalho", min: 70, max: 250 },
-            { name: "Pena de Águia", min: 400, max: 800 },
-            { name: "Erva Medicinal", min: 100, max: 300 }
-        ];
-
-        const selectedItem = huntingItems[Math.floor(Math.random() * huntingItems.length)];
-        const value = Math.floor(Math.random() * (selectedItem.max - selectedItem.min + 1)) + selectedItem.min;
-        
-        const item = { name: selectedItem.name, goldValue: value };
-        
-        const userRef = usersColRef.doc(currentUser.uid);
-        const userDoc = await userRef.get();
-        const currentInventory = userDoc.data().inventory || [];
-        
-        currentInventory.push(item);
-        
-        const success = await updateInventory(currentInventory);
-        if (!success) return;
-        
-        updateStatus(`Caça: Você encontrou ${item.name} (Valor: ${item.goldValue.toLocaleString()} Gold)!`, false);
-    }
-    
-    // NOVO: Minerar
-    async function mine() {
-        const action = 'mine';
-        const btnId = 'btnMine';
-        if (checkCooldown(action)) return;
-        
-        setCooldown(action, COOLDOWN_COLLECT, btnId);
-        
-        const miningItems = [
-            { name: "Diamante Bruto", min: 1500, max: 2500 },
-            { name: "Pepita de Ouro", min: 800, max: 1500 },
-            { name: "Carvão", min: 100, max: 300 },
-            { name: "Barra de Ferro", min: 200, max: 500 },
-            { name: "Rubi", min: 1200, max: 2000 }
-        ];
-
-        const selectedItem = miningItems[Math.floor(Math.random() * miningItems.length)];
-        const value = Math.floor(Math.random() * (selectedItem.max - selectedItem.min + 1)) + selectedItem.min;
-        
-        const item = { name: selectedItem.name, goldValue: value };
-        
-        const userRef = usersColRef.doc(currentUser.uid);
-        const userDoc = await userRef.get();
-        const currentInventory = userDoc.data().inventory || [];
-        
-        currentInventory.push(item);
-        
-        const success = await updateInventory(currentInventory);
-        if (!success) return;
-        
-        updateStatus(`Mineração: Você desenterrou ${item.name} (Valor: ${item.goldValue.toLocaleString()} Gold)!`, false);
-    }
-    
-    // NOVO: Vender Inventário
-    async function sellInventory() {
-        if (!currentUser) return;
-        
-        const userRef = usersColRef.doc(currentUser.uid);
-        const userDoc = await userRef.get();
-        const currentInventory = userDoc.data().inventory || [];
-        
-        if (currentInventory.length === 0) {
-            return updateStatus("Seu inventário está vazio!", true);
-        }
-        
-        let totalGold = currentInventory.reduce((sum, item) => sum + item.goldValue, 0);
-        
-        // 1. Adiciona Gold
-        const successGold = await updateGold(totalGold, true);
-        if (!successGold) return;
-        
-        // 2. Limpa o inventário
-        await updateInventory([]);
-        
-        updateStatus(`Venda! Você vendeu ${currentInventory.length} itens por ${totalGold.toLocaleString()} Gold!`, false);
-    }
-
-
-    // ----------------------------------------------------
-    // 5. OUTRAS FUNÇÕES (APOSTAS)
-    // ----------------------------------------------------
-
-    function validateBet(amount) {
-        const currentGoldText = document.getElementById('myGold').textContent.replace(/[^0-9]/g, '');
-        const currentGold = parseInt(currentGoldText) || 0;
-        
-        if (!currentUser) { 
-            updateStatus("Faça login para apostar.", true); return false; 
-        }
-        const betAmount = parseInt(amount); 
-        
-        if (isNaN(betAmount) || betAmount <= 0) { 
-            updateStatus("A aposta deve ser um valor positivo e numérico.", true); return false; 
-        }
-        if (betAmount > currentGold) { 
-            updateStatus("Gold insuficiente para esta aposta.", true); return false; 
-        }
-        return true;
-    }
-
-    function notify(message, isWin) {
-        const element = document.getElementById('globalNotice');
-        element.textContent = message;
-        
-        if (isWin) {
-             element.style.backgroundColor = 'var(--green-win)';
-        } else {
-             element.style.backgroundColor = 'var(--red-loss)';
-        }
-
-        element.style.color = 'white';
-        element.style.display = 'block';
-
-        clearTimeout(window.noticeTimeout);
-        window.noticeTimeout = setTimeout(() => {
-            element.style.display = 'none';
-        }, 4000);
-    }
-    
-    // Jogo Simples: Multiplicador
-    async function betSimple(multiplier, inputId, msgId, winChance) {
-        const inputElement = document.getElementById(inputId);
-        const amount = parseInt(inputElement.value);
-        if (!validateBet(amount)) return;
-        
-        const win = Math.random() * 100 < winChance;
-        const result = win ? amount * (multiplier - 1) : -amount; 
-        
-        const success = await updateGold(result, win);
-        if (!success) return;
-        
-        const msg = win 
-            ? `✅ GANHOU ${multiplier}x! Lucro de ${result.toLocaleString()} Gold.` 
-            : `❌ PERDEU. Menos ${amount.toLocaleString()} Gold.`;
-        
-        document.getElementById(msgId).textContent = msg;
-        notify(msg, win);
-    }
-
-    // Aposta Avançada: Cor
-    async function betCor() {
-        const amount = parseInt(document.getElementById('betCorAmount').value);
-        const choice = document.getElementById('betCorColor').value;
-        if (!validateBet(amount)) return;
-
-        const rand = Math.random();
-        let outcome = '';
-        let mult = 0;
-
-        if (rand < 0.48) { 
-            outcome = 'red';
-            mult = 2;
-        } else if (rand < 0.96) { 
-            outcome = 'black';
-            mult = 2;
-        } else { 
-            outcome = 'green';
-            mult = 4;
-        }
-
-        const win = choice === outcome;
-        const result = win ? amount * (mult - 1) : -amount;
-        
-        const success = await updateGold(result, win);
-        if (!success) return;
-        
-        const msg = win 
-            ? `✅ GANHOU ${mult}x! Sorteado: ${outcome.toUpperCase()}. Lucro: ${result.toLocaleString()} Gold.` 
-            : `❌ PERDEU. Sorteado: ${outcome.toUpperCase()}. Menos ${amount.toLocaleString()} Gold.`;
-        
-        document.getElementById('betCorMsg').textContent = msg;
-        notify(msg, win);
-    }
-
-    // Aposta Avançada: Moeda
-    async function betCoin() {
-        const amount = parseInt(document.getElementById('betCoinAmount').value);
-        const choice = document.getElementById('betCoinSide').value;
-        if (!validateBet(amount)) return;
-
-        const outcome = Math.random() < 0.5 ? 'cara' : 'coroa';
-        const win = choice === outcome;
-        const result = win ? amount : -amount;
-        
-        const success = await updateGold(result, win);
-        if (!success) return;
-        
-        const msg = win 
-            ? `✅ GANHOU 2x! Deu ${outcome.toUpperCase()}. Lucro: ${result.toLocaleString()} Gold.` 
-            : `❌ PERDEU. Deu ${outcome.toUpperCase()}. Menos ${amount.toLocaleString()} Gold.`;
-        
-        document.getElementById('betCoinMsg').textContent = msg;
-        notify(msg, win);
-    }
-
-    // Aposta Avançada: Dice/Loteria
-    async function betDice(maxNumber, multiplier, inputAmountId, inputChoiceId, msgId) {
-        const amount = parseInt(document.getElementById(inputAmountId).value);
-        const choice = parseInt(document.getElementById(inputChoiceId).value);
-        
-        if (!validateBet(amount) || isNaN(choice) || choice < 1 || choice > maxNumber) {
-            return updateStatus(`Número de ${maxNumber} lados inválido (1-${maxNumber}).`, true);
-        }
-
-        const outcome = Math.floor(Math.random() * maxNumber) + 1;
-        const win = choice === outcome;
-        const result = win ? amount * (multiplier - 1) : -amount;
-        
-        const success = await updateGold(result, win);
-        if (!success) return;
-        
-        const msg = win 
-            ? `✅ ACERTOU ${outcome}! Lucro de ${result.toLocaleString()} Gold (${multiplier}x).` 
-            : `❌ ERROU ${outcome}. Perdeu ${amount.toLocaleString()} Gold.`;
-        
-        document.getElementById(msgId).textContent = msg;
-        notify(msg, win);
-    }
-
-    // Aposta Avançada: RNG Mágico
-    async function betRNG(multiplier, fixedAmount, winChance, msgId) {
-        const amount = fixedAmount;
-        if (!validateBet(amount)) return; 
-
-        const rand = Math.random() * 100;
-        const win = rand < winChance;
-        const result = win ? amount * (multiplier - 1) : -amount;
-        
-        const success = await updateGold(result, win);
-        if (!success) return;
-        
-        const msg = win 
-            ? `✅ NÚMERO MÁGICO! Lucro de ${result.toLocaleString()} Gold (${multiplier}x).` 
-            : `❌ NÃO FOI DESSA VEZ. Perdeu ${amount.toLocaleString()} Gold.`;
-        
-        document.getElementById(msgId).textContent = msg;
-        notify(msg, win);
-    }
-    
-    // NOVO JOGO: Caça ao Tesouro
-    async function betTreasureHunt(chosenBoxElement) {
-        const boxes = document.querySelectorAll('.treasure-box');
-        const amount = parseInt(document.getElementById('betTreasureAmount').value);
-        
-        if (!validateBet(amount)) return; 
-        
-        // Desabilitar todas as caixas temporariamente
-        boxes.forEach(box => {
-            box.onclick = null;
-            box.style.opacity = '0.5';
-        });
-
-        const msgElement = document.getElementById('betTreasureMsg');
-        msgElement.textContent = 'Procurando...';
-
-        const outcomes = [
-            { id: 'T', mult: 3, name: '💰 Tesouro (3x)', color: 'var(--green-win)' },
-            { id: 'P', mult: 1.5, name: '✨ Pequeno Prêmio (1.5x)', color: 'var(--main-gold)' },
-            { id: 'A', mult: -1, name: '☠️ Armadilha (Perde)', color: 'var(--red-loss)' }
-        ];
-
-        // Sorteia as caixas
-        const shuffledOutcomes = outcomes.sort(() => Math.random() - 0.5);
-        
-        let result = 0;
-        let finalMsg = '';
-        let isWin = false;
-
-        // Revela o resultado em todas as caixas
-        boxes.forEach((box, index) => {
-            const outcome = shuffledOutcomes[index];
-
-            if (box === chosenBoxElement) {
-                // Usuário acertou ou errou
-                if (outcome.mult >= 1.5) { // Win or Small Prize
-                    result = amount * (outcome.mult - 1);
-                    isWin = true;
-                    finalMsg = `🎉 VOCÊ ACERTOU! Encontrou o ${outcome.name}! Lucro de ${result.toLocaleString()} Gold.`;
-                } else { // Trap
-                    result = -amount;
-                    isWin = false;
-                    finalMsg = `💥 ERROU! ${outcome.name}. Perdeu ${amount.toLocaleString()} Gold.`;
-                }
+        // --- INÍCIO DA VERIFICAÇÃO DE CARREGAMENTO DO FIREBASE ---
+        if (typeof firebase !== 'undefined') {
+            try {
+                firebase.initializeApp(firebaseConfig);
+            } catch (e) {
+                console.error("Erro ao inicializar Firebase. Verifique sua configuração.", e);
+                document.addEventListener('DOMContentLoaded', () => {
+                     updateStatus("ERRO CRÍTICO: Configuração do Firebase inválida. Verifique o console.", true);
+                });
+                throw e; 
             }
             
-            // Adiciona o resultado visual
-            setTimeout(() => {
-                box.classList.add('open');
-                box.style.borderColor = outcome.color;
-                box.textContent = outcome.id; 
-            }, 500);
-        });
+            const auth = firebase.auth();
+            const db = firebase.firestore();
+            const FieldValue = firebase.firestore.FieldValue;
+            const storage = firebase.storage(); 
 
-        // Atualiza o Gold e notifica
-        const success = await updateGold(result, isWin);
-        if (!success) return;
-
-        msgElement.textContent = finalMsg;
-        notify(finalMsg, isWin);
-
-        // Resetar o jogo após 4 segundos
-        setTimeout(() => {
-            boxes.forEach(box => {
-                box.classList.remove('open');
-                box.style.borderColor = 'transparent';
-                box.style.opacity = '1';
-                box.textContent = box.getAttribute('data-box');
-                box.onclick = () => betTreasureHunt(box); // Reativa o clique
-            });
-            msgElement.textContent = '';
-        }, 4000);
-    }
+            // Referências Comuns
+            const usersColRef = db.collection('users');
+            const chatColRef = db.collection('chat');
+            const salesColRef = db.collection('sales');
+            const onlineUsersColRef = db.collection('onlineUsers');
+            const storageRef = storage.ref('sales_images');
 
 
-    // ----------------------------------------------------
-    // 6. RANKING GLOBAL
-    // ----------------------------------------------------
+            // ----------------------------------------------------
+            // 2. FUNÇÕES DE UTILIDADE E UI
+            // ----------------------------------------------------
 
-    function loadRanking() {
-        usersColRef.orderBy('gold', 'desc').limit(15).onSnapshot(snapshot => {
-            const rankingList = document.getElementById('rankingList');
-            rankingList.innerHTML = ''; 
-            
-            if (snapshot.empty) {
-                rankingList.innerHTML = '<li>Nenhum usuário no ranking ainda.</li>';
-                return;
-            }
-
-            snapshot.forEach((doc, index) => {
-                const data = doc.data();
-                const li = document.createElement('li');
-                li.style.color = doc.id === currentUser.uid ? 'var(--main-gold)' : 'var(--text-primary)';
-                li.style.fontWeight = doc.id === currentUser.uid ? 'bold' : 'normal';
-
-                let usernameDisplay = data.username;
-                if (doc.id === OWNER_UID) {
-                     usernameDisplay = `<span style="color: #ff00ff;">${data.username} [DONO]</span>`;
-                }
-
-                li.innerHTML = `
-                    <span style="width: 30px; display: inline-block;">#${index + 1}</span>
-                    ${usernameDisplay}
-                    <span style="color: var(--main-gold);">${data.gold ? data.gold.toLocaleString() : '0'} Gold</span>
-                `;
-                rankingList.appendChild(li);
-            });
-        }, error => {
-            updateStatus(`Erro ao carregar ranking: ${error.message}. Verifique as Regras de Segurança.`, true);
-        });
-    }
-
-
-    // ----------------------------------------------------
-    // 7. CHAT GLOBAL
-    // ----------------------------------------------------
-
-    async function sendMessage() {
-        const input = document.getElementById('chatInput');
-        const message = input.value.trim();
-        if (!message || !currentUser) return;
-        
-        if (message.length > 200) {
-            return document.getElementById('chatError').textContent = "Mensagem muito longa (Máx. 200).";
-        }
-        
-        document.getElementById('chatError').textContent = "";
-        
-        // Verifica se o usuário está logado e pega os dados (evita crash se o usuário não tiver doc no firestore)
-        let userData;
-        try {
-             userData = (await usersColRef.doc(currentUser.uid).get()).data();
-             if (!userData || !userData.username) throw new Error("Dados de usuário incompletos.");
-        } catch (e) {
-             return document.getElementById('chatError').textContent = "Erro ao enviar: Falha ao obter dados do usuário.";
-        }
-        
-        chatColRef.add({
-            username: userData.username,
-            text: message,
-            uid: currentUser.uid,
-            timestamp: FieldValue.serverTimestamp()
-        })
-        .then(() => input.value = '')
-        .catch(error => {
-            document.getElementById('chatError').textContent = `Erro: ${error.message}.`;
-        });
-    }
-
-    function loadChat() {
-        chatColRef.orderBy('timestamp', 'desc').limit(CHAT_LIMIT).onSnapshot(snapshot => {
-            const chatWindow = document.getElementById('chatWindow');
-            chatWindow.innerHTML = '';
-            
-            const messages = [];
-            snapshot.forEach(doc => messages.push(doc.data()));
-            messages.reverse().forEach(data => {
-                const div = document.createElement('div');
-                div.className = 'chat-message';
+            function updateStatus(message, isError = false) {
+                const statusElement = document.getElementById('globalNotice');
+                statusElement.textContent = message;
                 
-                let nameColor = data.uid === OWNER_UID ? '#ff00ff' : 'var(--text-secondary)';
-                let nameDisplay = data.uid === OWNER_UID ? `${data.username} [DONO]:` : `${data.username}:`;
-
-                div.innerHTML = `<span style="color: ${nameColor}; font-weight: bold;">${nameDisplay}</span> <span>${data.text}</span>`;
-                
-                chatWindow.appendChild(div);
-            });
-            
-            chatWindow.scrollTop = chatWindow.scrollHeight;
-        }, error => console.error("Erro ao carregar chat: ", error));
-    }
-
-
-    // ----------------------------------------------------
-    // 8. SISTEMA DE VENDAS (Com Upload de Imagem)
-    // ----------------------------------------------------
-
-    async function postSale() {
-        if (!currentUser) return updateStatus("Faça login para postar.", true);
-
-        const title = document.getElementById('saleTitle').value.trim();
-        const contact = document.getElementById('saleContact').value.trim();
-        const description = document.getElementById('saleDescription').value.trim();
-        const price = parseFloat(document.getElementById('salePrice').value);
-        const imageFile = document.getElementById('saleImage').files[0];
-
-        if (!title || !contact || !description || isNaN(price) || price <= 0 || !imageFile) {
-            return updateStatus("Preencha todos os campos e anexe uma imagem.", true);
-        }
-
-        document.getElementById('btnPostSale').disabled = true;
-        updateStatus("Subindo imagem e postando...");
-
-        try {
-            const userData = (await usersColRef.doc(currentUser.uid).get()).data();
-            const fileName = `${currentUser.uid}_${Date.now()}_${imageFile.name}`;
-            const imageRef = storageRef.child(fileName);
-            
-            const snapshot = await imageRef.put(imageFile);
-            const imageUrl = await snapshot.ref.getDownloadURL();
-
-            await salesColRef.add({
-                title: title,
-                description: description,
-                contact: contact,
-                price: price,
-                imageUrl: imageUrl,
-                sellerUid: currentUser.uid,
-                sellerUsername: userData.username,
-                timestamp: FieldValue.serverTimestamp()
-            });
-
-            updateStatus("Item postado no mercado com sucesso!", false);
-            document.getElementById('saleTitle').value = '';
-            document.getElementById('saleContact').value = '';
-            document.getElementById('saleDescription').value = '';
-            document.getElementById('salePrice').value = '';
-            document.getElementById('saleImage').value = '';
-
-        } catch (error) {
-            updateStatus(`Erro ao postar venda: ${error.message}`, true);
-        } finally {
-            document.getElementById('btnPostSale').disabled = false;
-        }
-    }
-
-    function loadSales() {
-        salesColRef.orderBy('timestamp', 'desc').onSnapshot(snapshot => {
-            const salesList = document.getElementById('salesList');
-            salesList.innerHTML = '';
-
-            if (snapshot.empty) {
-                salesList.innerHTML = '<p class="small" style="grid-column: 1 / -1; text-align: center;">Nenhum item à venda no momento.</p>';
-                return;
-            }
-
-            snapshot.forEach(doc => {
-                const data = doc.data();
-                const div = document.createElement('div');
-                div.className = 'sale-post';
-                
-                let buttons = '';
-
-                if (data.contact) {
-                     // Lógica para detecção de contato
-                     const contactText = data.contact.toLowerCase();
-                     if (contactText.includes('discord')) {
-                        buttons += `<a href="#" onclick="navigator.clipboard.writeText('${data.contact}'); updateStatus('Contato Discord copiado!', false);" class="sale-contact-btn" style="background: #7289da;">VER DISCORD</a>`;
-                     } else if (contactText.includes('wa.me') || data.contact.match(/^\+?\d{10,15}$/)) {
-                         const waLink = data.contact.startsWith('https://wa.me') ? data.contact : `https://wa.me/${data.contact.replace(/[^\d+]/g, '')}?text=Tenho%20interesse%20no%20seu%20item%20'${data.title}'%20no%20IVAD!`;
-                         buttons += `<a href="${waLink}" target="_blank" class="sale-contact-btn" style="background: #25d366;">CHAMAR NO WHATSAPP</a>`;
-                     } else {
-                         buttons += `<a href="#" onclick="navigator.clipboard.writeText('${data.contact}'); updateStatus('Contato copiado!', false);" class="sale-contact-btn" style="background: #4A90E2;">COPIAR CONTATO</a>`;
-                     }
-                }
-                
-                if (currentUser && (data.sellerUid === currentUser.uid || currentUser.uid === OWNER_UID)) {
-                    buttons += `<button onclick="deleteSale('${doc.id}', '${data.imageUrl}')" class="btn" style="background: var(--btn-red); width: 100%; margin-top: 10px;">Excluir Postagem</button>`;
-                }
-
-                div.innerHTML = `
-                    <img src="${data.imageUrl || 'https://via.placeholder.com/320x240?text=Sem+Imagem'}" alt="${data.title}">
-                    <h4 style="margin-top: 0; color: var(--text-primary);">${data.title}</h4>
-                    <p class="small" style="color: var(--text-primary);">${data.description}</p>
-                    <div class="sale-price">R$ ${data.price.toFixed(2).replace('.', ',')}</div>
-                    <p class="small" style="margin-top: 5px; color: var(--text-secondary);">Vendedor: ${data.sellerUsername}</p>
-                    ${buttons}
-                `;
-                salesList.appendChild(div);
-            });
-        }, error => updateStatus(`Erro ao carregar vendas: ${error.message}`, true));
-    }
-
-    async function deleteSale(saleId, imageUrl) {
-        if (!currentUser) return;
-        if (!confirm("Tem certeza que deseja excluir esta postagem?")) return;
-        
-        try {
-            if (imageUrl) {
-                const fileRef = storage.refFromURL(imageUrl);
-                await fileRef.delete();
-            }
-            
-            await salesColRef.doc(saleId).delete();
-            updateStatus("Postagem excluída com sucesso.", false);
-        } catch (error) {
-            updateStatus(`Erro ao excluir postagem: ${error.message}`, true);
-        }
-    }
-
-
-    // ----------------------------------------------------
-    // 9. FUNÇÕES DE ADMINISTRADOR
-    // ----------------------------------------------------
-
-    async function adminGiveGold() {
-        if (!currentUser || currentUser.uid !== OWNER_UID) return;
-
-        const targetUsername = document.getElementById('adminName').value.trim();
-        const amount = parseInt(document.getElementById('adminAmount').value);
-
-        if (!targetUsername || isNaN(amount) || amount === 0) {
-            return updateStatus("[ADMIN] Preencha o nome do usuário e a quantidade de Gold.", true);
-        }
-        
-        try {
-            const snapshot = await usersColRef.where('username', '==', targetUsername).limit(1).get();
-            if (snapshot.empty) {
-                return updateStatus(`[ADMIN] Usuário '${targetUsername}' não encontrado.`, true);
-            }
-            const targetUid = snapshot.docs[0].id;
-            const isWin = amount > 0;
-
-            await usersColRef.doc(targetUid).update({
-                gold: FieldValue.increment(amount) ,
-                wins: isWin ? FieldValue.increment(1) : FieldValue.increment(0),
-                losses: isWin ? FieldValue.increment(0) : FieldValue.increment(1)
-            });
-
-            updateStatus(`[ADMIN] ${amount > 0 ? 'DADO' : 'REMOVIDO'} ${Math.abs(amount).toLocaleString()} Gold para ${targetUsername}.`);
-            document.getElementById('adminName').value = '';
-            document.getElementById('adminAmount').value = '';
-        } catch (error) {
-            updateStatus(`[ADMIN] Erro: ${error.message}`, true);
-        }
-    }
-
-    async function adminClearChat() {
-        if (!currentUser || currentUser.uid !== OWNER_UID) return;
-        if (!confirm("Tem certeza que deseja apagar TODAS as mensagens do Chat Global?")) return;
-        
-        chatColRef.limit(200).get().then(snapshot => {
-            const batch = db.batch();
-            snapshot.docs.forEach(doc => {
-                batch.delete(doc.ref);
-            });
-            return batch.commit();
-        })
-        .then(() => updateStatus("[ADMIN] Chat Global limpo (parcialmente - repita se for necessário)!", false))
-        .catch(error => updateStatus(`[ADMIN] Erro ao limpar chat: ${error.message}`, true));
-    }
-
-
-    // ----------------------------------------------------
-    // 10. CONTADOR DE USUÁRIOS ONLINE
-    // ----------------------------------------------------
-
-    function trackOnlineStatus(uid) {
-        if (isOnlineRef) return; 
-        
-        const usernameDisplay = document.getElementById('userLabel').textContent.split(', ')[1]?.replace('!', '') || 'Usuário';
-
-        isOnlineRef = onlineUsersColRef.doc(uid);
-        
-        isOnlineRef.set({ 
-            username: usernameDisplay, 
-            timestamp: FieldValue.serverTimestamp() 
-        });
-        
-        // Define o status offline no logoff
-        window.addEventListener('beforeunload', () => isOnlineRef.delete());
-        auth.onAuthStateChanged(user => {
-            if (!user && isOnlineRef) isOnlineRef.delete();
-        });
-
-        onlineUsersColRef.onSnapshot(snapshot => {
-            let count = 0;
-            const now = firebase.firestore.Timestamp.now().toMillis();
-            const timeout = 5 * 60 * 1000; // 5 minutos
-            const batch = db.batch();
-            let hasCleanup = false;
-
-            snapshot.forEach(doc => {
-                const data = doc.data();
-                if (data.timestamp && (now - data.timestamp.toMillis() > timeout)) {
-                    batch.delete(doc.ref);
-                    hasCleanup = true;
+                if (isError) {
+                     statusElement.style.backgroundColor = 'var(--red-loss)';
+                     statusElement.style.color = 'white';
                 } else {
-                    count++;
+                     statusElement.style.backgroundColor = 'var(--main-gold)';
+                     statusElement.style.color = '#111';
+                }
+
+                statusElement.style.display = 'block';
+
+                clearTimeout(window.noticeTimeout);
+                window.noticeTimeout = setTimeout(() => {
+                    statusElement.style.display = 'none';
+                }, 4000);
+            }
+
+            function switchTab(tabId) {
+                document.querySelectorAll('.content > div').forEach(tab => {
+                    tab.style.display = 'none';
+                });
+                document.querySelectorAll('.tabbtn').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+
+                const content = document.getElementById(tabId);
+                if (content) {
+                    content.style.display = 'block';
+                    document.querySelector('.content').style.display = 'block';
+                }
+
+                document.querySelector(`.tabbtn[data-tab="${tabId}"]`).classList.add('active');
+            }
+
+            // Listener para as abas
+            document.querySelectorAll('.tabbtn').forEach(button => {
+                button.addEventListener('click', () => {
+                    switchTab(button.getAttribute('data-tab'));
+                });
+            });
+
+
+            // ----------------------------------------------------
+            // 3. AUTENTICAÇÃO E PERFIL (CORREÇÃO DE BUGS DE EMAIL E LOGIN)
+            // ----------------------------------------------------
+
+            async function checkUsernameAvailability(username) {
+                // Verifica se o nome de usuário EXATO já existe no Firestore.
+                const snapshot = await usersColRef.where('username', '==', username).get();
+                return snapshot.empty;
+            }
+
+            async function signup() {
+                // 1. LIMPEZA E VALIDAÇÃO DOS INPUTS
+                const rawUsername = document.getElementById('username').value.trim();
+                const password = document.getElementById('pwd').value;
+                
+                // Remove caracteres que possam causar problemas no email e torna MINÚSCULO para o email do Firebase
+                const safeUsername = rawUsername.replace(/[^a-zA-Z0-9]/g, '').toLowerCase(); 
+                const email = safeUsername + "@ivad.com"; 
+                
+                // --- VALIDAÇÕES CRÍTICAS QUE DEVEM MOSTRAR O ERRO ---
+                if (rawUsername.length < 3) {
+                    return updateStatus("Nome de usuário deve ter no mínimo 3 caracteres.", true);
+                }
+                if (password.length < 6) {
+                    return updateStatus("Senha deve ter no mínimo 6 caracteres.", true);
+                }
+                
+                if (rawUsername.length !== safeUsername.length || rawUsername !== rawUsername.toLowerCase()) {
+                    updateStatus(`Atenção: Seu nome foi normalizado para segurança do login. Nome visível: "${rawUsername}".`, false);
+                }
+
+                // 2. VERIFICAÇÃO DE DISPONIBILIDADE DO NOME DE USUÁRIO (CASE-SENSITIVE)
+                const isAvailable = await checkUsernameAvailability(rawUsername); 
+                if (!isAvailable) {
+                    return updateStatus("Nome de usuário já está em uso.", true);
+                }
+
+                updateStatus("Criando conta...");
+                
+                // 3. CRIAÇÃO DE USUÁRIO NO FIREBASE
+                auth.createUserWithEmailAndPassword(email, password)
+                    .then(async (userCredential) => {
+                        const user = userCredential.user;
+                        
+                        await usersColRef.doc(user.uid).set({
+                            username: rawUsername, // Salva o nome de usuário original (como o usuário digitou)
+                            gold: initialGold, 
+                            wins: 0,
+                            losses: 0,
+                            inventory: [], 
+                            creationTime: FieldValue.serverTimestamp()
+                        });
+                        updateStatus(`Conta de ${rawUsername} criada com sucesso!`, false);
+                    })
+                    .catch(error => {
+                        if (error.code === 'auth/email-already-in-use') {
+                             updateStatus("Erro: Nome de usuário já existe. Tente outro nome.", true);
+                        } else if (error.code === 'auth/weak-password') {
+                             updateStatus("Erro: A senha é muito fraca. Use pelo menos 6 caracteres.", true);
+                        } else if (error.code === 'auth/too-many-requests') {
+                            updateStatus("BLOQUEADO: Seu dispositivo/IP está temporariamente bloqueado. Tente novamente em 1 hora ou mude sua conexão.", true);
+                        } else {
+                             updateStatus(`Erro no registro: ${error.message}`, true);
+                        }
+                    });
+            }
+
+            function login() {
+                const rawUsername = document.getElementById('username').value.trim();
+                const password = document.getElementById('pwd').value;
+                
+                // Deve usar a mesma lógica de email do signup para login funcionar
+                const safeUsername = rawUsername.replace(/[^a-zA-Z0-9]/g, '').toLowerCase(); 
+                const email = safeUsername + "@ivad.com";
+                
+                if (rawUsername.length < 3) {
+                    return updateStatus("Nome de usuário inválido.", true);
+                }
+                if (password.length < 6) {
+                    return updateStatus("Senha inválida.", true);
+                }
+                
+                auth.signInWithEmailAndPassword(email, password)
+                    .catch(error => {
+                        if (error.code === 'auth/too-many-requests') {
+                            updateStatus("BLOQUEADO: Seu dispositivo/IP está temporariamente bloqueado. Tente novamente em 1 hora ou mude sua conexão.", true);
+                        } else {
+                            updateStatus(`Erro no login: ${error.message}`, true);
+                        }
+                    });
+            }
+
+            async function loadUserData(user) {
+                currentUser = user;
+                
+                document.getElementById('signedOutUI').style.display = 'none';
+                document.getElementById('signedInUI').style.display = 'block';
+
+                document.getElementById('ownerPanel').style.display = user.uid === OWNER_UID ? 'block' : 'none';
+
+                const userRef = usersColRef.doc(user.uid);
+                
+                userRef.onSnapshot(docSnapshot => {
+                    if (docSnapshot.exists) {
+                        const data = docSnapshot.data();
+                        const currentGold = Math.max(0, data.gold || 0); 
+                        
+                        document.getElementById('myGold').textContent = currentGold.toLocaleString();
+                        document.getElementById('playerGold').textContent = currentGold.toLocaleString();
+                        document.getElementById('userLabel').textContent = `Bem-vindo, ${data.username}!`;
+                        document.getElementById('socialUsername').textContent = data.username;
+                        document.getElementById('socialUserId').textContent = user.uid;
+                        document.getElementById('playerInfoSocial').style.display = 'block';
+
+                        if (data.username !== document.getElementById('username').value.trim()) {
+                            document.getElementById('username').value = data.username; 
+                        }
+                        
+                        // ATUALIZA INVENTÁRIO
+                        renderInventory(data.inventory || []); 
+
+                    }
+                });
+
+                loadRanking(); 
+                loadChat();    
+                loadSales();
+                trackOnlineStatus(user.uid);
+            }
+
+
+            // ----------------------------------------------------
+            // 4. JOGOS E SISTEMA ANTI-HACK DE GOLD
+            // ----------------------------------------------------
+
+            async function updateGold(amount, isWin = false) {
+                if (!currentUser) { 
+                     updateStatus("Erro: Não logado. Gold não atualizado.", true);
+                     return false;
+                }
+                
+                const updateData = {
+                    gold: FieldValue.increment(amount)
+                };
+
+                if (isWin && amount > 0) {
+                    updateData.wins = FieldValue.increment(1);
+                } else if (!isWin && amount < 0) {
+                    updateData.losses = FieldValue.increment(1);
+                }
+
+                return usersColRef.doc(currentUser.uid).update(updateData)
+                    .catch(error => {
+                        updateStatus(`Erro ao atualizar Gold: ${error.message}`, true);
+                        return false;
+                    });
+            }
+            
+            // Função para atualizar o inventário
+            async function updateInventory(newInventory) {
+                if (!currentUser) return false;
+                
+                return usersColRef.doc(currentUser.uid).update({
+                    inventory: newInventory 
+                }).catch(error => {
+                    updateStatus(`Erro ao atualizar inventário: ${error.message}`, true);
+                    return false;
+                });
+            }
+            
+            // Funções de Cooldown
+            function checkCooldown(action) {
+                if (!currentUser) { updateStatus("Você precisa estar logado.", true); return true; }
+                if (cooldowns[action]) {
+                    updateStatus(`Aguarde o cooldown (${COOLDOWN_COLLECT / 1000} segundos) para ${action}.`, true);
+                    return true;
+                }
+                return false;
+            }
+            
+            function setCooldown(action, duration, btnId) {
+                cooldowns[action] = true;
+                const btn = document.getElementById(btnId);
+                if(btn) {
+                    btn.disabled = true;
+                    btn.classList.add('cooldown');
+                }
+
+                setTimeout(() => {
+                    cooldowns[action] = false;
+                    if(btn) {
+                        btn.disabled = false;
+                        btn.classList.remove('cooldown');
+                    }
+                }, duration);
+            }
+            
+            // Renderiza o inventário na tela
+            function renderInventory(inventory) {
+                const list = document.getElementById('inventoryList');
+                const totalElement = document.getElementById('inventoryTotal');
+                list.innerHTML = '';
+                
+                if (!inventory || inventory.length === 0) {
+                    list.innerHTML = '<li id="inventoryEmptyMsg" style="text-align: center; color: var(--text-secondary);">Inventário vazio.</li>';
+                    totalElement.textContent = 'Valor Total: 0 Gold';
+                    document.getElementById('btnSellInventory').disabled = true;
+                    return;
+                }
+                
+                let totalValue = 0;
+                
+                // Agrupa itens com o mesmo nome para exibição limpa
+                const groupedInventory = inventory.reduce((acc, item) => {
+                    acc[item.name] = acc[item.name] || { count: 0, totalValue: 0 };
+                    acc[item.name].count += 1;
+                    acc[item.name].totalValue += item.goldValue;
+                    totalValue += item.goldValue;
+                    return acc;
+                }, {});
+                
+                for (const name in groupedInventory) {
+                    const item = groupedInventory[name];
+                    const li = document.createElement('li');
+                    li.innerHTML = `
+                        <span>${name} (x${item.count})</span>
+                        <span style="color: var(--main-gold);">${item.totalValue.toLocaleString()} Gold</span>
+                    `;
+                    list.appendChild(li);
+                }
+                
+                totalElement.textContent = `Valor Total: ${totalValue.toLocaleString()} Gold`;
+                document.getElementById('btnSellInventory').disabled = false; 
+            }
+
+            // Jogo Simples: Trabalho (MANTIDO COMO RECUPERAÇÃO)
+            async function work() {
+                const action = 'work';
+                const btnId = 'btnWork';
+                if (checkCooldown(action)) return;
+                
+                setCooldown(action, COOLDOWN_WORK, btnId);
+
+                const currentGoldText = document.getElementById('myGold').textContent.replace(/[^0-9]/g, '');
+                const currentGold = parseInt(currentGoldText) || 0;
+                
+                const percentage = Math.floor(Math.random() * 100) + 1; 
+                const earnings = Math.max(1, Math.floor(currentGold * (percentage / 100))); 
+                
+                const success = await updateGold(earnings, true);
+                if (!success) return;
+
+                document.getElementById('workMsg').textContent = `Você trabalhou e ganhou +${earnings.toLocaleString()} Gold (${percentage}%).`;
+                
+                setTimeout(() => {
+                    document.getElementById('workMsg').textContent = '';
+                }, COOLDOWN_WORK); 
+            }
+            
+            // Caçar/Coletar
+            async function hunt() {
+                const action = 'hunt';
+                const btnId = 'btnHunt';
+                if (checkCooldown(action)) return;
+                
+                setCooldown(action, COOLDOWN_COLLECT, btnId);
+                
+                const huntingItems = [
+                    { name: "Pele de Urso Rara", min: 1000, max: 1800 },
+                    { name: "Carne de Cervo", min: 150, max: 400 },
+                    { name: "Tronco de Carvalho", min: 70, max: 250 },
+                    { name: "Pena de Águia", min: 400, max: 800 },
+                    { name: "Erva Medicinal", min: 100, max: 300 }
+                ];
+
+                const selectedItem = huntingItems[Math.floor(Math.random() * huntingItems.length)];
+                const value = Math.floor(Math.random() * (selectedItem.max - selectedItem.min + 1)) + selectedItem.min;
+                
+                const item = { name: selectedItem.name, goldValue: value };
+                
+                const userRef = usersColRef.doc(currentUser.uid);
+                const userDoc = await userRef.get();
+                const currentInventory = userDoc.data().inventory || [];
+                
+                currentInventory.push(item);
+                
+                const success = await updateInventory(currentInventory);
+                if (!success) return;
+                
+                updateStatus(`Caça: Você encontrou ${item.name} (Valor: ${item.goldValue.toLocaleString()} Gold)!`, false);
+            }
+            
+            // Minerar
+            async function mine() {
+                const action = 'mine';
+                const btnId = 'btnMine';
+                if (checkCooldown(action)) return;
+                
+                setCooldown(action, COOLDOWN_COLLECT, btnId);
+                
+                const miningItems = [
+                    { name: "Diamante Bruto", min: 1500, max: 2500 },
+                    { name: "Pepita de Ouro", min: 800, max: 1500 },
+                    { name: "Carvão", min: 100, max: 300 },
+                    { name: "Barra de Ferro", min: 200, max: 500 },
+                    { name: "Rubi", min: 1200, max: 2000 }
+                ];
+
+                const selectedItem = miningItems[Math.floor(Math.random() * miningItems.length)];
+                const value = Math.floor(Math.random() * (selectedItem.max - selectedItem.min + 1)) + selectedItem.min;
+                
+                const item = { name: selectedItem.name, goldValue: value };
+                
+                const userRef = usersColRef.doc(currentUser.uid);
+                const userDoc = await userRef.get();
+                const currentInventory = userDoc.data().inventory || [];
+                
+                currentInventory.push(item);
+                
+                const success = await updateInventory(currentInventory);
+                if (!success) return;
+                
+                updateStatus(`Mineração: Você desenterrou ${item.name} (Valor: ${item.goldValue.toLocaleString()} Gold)!`, false);
+            }
+            
+            // Vender Inventário
+            async function sellInventory() {
+                if (!currentUser) return;
+                
+                const userRef = usersColRef.doc(currentUser.uid);
+                const userDoc = await userRef.get();
+                const currentInventory = userDoc.data().inventory || [];
+                
+                if (currentInventory.length === 0) {
+                    return updateStatus("Seu inventário está vazio!", true);
+                }
+                
+                let totalGold = currentInventory.reduce((sum, item) => sum + item.goldValue, 0);
+                
+                // 1. Adiciona Gold
+                const successGold = await updateGold(totalGold, true);
+                if (!successGold) return;
+                
+                // 2. Limpa o inventário
+                await updateInventory([]);
+                
+                updateStatus(`Venda! Você vendeu ${currentInventory.length} itens por ${totalGold.toLocaleString()} Gold!`, false);
+            }
+
+
+            // ----------------------------------------------------
+            // 5. OUTRAS FUNÇÕES (APOSTAS)
+            // ----------------------------------------------------
+
+            function validateBet(amount) {
+                const currentGoldText = document.getElementById('myGold').textContent.replace(/[^0-9]/g, '');
+                const currentGold = parseInt(currentGoldText) || 0;
+                
+                if (!currentUser) { 
+                    updateStatus("Faça login para apostar.", true); return false; 
+                }
+                const betAmount = parseInt(amount); 
+                
+                if (isNaN(betAmount) || betAmount <= 0) { 
+                    updateStatus("A aposta deve ser um valor positivo e numérico.", true); return false; 
+                }
+                if (betAmount > currentGold) { 
+                    updateStatus("Gold insuficiente para esta aposta.", true); return false; 
+                }
+                return true;
+            }
+
+            function notify(message, isWin) {
+                // Usa a função global updateStatus para consistência
+                updateStatus(message, !isWin);
+            }
+            
+            // Jogo Simples: Multiplicador
+            async function betSimple(multiplier, inputId, msgId, winChance) {
+                const inputElement = document.getElementById(inputId);
+                const amount = parseInt(inputElement.value);
+                if (!validateBet(amount)) return;
+                
+                const win = Math.random() * 100 < winChance;
+                const result = win ? amount * (multiplier - 1) : -amount; 
+                
+                const success = await updateGold(result, win);
+                if (!success) return;
+                
+                const msg = win 
+                    ? `✅ GANHOU ${multiplier}x! Lucro de ${result.toLocaleString()} Gold.` 
+                    : `❌ PERDEU. Menos ${amount.toLocaleString()} Gold.`;
+                
+                document.getElementById(msgId).textContent = msg;
+                notify(msg, win);
+            }
+
+            // Aposta Avançada: Cor
+            async function betCor() {
+                const amount = parseInt(document.getElementById('betCorAmount').value);
+                const choice = document.getElementById('betCorColor').value;
+                if (!validateBet(amount)) return;
+
+                const rand = Math.random();
+                let outcome = '';
+                let mult = 0;
+
+                if (rand < 0.48) { 
+                    outcome = 'red';
+                    mult = 2;
+                } else if (rand < 0.96) { 
+                    outcome = 'black';
+                    mult = 2;
+                } else { 
+                    outcome = 'green';
+                    mult = 4;
+                }
+
+                const win = choice === outcome;
+                const result = win ? amount * (mult - 1) : -amount;
+                
+                const success = await updateGold(result, win);
+                if (!success) return;
+                
+                const msg = win 
+                    ? `✅ GANHOU ${mult}x! Sorteado: ${outcome.toUpperCase()}. Lucro: ${result.toLocaleString()} Gold.` 
+                    : `❌ PERDEU. Sorteado: ${outcome.toUpperCase()}. Menos ${amount.toLocaleString()} Gold.`;
+                
+                document.getElementById('betCorMsg').textContent = msg;
+                notify(msg, win);
+            }
+
+            // Aposta Avançada: Moeda
+            async function betCoin() {
+                const amount = parseInt(document.getElementById('betCoinAmount').value);
+                const choice = document.getElementById('betCoinSide').value;
+                if (!validateBet(amount)) return;
+
+                const outcome = Math.random() < 0.5 ? 'cara' : 'coroa';
+                const win = choice === outcome;
+                const result = win ? amount : -amount;
+                
+                const success = await updateGold(result, win);
+                if (!success) return;
+                
+                const msg = win 
+                    ? `✅ GANHOU 2x! Deu ${outcome.toUpperCase()}. Lucro: ${result.toLocaleString()} Gold.` 
+                    : `❌ PERDEU. Deu ${outcome.toUpperCase()}. Menos ${amount.toLocaleString()} Gold.`;
+                
+                document.getElementById('betCoinMsg').textContent = msg;
+                notify(msg, win);
+            }
+
+            // Aposta Avançada: Dice/Loteria
+            async function betDice(maxNumber, multiplier, inputAmountId, inputChoiceId, msgId) {
+                const amount = parseInt(document.getElementById(inputAmountId).value);
+                const choice = parseInt(document.getElementById(inputChoiceId).value);
+                
+                if (!validateBet(amount) || isNaN(choice) || choice < 1 || choice > maxNumber) {
+                    return updateStatus(`Número de ${maxNumber} lados inválido (1-${maxNumber}).`, true);
+                }
+
+                const outcome = Math.floor(Math.random() * maxNumber) + 1;
+                const win = choice === outcome;
+                const result = win ? amount * (multiplier - 1) : -amount;
+                
+                const success = await updateGold(result, win);
+                if (!success) return;
+                
+                const msg = win 
+                    ? `✅ ACERTOU ${outcome}! Lucro de ${result.toLocaleString()} Gold (${multiplier}x).` 
+                    : `❌ ERROU ${outcome}. Perdeu ${amount.toLocaleString()} Gold.`;
+                
+                document.getElementById(msgId).textContent = msg;
+                notify(msg, win);
+            }
+
+            // Aposta Avançada: RNG Mágico
+            async function betRNG(multiplier, fixedAmount, winChance, msgId) {
+                const amount = fixedAmount;
+                if (!validateBet(amount)) return; 
+
+                const rand = Math.random() * 100;
+                const win = rand < winChance;
+                const result = win ? amount * (multiplier - 1) : -amount;
+                
+                const success = await updateGold(result, win);
+                if (!success) return;
+                
+                const msg = win 
+                    ? `✅ NÚMERO MÁGICO! Lucro de ${result.toLocaleString()} Gold (${multiplier}x).` 
+                    : `❌ NÃO FOI DESSA VEZ. Perdeu ${amount.toLocaleString()} Gold.`;
+                
+                document.getElementById(msgId).textContent = msg;
+                notify(msg, win);
+            }
+            
+            // NOVO JOGO: Caça ao Tesouro
+            async function betTreasureHunt(chosenBoxElement) {
+                const boxes = document.querySelectorAll('.treasure-box');
+                const amount = parseInt(document.getElementById('betTreasureAmount').value);
+                
+                if (!validateBet(amount)) return; 
+                
+                boxes.forEach(box => {
+                    box.onclick = null;
+                    box.style.opacity = '0.5';
+                });
+
+                const msgElement = document.getElementById('betTreasureMsg');
+                msgElement.textContent = 'Procurando...';
+
+                const outcomes = [
+                    { id: 'T', mult: 3, name: '💰 Tesouro (3x)', color: 'var(--green-win)' },
+                    { id: 'P', mult: 1.5, name: '✨ Pequeno Prêmio (1.5x)', color: 'var(--main-gold)' },
+                    { id: 'A', mult: -1, name: '☠️ Armadilha (Perde)', color: 'var(--red-loss)' }
+                ];
+
+                const shuffledOutcomes = outcomes.sort(() => Math.random() - 0.5);
+                
+                let result = 0;
+                let finalMsg = '';
+                let isWin = false;
+
+                boxes.forEach((box, index) => {
+                    const outcome = shuffledOutcomes[index];
+
+                    if (box === chosenBoxElement) {
+                        if (outcome.mult >= 1.5) { 
+                            result = amount * (outcome.mult - 1);
+                            isWin = true;
+                            finalMsg = `🎉 VOCÊ ACERTOU! Encontrou o ${outcome.name}! Lucro de ${result.toLocaleString()} Gold.`;
+                        } else { 
+                            result = -amount;
+                            isWin = false;
+                            finalMsg = `💥 ERROU! ${outcome.name}. Perdeu ${amount.toLocaleString()} Gold.`;
+                        }
+                    }
+                    
+                    setTimeout(() => {
+                        box.classList.add('open');
+                        box.style.borderColor = outcome.color;
+                        box.textContent = outcome.id; 
+                    }, 500);
+                });
+
+                const success = await updateGold(result, isWin);
+                if (!success) return;
+
+                msgElement.textContent = finalMsg;
+                notify(finalMsg, isWin);
+
+                setTimeout(() => {
+                    boxes.forEach(box => {
+                        box.classList.remove('open');
+                        box.style.borderColor = 'transparent';
+                        box.style.opacity = '1';
+                        box.textContent = box.getAttribute('data-box');
+                        box.onclick = () => betTreasureHunt(box); 
+                    });
+                    msgElement.textContent = '';
+                }, 4000);
+            }
+
+
+            // ----------------------------------------------------
+            // 6. RANKING GLOBAL
+            // ----------------------------------------------------
+
+            function loadRanking() {
+                usersColRef.orderBy('gold', 'desc').limit(15).onSnapshot(snapshot => {
+                    const rankingList = document.getElementById('rankingList');
+                    rankingList.innerHTML = ''; 
+                    
+                    if (snapshot.empty) {
+                        rankingList.innerHTML = '<li>Nenhum usuário no ranking ainda.</li>';
+                        return;
+                    }
+
+                    snapshot.forEach((doc, index) => {
+                        const data = doc.data();
+                        const li = document.createElement('li');
+                        li.style.color = doc.id === currentUser.uid ? 'var(--main-gold)' : 'var(--text-primary)';
+                        li.style.fontWeight = doc.id === currentUser.uid ? 'bold' : 'normal';
+
+                        let usernameDisplay = data.username;
+                        if (doc.id === OWNER_UID) {
+                             usernameDisplay = `<span style="color: #ff00ff;">${data.username} [DONO]</span>`;
+                        }
+
+                        li.innerHTML = `
+                            <span style="width: 30px; display: inline-block;">#${index + 1}</span>
+                            ${usernameDisplay}
+                            <span style="color: var(--main-gold);">${data.gold ? data.gold.toLocaleString() : '0'} Gold</span>
+                        `;
+                        rankingList.appendChild(li);
+                    });
+                }, error => {
+                    updateStatus(`Erro ao carregar ranking: ${error.message}. Verifique as Regras de Segurança.`, true);
+                });
+            }
+
+
+            // ----------------------------------------------------
+            // 7. CHAT GLOBAL
+            // ----------------------------------------------------
+
+            async function sendMessage() {
+                const input = document.getElementById('chatInput');
+                const message = input.value.trim();
+                if (!message || !currentUser) return;
+                
+                if (message.length > 200) {
+                    return document.getElementById('chatError').textContent = "Mensagem muito longa (Máx. 200).";
+                }
+                
+                document.getElementById('chatError').textContent = "";
+                
+                let userData;
+                try {
+                     userData = (await usersColRef.doc(currentUser.uid).get()).data();
+                     if (!userData || !userData.username) throw new Error("Dados de usuário incompletos.");
+                } catch (e) {
+                     return document.getElementById('chatError').textContent = "Erro ao enviar: Falha ao obter dados do usuário.";
+                }
+                
+                chatColRef.add({
+                    username: userData.username,
+                    text: message,
+                    uid: currentUser.uid,
+                    timestamp: FieldValue.serverTimestamp()
+                })
+                .then(() => input.value = '')
+                .catch(error => {
+                    document.getElementById('chatError').textContent = `Erro: ${error.message}.`;
+                });
+            }
+
+            function loadChat() {
+                chatColRef.orderBy('timestamp', 'desc').limit(CHAT_LIMIT).onSnapshot(snapshot => {
+                    const chatWindow = document.getElementById('chatWindow');
+                    chatWindow.innerHTML = '';
+                    
+                    const messages = [];
+                    snapshot.forEach(doc => messages.push(doc.data()));
+                    messages.reverse().forEach(data => {
+                        const div = document.createElement('div');
+                        div.className = 'chat-message';
+                        
+                        let nameColor = data.uid === OWNER_UID ? '#ff00ff' : 'var(--text-secondary)';
+                        let nameDisplay = data.uid === OWNER_UID ? `${data.username} [DONO]:` : `${data.username}:`;
+
+                        div.innerHTML = `<span style="color: ${nameColor}; font-weight: bold;">${nameDisplay}</span> <span>${data.text}</span>`;
+                        
+                        chatWindow.appendChild(div);
+                    });
+                    
+                    chatWindow.scrollTop = chatWindow.scrollHeight;
+                }, error => console.error("Erro ao carregar chat: ", error));
+            }
+
+
+            // ----------------------------------------------------
+            // 8. SISTEMA DE VENDAS (Com Upload de Imagem)
+            // ----------------------------------------------------
+
+            async function postSale() {
+                if (!currentUser) return updateStatus("Faça login para postar.", true);
+
+                const title = document.getElementById('saleTitle').value.trim();
+                const contact = document.getElementById('saleContact').value.trim();
+                const description = document.getElementById('saleDescription').value.trim();
+                const price = parseFloat(document.getElementById('salePrice').value);
+                const imageFile = document.getElementById('saleImage').files[0];
+
+                if (!title || !contact || !description || isNaN(price) || price <= 0 || !imageFile) {
+                    return updateStatus("Preencha todos os campos e anexe uma imagem.", true);
+                }
+
+                document.getElementById('btnPostSale').disabled = true;
+                updateStatus("Subindo imagem e postando...");
+
+                try {
+                    const userData = (await usersColRef.doc(currentUser.uid).get()).data();
+                    const fileName = `${currentUser.uid}_${Date.now()}_${imageFile.name}`;
+                    const imageRef = storageRef.child(fileName);
+                    
+                    const snapshot = await imageRef.put(imageFile);
+                    const imageUrl = await snapshot.ref.getDownloadURL();
+
+                    await salesColRef.add({
+                        title: title,
+                        description: description,
+                        contact: contact,
+                        price: price,
+                        imageUrl: imageUrl,
+                        sellerUid: currentUser.uid,
+                        sellerUsername: userData.username,
+                        timestamp: FieldValue.serverTimestamp()
+                    });
+
+                    updateStatus("Item postado no mercado com sucesso!", false);
+                    document.getElementById('saleTitle').value = '';
+                    document.getElementById('saleContact').value = '';
+                    document.getElementById('saleDescription').value = '';
+                    document.getElementById('salePrice').value = '';
+                    document.getElementById('saleImage').value = '';
+
+                } catch (error) {
+                    updateStatus(`Erro ao postar venda: ${error.message}`, true);
+                } finally {
+                    document.getElementById('btnPostSale').disabled = false;
+                }
+            }
+
+            function loadSales() {
+                salesColRef.orderBy('timestamp', 'desc').onSnapshot(snapshot => {
+                    const salesList = document.getElementById('salesList');
+                    salesList.innerHTML = '';
+
+                    if (snapshot.empty) {
+                        salesList.innerHTML = '<p class="small" style="grid-column: 1 / -1; text-align: center;">Nenhum item à venda no momento.</p>';
+                        return;
+                    }
+
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        const div = document.createElement('div');
+                        div.className = 'sale-post';
+                        
+                        let buttons = '';
+
+                        if (data.contact) {
+                             const contactText = data.contact.toLowerCase();
+                             if (contactText.includes('discord')) {
+                                buttons += `<a href="#" onclick="navigator.clipboard.writeText('${data.contact}'); updateStatus('Contato Discord copiado!', false);" class="sale-contact-btn" style="background: #7289da;">VER DISCORD</a>`;
+                             } else if (contactText.includes('wa.me') || data.contact.match(/^\+?\d{10,15}$/)) {
+                                 const waLink = data.contact.startsWith('https://wa.me') ? data.contact : `https://wa.me/${data.contact.replace(/[^\d+]/g, '')}?text=Tenho%20interesse%20no%20seu%20item%20'${data.title}'%20no%20IVAD!`;
+                                 buttons += `<a href="${waLink}" target="_blank" class="sale-contact-btn" style="background: #25d366;">CHAMAR NO WHATSAPP</a>`;
+                             } else {
+                                 buttons += `<a href="#" onclick="navigator.clipboard.writeText('${data.contact}'); updateStatus('Contato copiado!', false);" class="sale-contact-btn" style="background: #4A90E2;">COPIAR CONTATO</a>`;
+                             }
+                        }
+                        
+                        if (currentUser && (data.sellerUid === currentUser.uid || currentUser.uid === OWNER_UID)) {
+                            buttons += `<button onclick="deleteSale('${doc.id}', '${data.imageUrl}')" class="btn" style="background: var(--btn-red); width: 100%; margin-top: 10px;">Excluir Postagem</button>`;
+                        }
+
+                        div.innerHTML = `
+                            <img src="${data.imageUrl || 'https://via.placeholder.com/320x240?text=Sem+Imagem'}" alt="${data.title}">
+                            <h4 style="margin-top: 0; color: var(--text-primary);">${data.title}</h4>
+                            <p class="small" style="color: var(--text-primary);">${data.description}</p>
+                            <div class="sale-price">R$ ${data.price.toFixed(2).replace('.', ',')}</div>
+                            <p class="small" style="margin-top: 5px; color: var(--text-secondary);">Vendedor: ${data.sellerUsername}</p>
+                            ${buttons}
+                        `;
+                        salesList.appendChild(div);
+                    });
+                }, error => updateStatus(`Erro ao carregar vendas: ${error.message}`, true));
+            }
+
+            async function deleteSale(saleId, imageUrl) {
+                if (!currentUser) return;
+                if (!confirm("Tem certeza que deseja excluir esta postagem?")) return;
+                
+                try {
+                    if (imageUrl) {
+                        const fileRef = storage.refFromURL(imageUrl);
+                        await fileRef.delete();
+                    }
+                    
+                    await salesColRef.doc(saleId).delete();
+                    updateStatus("Postagem excluída com sucesso.", false);
+                } catch (error) {
+                    updateStatus(`Erro ao excluir postagem: ${error.message}`, true);
+                }
+            }
+
+
+            // ----------------------------------------------------
+            // 9. FUNÇÕES DE ADMINISTRADOR
+            // ----------------------------------------------------
+
+            async function adminGiveGold() {
+                if (!currentUser || currentUser.uid !== OWNER_UID) return;
+
+                const targetUsername = document.getElementById('adminName').value.trim();
+                const amount = parseInt(document.getElementById('adminAmount').value);
+
+                if (!targetUsername || isNaN(amount) || amount === 0) {
+                    return updateStatus("[ADMIN] Preencha o nome do usuário e a quantidade de Gold.", true);
+                }
+                
+                try {
+                    const snapshot = await usersColRef.where('username', '==', targetUsername).limit(1).get();
+                    if (snapshot.empty) {
+                        return updateStatus(`[ADMIN] Usuário '${targetUsername}' não encontrado.`, true);
+                    }
+                    const targetUid = snapshot.docs[0].id;
+                    const isWin = amount > 0;
+
+                    await usersColRef.doc(targetUid).update({
+                        gold: FieldValue.increment(amount) ,
+                        wins: isWin ? FieldValue.increment(1) : FieldValue.increment(0),
+                        losses: isWin ? FieldValue.increment(0) : FieldValue.increment(1)
+                    });
+
+                    updateStatus(`[ADMIN] ${amount > 0 ? 'DADO' : 'REMOVIDO'} ${Math.abs(amount).toLocaleString()} Gold para ${targetUsername}.`);
+                    document.getElementById('adminName').value = '';
+                    document.getElementById('adminAmount').value = '';
+                } catch (error) {
+                    updateStatus(`[ADMIN] Erro: ${error.message}`, true);
+                }
+            }
+
+            async function adminClearChat() {
+                if (!currentUser || currentUser.uid !== OWNER_UID) return;
+                if (!confirm("Tem certeza que deseja apagar TODAS as mensagens do Chat Global?")) return;
+                
+                chatColRef.limit(200).get().then(snapshot => {
+                    const batch = db.batch();
+                    snapshot.docs.forEach(doc => {
+                        batch.delete(doc.ref);
+                    });
+                    return batch.commit();
+                })
+                .then(() => updateStatus("[ADMIN] Chat Global limpo (parcialmente - repita se for necessário)!", false))
+                .catch(error => updateStatus(`[ADMIN] Erro ao limpar chat: ${error.message}`, true));
+            }
+
+
+            // ----------------------------------------------------
+            // 10. CONTADOR DE USUÁRIOS ONLINE
+            // ----------------------------------------------------
+
+            function trackOnlineStatus(uid) {
+                if (isOnlineRef) return; 
+                
+                const usernameDisplay = document.getElementById('userLabel').textContent.split(', ')[1]?.replace('!', '') || 'Usuário';
+
+                isOnlineRef = onlineUsersColRef.doc(uid);
+                
+                isOnlineRef.set({ 
+                    username: usernameDisplay, 
+                    timestamp: FieldValue.serverTimestamp() 
+                });
+                
+                // Define o status offline no logoff
+                window.addEventListener('beforeunload', () => isOnlineRef.delete());
+                auth.onAuthStateChanged(user => {
+                    if (!user && isOnlineRef) isOnlineRef.delete();
+                });
+
+                onlineUsersColRef.onSnapshot(snapshot => {
+                    let count = 0;
+                    const now = firebase.firestore.Timestamp.now().toMillis();
+                    const timeout = 5 * 60 * 1000; // 5 minutos
+                    const batch = db.batch();
+                    let hasCleanup = false;
+
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        if (data.timestamp && (now - data.timestamp.toMillis() > timeout)) {
+                            batch.delete(doc.ref);
+                            hasCleanup = true;
+                        } else {
+                            count++;
+                        }
+                    });
+
+                    if (hasCleanup) {
+                         batch.commit().catch(e => console.error("Erro ao limpar usuários online: ", e));
+                    }
+                    
+                    document.getElementById('visitorCount').textContent = count.toLocaleString();
+                }, error => console.error("Erro no contador online: ", error));
+            }
+
+
+            // ----------------------------------------------------
+            // 11. LISTENERS GLOBAIS
+            // ----------------------------------------------------
+
+            auth.onAuthStateChanged(user => {
+                if (user) {
+                    loadUserData(user);
+                } else {
+                    currentUser = null;
+                    document.getElementById('signedOutUI').style.display = 'block'; 
+                    document.getElementById('signedInUI').style.display = 'none';
+                    document.getElementById('ownerPanel').style.display = 'none';
+                    document.getElementById('playerInfoSocial').style.display = 'none';
+                    if (isOnlineRef) { isOnlineRef.delete(); isOnlineRef = null; }
                 }
             });
 
-            if (hasCleanup) {
-                 batch.commit().catch(e => console.error("Erro ao limpar usuários online: ", e));
-            }
-            
-            document.getElementById('visitorCount').textContent = count.toLocaleString();
-        }, error => console.error("Erro no contador online: ", error));
-    }
-
-
-    // ----------------------------------------------------
-    // 11. LISTENERS GLOBAIS
-    // ----------------------------------------------------
-
-    auth.onAuthStateChanged(user => {
-        if (user) {
-            loadUserData(user);
+            document.addEventListener('DOMContentLoaded', () => {
+                switchTab('regrasTab');
+            });
         } else {
-            currentUser = null;
-            document.getElementById('signedOutUI').style.display = 'block'; 
-            document.getElementById('signedInUI').style.display = 'none';
-            document.getElementById('ownerPanel').style.display = 'none';
-            document.getElementById('playerInfoSocial').style.display = 'none';
-            if (isOnlineRef) { isOnlineRef.delete(); isOnlineRef = null; }
+            document.addEventListener('DOMContentLoaded', () => {
+                alert("ERRO CRÍTICO: O SDK do Firebase não carregou. Verifique sua conexão e os links do SDK.");
+            });
         }
-    });
 
-    document.addEventListener('DOMContentLoaded', () => {
-        switchTab('regrasTab');
-    });
-} else {
-    document.addEventListener('DOMContentLoaded', () => {
-        alert("ERRO CRÍTICO: O SDK do Firebase não carregou. Verifique sua conexão e os links do SDK.");
-    });
-}
-
-</script>
+    </script>
 
 </body>
 </html>

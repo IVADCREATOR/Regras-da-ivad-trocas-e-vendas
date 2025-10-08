@@ -243,6 +243,7 @@ input[type="file"]::file-selector-button {
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-analytics.js"></script> 
 
 <div class="bg3d" aria-hidden="true"></div>
 <div class="overlay" aria-hidden="true"></div>
@@ -533,7 +534,7 @@ input[type="file"]::file-selector-button {
 // 1. CONFIGURAÇÃO E INICIALIZAÇÃO DO FIREBASE (v8)
 // ----------------------------------------------------
 // SEU UID DE ADMINISTRADOR! ESSENCIAL PARA O PAINEL E REGRAS!
-const OWNER_UID = "m3h06woQv2V7lrNu1p8fDQCZ8IW2"; 
+const OWNER_UID = "m3h06woQv2V7lrNu1p8fDQCZ8IW2"; // SUBSTITUA PELO SEU UID DE ADMIN!
 let currentUser = null; 
 // GOLD INICIAL
 let initialGold = 5000; 
@@ -547,14 +548,16 @@ let cooldowns = {
 const COOLDOWN_WORK = 5000;
 const COOLDOWN_COLLECT = 10000; // 10 segundos para caçar e minerar
 
-// ATENÇÃO: SUBSTITUA OS VALORES MARCADOS COM [!] PELOS SEUS DADOS REAIS DO FIREBASE
+// CONFIGURAÇÃO FORNECIDA PELO USUÁRIO (AJUSTADA PARA FUNCIONAR)
 const firebaseConfig = {
-    apiKey: "AIzaSyCkmyMqEJaM8jVvmTN8I3gLnbC8YtMPWOI", // Sua chave fornecida
-    authDomain: "[!] SEU_AUTH_DOMAIN", // Ex: "seu-projeto.firebaseapp.com"
-    projectId: "[!] SEU_PROJECT_ID", // Ex: "seu-projeto-12345"
-    storageBucket: "[!] SEU_STORAGE_BUCKET", // Ex: "seu-projeto.appspot.com"
-    messagingSenderId: "SEU_MESSAGING_SENDER_ID",
-    appId: "SEU_APP_ID"
+  apiKey: "AIzaSyDxXQjbQ400wgqTW1_UfY3vPs1XES6M-78",
+  authDomain: "regras-ivad.firebaseapp.com",
+  projectId: "regras-ivad",
+  storageBucket: "regras-ivad.firebasestorage.app",
+  messagingSenderId: "812565896201",
+  appId: "1:812565896201:web:e8e6b5e6aaaf944b1aacd8",
+  // O measurementId foi removido do objeto de config principal
+  // Mas o firebase-analytics.js foi incluído acima para compatibilidade.
 };
 
 // Certifica-se de que o Firebase SDK está carregado antes de inicializar
@@ -1434,10 +1437,12 @@ if (typeof firebase !== 'undefined') {
     function trackOnlineStatus(uid) {
         if (isOnlineRef) return; 
         
+        const usernameDisplay = document.getElementById('userLabel').textContent.split(', ')[1]?.replace('!', '') || 'Usuário';
+
         isOnlineRef = onlineUsersColRef.doc(uid);
         
         isOnlineRef.set({ 
-            username: document.getElementById('userLabel').textContent.split(', ')[1].replace('!', ''), 
+            username: usernameDisplay, 
             timestamp: FieldValue.serverTimestamp() 
         });
         
@@ -1481,12 +1486,12 @@ if (typeof firebase !== 'undefined') {
             loadUserData(user);
         } else {
             currentUser = null;
-            document.getElementById('signedOutUI').style.display = 'none';
+            document.getElementById('signedOutUI').style.display = 'block'; // Mostra o login se deslogado
             document.getElementById('signedInUI').style.display = 'none';
             document.getElementById('ownerPanel').style.display = 'none';
             document.getElementById('playerInfoSocial').style.display = 'none';
             if (isOnlineRef) { isOnlineRef.delete(); isOnlineRef = null; }
-            updateStatus("Desconectado. Faça login para usar o sistema.", true);
+            // Mantenha o status de erro se necessário, mas evite mostrar se for apenas a primeira carga.
         }
     });
 

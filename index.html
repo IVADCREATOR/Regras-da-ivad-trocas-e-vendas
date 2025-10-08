@@ -7,27 +7,29 @@
 <style>
 /* VARS */
 :root{
-  --card-bg: rgba(15, 15, 25, 0.95); /* Dark Blue/Purple Transparent (mais escuro) */
+  --card-bg: rgba(15, 10, 30, 0.95); /* Deep Violet Transparent */
   --btn-gradient: linear-gradient(90deg, #5EEAD4, #10B981); /* Teal/Green */
-  --btn-blue: linear-gradient(90deg, #60A5FA, #3B82F6); /* Bright Blue */
+  --btn-blue: linear-gradient(90deg, #8B5CF6, #6D28D9); /* Deep Purple Blue */
   --btn-red: linear-gradient(90deg, #F87171, #EF4444); /* Red */
   --text-primary: #E5E7EB;
-  --text-secondary: #9CA3AF;
+  --text-secondary: #C4B5FD; /* Light purple for secondary text */
   --main-gold: #FCD34D; /* Light Gold */
-  --border-color: rgba(255,255,255,0.08); /* Borda mais sutil */
+  --border-color: rgba(139, 92, 246, 0.3); /* Purple Border */
   --green-win: #10B981;
   --red-loss: #EF4444;
 }
 
 /* BASE & LAYOUT */
-html,body{height:100%;margin:0;font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;color:var(--text-primary);background:#0A0A10}
+html,body{height:100%;margin:0;font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;color:var(--text-primary);background:#05050A}
 body{perspective:1000px;overflow-x:hidden}
 
 .bg3d{
   position:fixed;inset:0;
-  /* IMPORTANTE: Coloque o link RAW da sua imagem de fundo aqui */
-  background:url('https://i.imgur.com/Q5wz9sX.jpg') no-repeat center center; 
-  background-size:cover;z-index:-2;filter:contrast(1) saturate(1.1) brightness(0.7);
+  /* NOVO FUNDO 3D: Imagem de Nebulosa Roxa/Azul */
+  background:url('https://i.imgur.com/gK2g2f7.jpeg') no-repeat center center; 
+  background-size:cover;z-index:-2;
+  /* Efeito de cor e contraste para vibrante */
+  filter:contrast(1.2) saturate(1.5) brightness(0.65); 
   transform-origin:center center;animation:float3d 18s ease-in-out infinite alternate;
 }
 @keyframes float3d{
@@ -35,7 +37,7 @@ body{perspective:1000px;overflow-x:hidden}
   50%{transform:translateZ(15px) rotateY(2deg) rotateX(1deg) scale(1.06)}
   100%{transform:translateZ(0px) rotateY(-1deg) rotateX(-1deg) scale(1.05)}
 }
-.overlay{position:fixed;inset:0;z-index:-1;background:linear-gradient(135deg, rgba(10,10,16,0.95), rgba(10,10,16,0.7))}
+.overlay{position:fixed;inset:0;z-index:-1;background:linear-gradient(135deg, rgba(5,5,10,0.95), rgba(5,5,10,0.6))}
 
 header{
     background:var(--card-bg);padding:1.4rem;text-align:center;position:relative;z-index:2;
@@ -59,7 +61,9 @@ header p{margin:.1rem;color:var(--text-secondary);font-size:1rem; font-style: it
     box-shadow:0 10px 25px rgba(252,211,77,0.4);
 }
 .menu button.active{
-    background:var(--btn-gradient);color:#0A0A10;transform:translateY(0);
+    background:var(--btn-blue); /* Mudança para azul-roxo */
+    color:var(--text-primary);
+    transform:translateY(0);
     box-shadow:0 4px 15px rgba(0,0,0,0.8); font-weight: 700;
 }
 
@@ -295,7 +299,7 @@ input[type="file"]{padding: 10px; background: rgba(255,255,255,0.05); border-rad
             </div>
             
             <div class="bet-option-card">
-                <h4 style="color: var(--btn-red); margin-top: 0;">10x (Aposta Extrema)</h4>
+                <h4 style="color: var(--btn-red); margin-top: 0;'>10x (Aposta Extrema)</h4>
                 <p class="small">Altíssimo risco. Chance de 10%.</p>
                 <input type="number" id="betAmount_10x" placeholder="Quantos golds apostar?" min="1">
                 <button onclick="betSimple(10, 'betAmount_10x', 'betMsg_10x', 10)" class="btn" style="background:var(--btn-red); width: 100%; margin-top: 10px;">Apostar 10x</button>
@@ -527,17 +531,16 @@ input[type="file"]{padding: 10px; background: rgba(255,255,255,0.05); border-rad
     }
 
     // ----------------------------------------------------
-    // 3. LÓGICA DE AUTENTICAÇÃO E CONTA (ERRO CORRIGIDO)
+    // 3. LÓGICA DE AUTENTICAÇÃO E CONTA (CORREÇÃO DE UI)
     // ----------------------------------------------------
 
     // Checa a unicidade do nome de usuário no Firestore
     async function checkUsernameUnique(username) {
-        // Procura na coleção 'users' onde o campo 'displayName' é o username desejado
         const snapshot = await db.collection("users").where("displayName", "==", username).limit(1).get();
-        return snapshot.empty; // Retorna true se estiver vazio (único), false se já existir
+        return snapshot.empty; 
     }
 
-    // Atualiza a UI de autenticação (logado vs deslogado)
+    // CORRIGIDO: Atualiza a UI de autenticação (logado vs deslogado)
     function updateAuthUI(user) {
         const signedOutUI = document.getElementById('signedOutUI');
         const signedInUI = document.getElementById('signedInUI');
@@ -545,9 +548,10 @@ input[type="file"]{padding: 10px; background: rgba(255,255,255,0.05); border-rad
         const playerInfo = document.getElementById('playerInfo');
         const playerInfoSocial = document.getElementById('playerInfoSocial');
 
+        // Se houver um usuário REAL logado (não anônimo)
         if (user && !user.isAnonymous) {
-            signedOutUI.style.display = 'none';
-            signedInUI.style.display = 'block';
+            signedOutUI.style.display = 'none'; // Esconde a tela de Login/Cadastro
+            signedInUI.style.display = 'block'; // Mostra o botão 'Sair' e o Gold
             playerInfo.style.display = 'block';
             playerInfoSocial.style.display = 'block';
 
@@ -557,29 +561,31 @@ input[type="file"]{padding: 10px; background: rgba(255,255,255,0.05); border-rad
             document.getElementById('socialUserId').textContent = user.uid;
 
             ownerPanel.style.display = (user.uid === OWNER_UID) ? 'block' : 'none';
-            loadUserGold(user.uid); 
+            loadUserGold(user.uid); // Chama a função para carregar o Gold
         } else {
-            signedOutUI.style.display = 'block';
-            signedInUI.style.display = 'none';
+            // Se não houver usuário logado ou for anônimo
+            signedOutUI.style.display = 'block'; // Mostra a tela de Login/Cadastro
+            signedInUI.style.display = 'none'; // Esconde o botão 'Sair'
             ownerPanel.style.display = 'none';
             playerInfo.style.display = 'none';
             playerInfoSocial.style.display = 'none';
         }
     }
 
-    // Carrega o Gold do usuário e atualiza a UI
+    // CORRIGIDO: Carrega o Gold do usuário e atualiza a UI (Listener em tempo real)
     window.loadUserGold = function(uid) {
         db.collection("users").doc(uid).onSnapshot(doc => {
             if (doc.exists) {
                 const data = doc.data();
                 const gold = data.gold || 0;
                 
+                // Atualiza o Gold em todos os lugares
                 document.getElementById('myGold').textContent = gold.toLocaleString('pt-BR');
                 document.getElementById('playerGold').textContent = gold.toLocaleString('pt-BR');
                 window.currentGold = gold; 
             } else {
                 console.warn("Documento do usuário não encontrado no Firestore. Criando documento...");
-                // Se o doc não existir, pode ser um user antigo sem gold. Cria com 100.
+                // Se o doc não existir, cria com 100 de gold.
                 db.collection("users").doc(uid).set({
                     uid: uid,
                     displayName: auth.currentUser.displayName,
@@ -592,7 +598,7 @@ input[type="file"]{padding: 10px; background: rgba(255,255,255,0.05); border-rad
         });
     }
     
-    // Listener de Cadastro
+    // Listener de Cadastro (Mantido)
     document.getElementById('btnSignup').addEventListener('click', async () => {
         const username = document.getElementById('username').value.trim();
         const password = document.getElementById('pwd').value.trim();
@@ -612,7 +618,6 @@ input[type="file"]{padding: 10px; background: rgba(255,255,255,0.05); border-rad
             }
 
             showGlobalNotice("Criando conta...", 'var(--btn-blue)');
-            // Usa o username como parte do email, mas mantém a senha separada
             const userCredential = await auth.createUserWithEmailAndPassword(`${username}@ivad.com`, password);
             const user = userCredential.user;
 
@@ -646,7 +651,7 @@ input[type="file"]{padding: 10px; background: rgba(255,255,255,0.05); border-rad
         }
     });
 
-    // Listener de Login
+    // Listener de Login (Mantido)
     document.getElementById('btnLogin').addEventListener('click', async () => {
         const username = document.getElementById('username').value.trim();
         const password = document.getElementById('pwd').value.trim();
@@ -658,9 +663,10 @@ input[type="file"]{padding: 10px; background: rgba(255,255,255,0.05); border-rad
         showGlobalNotice("Acessando conta...", 'var(--main-gold)');
 
         try {
-            // Usa o username para formar o email
             await auth.signInWithEmailAndPassword(`${username}@ivad.com`, password);
             
+            // A UI será atualizada automaticamente pelo listener auth.onAuthStateChanged
+
             showGlobalNotice(`✅ Login bem-sucedido! Bem-vindo(a) ${username}.`, 'var(--green-win)');
             document.getElementById('pwd').value = ''; 
 
@@ -681,17 +687,18 @@ input[type="file"]{padding: 10px; background: rgba(255,255,255,0.05); border-rad
     });
 
 
-    // Listener para o botão de Logout
+    // Listener para o botão de Logout (Mantido)
     document.getElementById('btnLogout').addEventListener('click', () => {
         auth.signOut().then(() => {
             showGlobalNotice("Você foi desconectado(a).", 'var(--btn-blue)');
+            // A UI será atualizada automaticamente pelo listener auth.onAuthStateChanged
         }).catch(error => {
             showGlobalNotice(`Erro ao desconectar: ${error.message}`, 'var(--btn-red)');
         });
     });
 
     // ----------------------------------------------------
-    // 4. LÓGICA DE ABAS (ERRO CORRIGIDO)
+    // 4. LÓGICA DE ABAS (Mantido)
     // ----------------------------------------------------
 
     // Função para trocar de aba
@@ -712,7 +719,7 @@ input[type="file"]{padding: 10px; background: rgba(255,255,255,0.05); border-rad
     }
 
     // ----------------------------------------------------
-    // 5. LÓGICA DE JOGOS E RANKING
+    // 5. LÓGICA DE JOGOS E RANKING (Mantido)
     // ----------------------------------------------------
 
     // Função Trabalhar (Work)
@@ -832,7 +839,7 @@ input[type="file"]{padding: 10px; background: rgba(255,255,255,0.05); border-rad
     }
 
     // ----------------------------------------------------
-    // 6. LÓGICA DE VENDAS E MODERAÇÃO DE FOTOS
+    // 6. LÓGICA DE VENDAS E MODERAÇÃO DE FOTOS (Mantido)
     // ----------------------------------------------------
 
     window.publishSale = async function() {
@@ -865,7 +872,6 @@ input[type="file"]{padding: 10px; background: rgba(255,255,255,0.05); border-rad
         try {
             // 2. UPLOAD DA FOTO para o Storage
             const fileExtension = file.name.split('.').pop();
-            // Usamos o UID e o Timestamp para garantir que o nome seja único
             const fileName = `${user.uid}_${Date.now()}.${fileExtension}`; 
             const storageRef = storage.ref(`sales_photos/${user.uid}/${fileName}`);
             
@@ -875,7 +881,7 @@ input[type="file"]{padding: 10px; background: rgba(255,255,255,0.05); border-rad
             statusMsg.textContent = 'Publicando anúncio e iniciando moderação de imagem...';
 
             // 3. CRIAÇÃO DO ANÚNCIO no Firestore
-            await db.collection("sales").doc().set({ // Usando doc() sem argumento para gerar ID automático do Firestore
+            await db.collection("sales").doc().set({
                 userId: user.uid,
                 userName: user.displayName,
                 title: title,
@@ -884,7 +890,7 @@ input[type="file"]{padding: 10px; background: rgba(255,255,255,0.05); border-rad
                 description: description,
                 photoURL: photoURL,
                 timestamp: serverTimestamp(),
-                moderationStatus: 'pending' // STATUS: 'pending' -> Gatilho para Cloud Function
+                moderationStatus: 'pending' 
             });
 
             // 4. SUCESSO
@@ -941,7 +947,7 @@ input[type="file"]{padding: 10px; background: rgba(255,255,255,0.05); border-rad
     }
 
     // ----------------------------------------------------
-    // 7. LÓGICA DE CHAT (Placeholder funcional)
+    // 7. LÓGICA DE CHAT (Mantido)
     // ----------------------------------------------------
     
     window.sendMessage = async function() {
@@ -1012,7 +1018,7 @@ input[type="file"]{padding: 10px; background: rgba(255,255,255,0.05); border-rad
             });
     }
     
-    // --- Funções de Aposta Avançadas (Placeholders funcionais) ---
+    // --- Funções de Aposta Avançadas (Mantido) ---
     
     // Roleta de Cor (48% Vermelho, 48% Preto, 4% Verde)
     window.betCor = async function() {
@@ -1063,7 +1069,7 @@ input[type="file"]{padding: 10px; background: rgba(255,255,255,0.05); border-rad
             showGlobalNotice(statusText, color);
 
         } catch (error) {
-            betMsg.textContent = 'Erro ao processar a aposta. Tente novamente.';
+            betCorMsg.textContent = 'Erro ao processar a aposta. Tente novamente.';
         } finally {
             setTimeout(() => { amountInput.disabled = false; amountInput.value = ''; }, 1000);
         }
@@ -1078,10 +1084,10 @@ input[type="file"]{padding: 10px; background: rgba(255,255,255,0.05); border-rad
         const sideSelect = document.getElementById('betCoinSide');
         const amount = parseInt(amountInput.value);
         const selectedSide = sideSelect.value;
-        const betMsg = document.getElementById('betCoinMsg');
+        const betCoinMsg = document.getElementById('betCoinMsg');
 
-        if (isNaN(amount) || amount <= 0) return betMsg.textContent = "Aposta inválida.";
-        if (window.currentGold < amount) return betMsg.textContent = "Gold insuficiente.";
+        if (isNaN(amount) || amount <= 0) return betCoinMsg.textContent = "Aposta inválida.";
+        if (window.currentGold < amount) return betCoinMsg.textContent = "Gold insuficiente.";
         
         amountInput.disabled = true;
         
@@ -1101,11 +1107,11 @@ input[type="file"]{padding: 10px; background: rgba(255,255,255,0.05); border-rad
                 losses: isWin ? increment(0) : increment(1),
             });
             
-            betMsg.innerHTML = `<span style="color:${color}; font-weight: bold;">${statusText}</span>`;
+            betCoinMsg.innerHTML = `<span style="color:${color}; font-weight: bold;">${statusText}</span>`;
             showGlobalNotice(statusText, color);
 
         } catch (error) {
-            betMsg.textContent = 'Erro ao processar a aposta. Tente novamente.';
+            betCoinMsg.textContent = 'Erro ao processar a aposta. Tente novamente.';
         } finally {
             setTimeout(() => { amountInput.disabled = false; amountInput.value = ''; }, 1000);
         }
@@ -1187,7 +1193,7 @@ input[type="file"]{padding: 10px; background: rgba(255,255,255,0.05); border-rad
     }
 
     // ----------------------------------------------------
-    // 8. ADMIN FUNCTIONS (Painel do Dono)
+    // 8. ADMIN FUNCTIONS (Painel do Dono) (Mantido)
     // ----------------------------------------------------
 
     window.adminGiveGold = async function() {
@@ -1311,6 +1317,9 @@ input[type="file"]{padding: 10px; background: rgba(255,255,255,0.05); border-rad
                         return;
                     }
                     updateAuthUI(user);
+                }).catch(error => {
+                    console.error("Erro ao checar banimento:", error);
+                    updateAuthUI(user); // Tenta carregar mesmo se der erro no ban check
                 });
             } else {
                 updateAuthUI(user);

@@ -84,9 +84,6 @@ input:focus, textarea:focus{outline: none; border-color: var(--main-gold);}
 .chat-input-area{margin-top:.75rem; display: flex; gap: 5px; flex-wrap: wrap; align-items: stretch;}
 .chat-input-area input[type=text]{margin: 0; flex-grow: 1;}
 .chat-input-area button{padding: 0 1.2rem; margin: 0; font-size: 1rem;}
-#btnRecordAudio{background: var(--btn-blue); color: #fff; width: 50px; font-size: 1.2rem;}
-#btnRecordAudio.recording{background: var(--btn-red); animation: pulse 1s infinite;}
-@keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(229, 115, 115, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(229, 115, 115, 0); } 100% { box-shadow: 0 0 0 0 rgba(229, 115, 115, 0); } }
 
 /* NOTIFICAÇÃO GLOBAL */
 #globalNotice{
@@ -96,11 +93,13 @@ input:focus, textarea:focus{outline: none; border-color: var(--main-gold);}
 }
 @keyframes fadeInOut { 0%{opacity:0; transform: translateX(100px)} 5%{opacity:1; transform: translateX(0)} 95%{opacity:1; transform: translateX(0)} 100%{opacity:0; transform: translateX(100px)} }
 
-/* ABA DE TROCAS */
-.trade-item{border: 1px solid var(--border-color); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; display: flex; gap: 1rem; align-items: center; background: rgba(255,255,255,0.05);}
-.trade-item img{width: 80px; height: 80px; object-fit: cover; border-radius: 4px; border: 1px solid var(--main-gold);}
-.trade-info{flex-grow: 1;}
-.trade-info p{margin: 0.2rem 0;}
+/* ABA DE VENDAS */
+.sale-item{border: 1px solid var(--border-color); padding: 1rem; border-radius: 8px; margin-bottom: 1rem; display: flex; gap: 1rem; align-items: center; background: rgba(255,255,255,0.05);}
+.sale-item img{width: 80px; height: 80px; object-fit: cover; border-radius: 4px; border: 1px solid var(--main-gold);}
+.sale-info{flex-grow: 1;}
+.sale-info p{margin: 0.2rem 0;}
+.sale-info .price-real{color: #4CAF50; font-weight: bold;}
+.sale-info .contact-btn{background: #25D366; color: #fff; text-decoration: none; padding: 4px 8px; border-radius: 4px; font-size: 0.9rem; margin-left: 10px;}
 
 @media(max-width:880px){ .container{grid-template-columns:1fr; padding:.5rem; margin-top: 1rem} .menu{order:2} }
 </style>
@@ -118,9 +117,9 @@ input:focus, textarea:focus{outline: none; border-color: var(--main-gold);}
   <aside class="card menu">
     <button class="tabbtn active" data-tab="regrasTab">REGRAS</button>
     <button class="tabbtn" data-tab="jogoTab">🎮 JOGUINHOS (Sorte Extrema)</button>
-    <button class="tabbtn" data-tab="tradeTab">🔄 TROCAS</button>
+    <button class="tabbtn" data-tab="salesTab">💰 VENDAS (Dinheiro Real)</button>
     <button class="tabbtn" data-tab="rankTab">🏆 RANK GLOBAL</button>
-    <button class="tabbtn" data-tab="chatTab">💬 CHAT DINÂMICO</button>
+    <button class="tabbtn" data-tab="chatTab">💬 CHAT GLOBAL</button>
     <hr style="border:none;height:1px;background:var(--border-color);margin:15px 0">
 
     <div id="authArea" class="small">
@@ -164,14 +163,14 @@ input:focus, textarea:focus{outline: none; border-color: var(--main-gold);}
       <h3>🚫 Proibido</h3>
       <ul>
         <li>**Spam** ou flood de mensagens repetitivas.</li>
-        <li>Compartilhar **links suspeitos** (phishing, vírus) ou conteúdo NSFW.</li>
+        <li>Compartilhar **conteúdo NSFW** (banimento imediato se detectado!).</li>
         <li>**Avaliar contas** de outros membros.</li>
         <li>Ofensas, xingamentos ou **desrespeito** mútuo.</li>
         <li>Vendas de itens ilegais ou roubados.</li>
       </ul>
       <h3>✅ Permitido</h3>
       <ul>
-        <li>Postar links não suspeitos.</li>
+        <li>Anunciar itens por dinheiro real na aba de Vendas.</li>
         <li>Comprar e vender produtos de forma **clara e transparente**.</li>
         <li>Negociar e interagir com **bom senso** e educação.</li>
       </ul>
@@ -215,41 +214,43 @@ input:focus, textarea:focus{outline: none; border-color: var(--main-gold);}
       <span id="betMsgHigh" class="small" style="color: #ef9a9a;"></span>
     </div>
 
-    <div id="tradeTab" style="display:none">
-      <h2>🔄 Trocas e Vendas</h2>
-      <p class="small">Aqui você pode publicar um item para troca ou venda por Gold. <strong style="color:var(--main-gold);">A moderação verificará as imagens.</strong></p>
+    <div id="salesTab" style="display:none">
+      <h2>💰 Vendas por Dinheiro Real (R$)</h2>
+      <p class="small">Publique sua conta ou item! O contato é feito diretamente via WhatsApp.</p>
       
       <div class="card" style="background: rgba(0,0,0,0.4); margin-bottom: 2rem;">
         <h4>Publicar Novo Item</h4>
-        <input type="text" id="tradeTitle" placeholder="Título do Item (Ex: Conta Nível 50)">
-        <input type="number" id="tradePrice" placeholder="Valor em Gold (Ex: 5000)">
-        <textarea id="tradeDescription" placeholder="Descrição do item e termos de troca." rows="3"></textarea>
+        <input type="text" id="saleTitle" placeholder="Título do Item (Ex: Conta Nível 50)">
+        <input type="number" id="salePriceReal" placeholder="Preço em Reais (R$)" min="1">
+        <input type="text" id="saleContact" placeholder="Número de WhatsApp (apenas números)">
+        <textarea id="saleDescription" placeholder="Descrição detalhada do item." rows="3"></textarea>
         
-        <input type="file" id="tradeImage" accept="image/*" style="margin-bottom: 1rem;">
-        <p class="small" style="color: #e57373;">⚠️ O upload de imagens e a detecção de conteúdo sensível só funcionam com Cloud Functions (servidor), esta é uma demonstração de interface.</p>
+        <label style="display:block; margin-top:.5rem;">Foto do Item (PNG/JPG):</label>
+        <input type="file" id="saleImage" accept="image/*" style="margin-bottom: 1rem;">
+        <p class="small" style="color: #e57373;">⚠️ **Moderacão Obrigatória:** O upload de imagens e a detecção de **conteúdo íntimo/NSFW** exigem Cloud Functions. Se for detectado, o usuário é banido e a imagem some.</p>
 
-        <button id="btnSubmitTrade" class="btn" style="width: 100%;">Publicar Troca/Venda</button>
+        <button id="btnSubmitSale" class="btn" style="width: 100%;">Publicar Venda</button>
       </div>
 
-      <h4>Itens à Venda (Mockup)</h4>
-      <div id="tradeList">
-        <div class="trade-item">
-            <img src="https://via.placeholder.com/80?text=Item" alt="Item de Troca">
-            <div class="trade-info">
-                <p><strong>Conta Rara (Troca Rápida)</strong></p>
-                <p class="small" style="color:var(--main-gold);">Valor: 85.000 Gold</p>
+      <h4>Itens Atuais (Mockup)</h4>
+      <div id="saleList">
+        <div class="sale-item">
+            <img src="https://via.placeholder.com/80?text=Conta" alt="Conta Nível 50">
+            <div class="sale-info">
+                <p><strong>Conta Rara (Nível 50)</strong></p>
                 <p class="small">Vendedor: OWNER_UID</p>
+                <p class="price-real">R$ 350,00</p>
             </div>
-            <button class="btn" style="padding: .5rem 1rem; font-size: 0.9rem;">Comprar</button>
+            <a href="https://wa.me/5511999999999" target="_blank" class="contact-btn">CHAMAR NO ZAP</a>
         </div>
-        <div class="trade-item">
-            <img src="https://via.placeholder.com/80?text=Item" alt="Item de Troca">
-            <div class="trade-info">
-                <p><strong>Skin Exclusiva (Venda)</strong></p>
-                <p class="small" style="color:var(--main-gold);">Valor: 12.000 Gold</p>
+        <div class="sale-item">
+            <img src="https://via.placeholder.com/80?text=Item" alt="Item Exclusivo">
+            <div class="sale-info">
+                <p><strong>Skin Exclusiva (Raríssima)</strong></p>
                 <p class="small">Vendedor: JogadorTeste</p>
+                <p class="price-real">R$ 15,00</p>
             </div>
-            <button class="btn" style="padding: .5rem 1rem; font-size: 0.9rem;">Comprar</button>
+            <a href="https://wa.me/5511988888888" target="_blank" class="contact-btn">CHAMAR NO ZAP</a>
         </div>
       </div>
     </div>
@@ -261,14 +262,12 @@ input:focus, textarea:focus{outline: none; border-color: var(--main-gold);}
     </div>
 
     <div id="chatTab" style="display:none">
-      <h2>💬 Chat Global Dinâmico</h2>
+      <h2>💬 Chat Global</h2>
       <div class="chat-box" id="chatBox"></div>
       <div class="chat-input-area">
-        <input type="text" id="chatInput" placeholder="Digite sua mensagem ou inicie gravação..." style="margin: 0;">
-        <button id="btnRecordAudio" class="btn" title="Gravar Áudio (Funcionalidade de Servidor Necessária)">🎤</button>
-        <button id="btnSendChat" class="btn" style="padding: 0 1.2rem;">Enviar</button>
+        <input type="text" id="chatInput" placeholder="Digite sua mensagem" style="margin: 0;">
+        <button id="btnSendChat" class="btn">Enviar</button>
       </div>
-      <p class="small" style="margin-top: 5px; color: #ffb300;">🎤 Botão de Áudio: A interface existe, mas a gravação e envio de áudio exigem Firebase Storage e Cloud Functions.</p>
     </div>
   </section>
 </main>
@@ -280,8 +279,7 @@ input:focus, textarea:focus{outline: none; border-color: var(--main-gold);}
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-
-<script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script> <script>
 // ===================================
 // ⚙️ CONFIGURAÇÕES FIREBASE
 // ===================================
@@ -298,6 +296,7 @@ const OWNER_UID = "m3h06woQv2V7lrNu1p8fDQCZ8IW2";
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
+const storage = firebase.storage(); // Inicializa o Storage
 
 // ===================================
 // 🎯 ELEMENTOS DO DOM
@@ -330,9 +329,6 @@ const elements = {
 
 /**
  * Gera um número inteiro aleatório entre min (inclusivo) e max (inclusivo).
- * @param {number} min - O valor mínimo do intervalo.
- * @param {number} max - O valor máximo do intervalo.
- * @returns {number} O número inteiro aleatório.
  */
 function getRandomInt(min, max) {
     min = Math.ceil(min);
@@ -341,7 +337,7 @@ function getRandomInt(min, max) {
 }
 
 function showTab(id){
-  ['regrasTab','jogoTab','rankTab','chatTab','tradeTab'].forEach(t=>document.getElementById(t).style.display=(t===id?'block':'none'));
+  ['regrasTab','jogoTab','rankTab','chatTab','salesTab'].forEach(t=>document.getElementById(t).style.display=(t===id?'block':'none'));
 }
 document.querySelectorAll('.tabbtn').forEach(b=>{
   b.addEventListener('click',e=>{
@@ -490,11 +486,6 @@ elements.btnWork.onclick=async ()=>{
 
 /**
  * Função genérica para lidar com todas as apostas.
- * @param {HTMLInputElement} amountInput - O campo de input do valor apostado.
- * @param {number} multiplier - O multiplicador de ganho (1x, 2x, 5x, etc.).
- * @param {number} winChance - A chance de vitória (0.0 a 1.0).
- * @param {HTMLElement} msgEl - O elemento para exibir a mensagem.
- * @param {HTMLButtonElement} btn - O botão de aposta.
  */
 async function handleBet(amountInput, multiplier, winChance, msgEl, btn) {
     const user = auth.currentUser;
@@ -515,14 +506,12 @@ async function handleBet(amountInput, multiplier, winChance, msgEl, btn) {
             const currentGold = doc.data().gold || 0;
             if(currentGold < amt){ throw new Error('Gold insuficiente para esta aposta.'); }
             
-            // Lógica de sorte com base na chance fornecida
             const roll = Math.random(); // 0.0 a 1.0
             const win = roll < winChance;
             
             let diff = -amt; // Perde o valor apostado
             
             if (win) {
-                // Ganha o valor apostado * multiplicador
                 const gain = amt * multiplier;
                 diff = gain; 
             }
@@ -625,10 +614,80 @@ document.getElementById('btnSendChat').onclick=async ()=>{
   }
 };
 
-document.getElementById('btnRecordAudio').onclick = () => {
-    // Apenas um alerta para simular a necessidade de servidor
-    showNotification('⚠️ Para áudio: Você precisa do Firebase Storage e Cloud Functions.');
+// ===================================
+// 💰 VENDAS (ANÚNCIOS POR DINHEIRO REAL)
+// ===================================
+document.getElementById('btnSubmitSale').onclick = async () => {
+    const user = auth.currentUser;
+    if (!user) {
+        showNotification('Faça login para publicar uma venda.');
+        return;
+    }
+    
+    const title = document.getElementById('saleTitle').value.trim();
+    const price = Number(document.getElementById('salePriceReal').value);
+    const contact = document.getElementById('saleContact').value.trim();
+    const description = document.getElementById('saleDescription').value.trim();
+    const file = document.getElementById('saleImage').files[0];
+    
+    if (!title || isNaN(price) || price <= 0 || !contact || !description || !file) {
+        showNotification('Preencha todos os campos corretamente (Título, Preço R$, Contato, Descrição e Imagem).');
+        return;
+    }
+    
+    // Simulação do Banimento por Conteúdo Sensível
+    // Sem um backend (Cloud Functions + Vision API), não podemos garantir a detecção real.
+    // Este código apenas faz o upload, mas o BANIMENTO real DEVE ser feito no servidor.
+    try {
+        // 1. Upload da Imagem para o Firebase Storage
+        const filePath = `sales_images/${user.uid}_${Date.now()}_${file.name}`;
+        const storageRef = storage.ref(filePath);
+        const uploadTask = storageRef.put(file);
+
+        uploadTask.on('state_changed', 
+            (snapshot) => {
+                // Progresso do upload
+                const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                showNotification(`Upload em andamento: ${Math.round(progress)}%`);
+            }, 
+            (error) => {
+                console.error("Erro no upload:", error);
+                showNotification('Erro ao fazer upload da imagem.');
+            }, 
+            async () => {
+                // Upload completo, obter URL
+                const downloadURL = await storageRef.getDownloadURL();
+                
+                // 2. Salvar o Anúncio no Firestore
+                // Aqui o Cloud Function seria disparado para a moderação!
+                await db.collection('sales').add({
+                    sellerUid: user.uid,
+                    sellerName: user.email.split('@')[0],
+                    title: title,
+                    priceReal: price,
+                    contact: contact,
+                    description: description,
+                    imageUrl: downloadURL,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                showNotification('✅ Anúncio Publicado com Sucesso! Aguardando moderação (servidor).');
+
+                // Limpa os campos
+                document.getElementById('saleTitle').value = '';
+                document.getElementById('salePriceReal').value = '';
+                document.getElementById('saleContact').value = '';
+                document.getElementById('saleDescription').value = '';
+                document.getElementById('saleImage').value = '';
+            }
+        );
+
+    } catch (err) {
+        console.error(err);
+        showNotification('Erro ao publicar anúncio: '+err.message);
+    }
 };
+
 
 // ===================================
 // 📈 CONTADOR DE VISITANTES
@@ -709,42 +768,6 @@ document.getElementById('btnClearChat').onclick=async ()=>{
     showNotification('Erro ao limpar o chat: '+err.message);
   }
 };
-
-// ===================================
-// 🔄 TROCAS (Mockup de Funcionalidade)
-// ===================================
-document.getElementById('btnSubmitTrade').onclick = () => {
-    const title = document.getElementById('tradeTitle').value;
-    const price = document.getElementById('tradePrice').value;
-    const description = document.getElementById('tradeDescription').value;
-    const file = document.getElementById('tradeImage').files[0];
-    
-    if (!auth.currentUser) {
-        showNotification('Faça login para publicar uma troca.');
-        return;
-    }
-    if (!title || !price || !description || !file) {
-        showNotification('Preencha todos os campos e anexe uma imagem.');
-        return;
-    }
-
-    // AVISO SOBRE MODERAÇÃO
-    showNotification('⚠️ Item publicado! Lembre-se: A moderação de imagens NSFW (banimento) e o upload real dependem do Firebase Storage e Cloud Functions.');
-
-    // Aqui iria o código real para:
-    // 1. Fazer upload da imagem para o Firebase Storage
-    // 2. Chamar a Cloud Function para analisar a imagem (NSFW Check)
-    // 3. Se a imagem for segura, salvar o link no Firestore.
-    // 4. Se a imagem for NSFW, BANIR o usuário e excluir a imagem.
-    
-    // Por enquanto, apenas limpa os campos para simular a publicação.
-    document.getElementById('tradeTitle').value = '';
-    document.getElementById('tradePrice').value = '';
-    document.getElementById('tradeDescription').value = '';
-    document.getElementById('tradeImage').value = '';
-
-};
-
 </script>
 </body>
 </html>

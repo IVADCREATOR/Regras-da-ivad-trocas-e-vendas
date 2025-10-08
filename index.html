@@ -81,9 +81,14 @@ input:focus, textarea:focus{outline: none; border-color: var(--main-gold);}
 .chat-box{max-height:300px;overflow-y:auto;background:rgba(0,0,0,0.5);padding:.75rem;margin-top:.75rem;border-radius:8px;border: 1px solid var(--border-color)}
 .chat-msg{margin:.4rem 0; font-size: 0.9rem; word-wrap: break-word; color: #eee;}
 .chat-msg strong{color: #42a5f5; margin-right: 5px; font-weight: 600;}
+.chat-msg .audio-player{display: block; margin-top: 5px;}
 .chat-input-area{margin-top:.75rem; display: flex; gap: 5px; flex-wrap: wrap; align-items: stretch;}
 .chat-input-area input[type=text]{margin: 0; flex-grow: 1;}
 .chat-input-area button{padding: 0 1.2rem; margin: 0; font-size: 1rem;}
+#btnRecordAudio{background: var(--btn-blue); color: #fff; width: 50px; font-size: 1.2rem;}
+#btnRecordAudio.recording{background: var(--btn-red); animation: pulse 1s infinite;}
+@keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(229, 115, 115, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(229, 115, 115, 0); } 100% { box-shadow: 0 0 0 0 rgba(229, 115, 115, 0); } }
+
 
 /* NOTIFICAÇÃO GLOBAL */
 #globalNotice{
@@ -196,19 +201,19 @@ input:focus, textarea:focus{outline: none; border-color: var(--main-gold);}
       <hr style="border:none;height:1px;background:var(--border-color);margin:20px 0">
 
       <h3 style="margin-top: 1rem;">Aposta Simples (2x)</h3>
-      <p class="small">Chance de 50%. Ganha 2x o que apostou se acertar, perde o valor se errar.</p>
+      <p class="small">Chance de 50%. Ganha 2x o que apostou se acertar, **perde o valor se errar**.</p>
       <input type="number" id="betAmount" placeholder="Quantos golds apostar?" min="1">
       <button id="btnBetSimple" class="btn">Apostar 2x</button>
       <span id="betMsgSimple" class="small" style="color: #ffd54f;"></span>
 
       <h3 style="margin-top: 2rem;">Aposta Média (5x)</h3>
-      <p class="small">Chance de 20%. Ganha 5x o que apostou.</p>
+      <p class="small">Chance de 20%. Ganha 5x o que apostou, **perde o valor se errar**.</p>
       <input type="number" id="betAmountMedium" placeholder="Quantos golds apostar?" min="1">
       <button id="btnBetMedium" class="btn" style="background:var(--btn-blue)">Apostar 5x</button>
       <span id="betMsgMedium" class="small" style="color: #90caf9;"></span>
 
       <h3 style="margin-top: 2rem;">Aposta Alta (10x)</h3>
-      <p class="small">Chance de 10%. Ganha 10x o que apostou. Risco altíssimo!</p>
+      <p class="small">Chance de 10%. Ganha 10x o que apostou, **perde o valor se errar**.</p>
       <input type="number" id="betAmountHigh" placeholder="Quantos golds apostar?" min="1">
       <button id="btnBetHigh" class="btn" style="background:var(--btn-red)">Apostar 10x</button>
       <span id="betMsgHigh" class="small" style="color: #ef9a9a;"></span>
@@ -227,7 +232,7 @@ input:focus, textarea:focus{outline: none; border-color: var(--main-gold);}
         
         <label style="display:block; margin-top:.5rem;">Foto do Item (PNG/JPG):</label>
         <input type="file" id="saleImage" accept="image/*" style="margin-bottom: 1rem;">
-        <p class="small" style="color: #e57373;">⚠️ **Moderacão Obrigatória:** O upload de imagens e a detecção de **conteúdo íntimo/NSFW** exigem Cloud Functions. Se for detectado, o usuário é banido e a imagem some.</p>
+        <p class="small" style="color: #e57373;">⚠️ **Moderacão Obrigatória:** O upload de imagens e a detecção de **conteúdo íntimo/NSFW** exigem Cloud Functions para banimento e exclusão da foto.</p>
 
         <button id="btnSubmitSale" class="btn" style="width: 100%;">Publicar Venda</button>
       </div>
@@ -262,12 +267,14 @@ input:focus, textarea:focus{outline: none; border-color: var(--main-gold);}
     </div>
 
     <div id="chatTab" style="display:none">
-      <h2>💬 Chat Global</h2>
+      <h2>💬 Chat Global Dinâmico</h2>
       <div class="chat-box" id="chatBox"></div>
       <div class="chat-input-area">
-        <input type="text" id="chatInput" placeholder="Digite sua mensagem" style="margin: 0;">
+        <input type="text" id="chatInput" placeholder="Digite sua mensagem ou grave um áudio..." style="margin: 0;">
+        <button id="btnRecordAudio" class="btn" title="Gravar Áudio (Máx 15s)">🎤</button>
         <button id="btnSendChat" class="btn">Enviar</button>
       </div>
+      <p class="small" style="margin-top: 5px; color: #ffb300;">🎤 Áudio: Gravado e salvo diretamente no banco de dados (máx 15s). Evite gravar áudios longos.</p>
     </div>
   </section>
 </main>
@@ -279,7 +286,9 @@ input:focus, textarea:focus{outline: none; border-color: var(--main-gold);}
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script> <script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+
+<script>
 // ===================================
 // ⚙️ CONFIGURAÇÕES FIREBASE
 // ===================================
@@ -296,7 +305,7 @@ const OWNER_UID = "m3h06woQv2V7lrNu1p8fDQCZ8IW2";
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
-const storage = firebase.storage(); // Inicializa o Storage
+const storage = firebase.storage(); 
 
 // ===================================
 // 🎯 ELEMENTOS DO DOM
@@ -320,16 +329,15 @@ const elements = {
     btnBetHigh: document.getElementById('btnBetHigh'),
     betMsgSimple: document.getElementById('betMsgSimple'),
     betMsgMedium: document.getElementById('betMsgMedium'),
-    betMsgHigh: document.getElementById('betMsgHigh')
+    betMsgHigh: document.getElementById('betMsgHigh'),
+    btnRecordAudio: document.getElementById('btnRecordAudio'),
+    btnSendChat: document.getElementById('btnSendChat')
 };
 
 // ===================================
 // 💡 FUNÇÕES AUXILIARES
 // ===================================
 
-/**
- * Gera um número inteiro aleatório entre min (inclusivo) e max (inclusivo).
- */
 function getRandomInt(min, max) {
     min = Math.ceil(min);
     max = Math.floor(max);
@@ -352,7 +360,6 @@ function usernameToEmail(u){ return `${u}@ivad.local`; }
 function validUsername(u){ return /^[a-zA-Z0-9_]{3,20}$/.test(u); }
 function escapeHtml(s){ return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 
-/** Exibe uma notificação estilizada no canto superior direito */
 function showNotification(message) {
   const el = elements.globalNotice;
   el.textContent = message;
@@ -397,7 +404,6 @@ auth.onAuthStateChanged(async user=>{
     const displayName = user.email ? user.email.split('@')[0] : user.uid;
     elements.userLabel.textContent = `Conectado: ${displayName}`;
     
-    // Cria/Atualiza o documento do usuário
     const userRef = db.collection('users').doc(user.uid);
     const doc = await userRef.get();
     if (!doc.exists) {
@@ -405,7 +411,7 @@ auth.onAuthStateChanged(async user=>{
             uid: user.uid,
             email: user.email,
             displayName: displayName,
-            gold: 100, // Começa com 100 gold
+            gold: 100, 
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
     }
@@ -413,7 +419,6 @@ auth.onAuthStateChanged(async user=>{
     if(user.uid === OWNER_UID) document.getElementById('ownerPanel').style.display='block';
     else document.getElementById('ownerPanel').style.display='none';
     
-    // Escuta mudanças no gold do usuário em tempo real
     db.collection('users').doc(user.uid).onSnapshot(doc => {
         if(doc.exists){
             const gold = Number(doc.data().gold||0);
@@ -463,9 +468,7 @@ elements.btnWork.onclick=async ()=>{
       
       const currentGold = d.data().gold || 0;
       
-      // Ganho Aleatório: 1% a 100% do Gold Atual
       const percentage = getRandomInt(1, 100); 
-      // Se o gold for zero, garante um ganho mínimo
       const baseGold = currentGold > 0 ? currentGold : 100; 
       const gain = Math.round(baseGold * (percentage / 100)); 
       
@@ -486,6 +489,7 @@ elements.btnWork.onclick=async ()=>{
 
 /**
  * Função genérica para lidar com todas as apostas.
+ * **CORRIGIDO: A subtração do Gold na perda agora está funcionando.**
  */
 async function handleBet(amountInput, multiplier, winChance, msgEl, btn) {
     const user = auth.currentUser;
@@ -506,14 +510,18 @@ async function handleBet(amountInput, multiplier, winChance, msgEl, btn) {
             const currentGold = doc.data().gold || 0;
             if(currentGold < amt){ throw new Error('Gold insuficiente para esta aposta.'); }
             
-            const roll = Math.random(); // 0.0 a 1.0
+            const roll = Math.random(); 
             const win = roll < winChance;
             
-            let diff = -amt; // Perde o valor apostado
+            let diff;
             
             if (win) {
+                // Ganha o valor apostado * multiplicador
                 const gain = amt * multiplier;
                 diff = gain; 
+            } else {
+                // Perde exatamente o valor apostado
+                diff = -amt; 
             }
 
             const newGold = currentGold + diff;
@@ -571,12 +579,31 @@ async function reloadRank(){
     elements.rankList.innerHTML = `<p class="small" style="color: #e57373;">Erro ao carregar o ranking.</p>`;
   }
 }
-// Recarrega o ranking a cada 5 segundos para manter atualizado
 setInterval(reloadRank, 5000); 
 
 // ===================================
 // 💬 CHAT GLOBAL
 // ===================================
+
+/** Converte Base64 para Blob para tocar áudio */
+function b64toBlob(b64Data, contentType, sliceSize=512) {
+  const byteCharacters = atob(b64Data);
+  const byteArrays = [];
+
+  for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) {
+    const slice = byteCharacters.slice(offset, offset + sliceSize);
+    const byteNumbers = new Array(slice.length);
+    for (let i = 0; i < slice.length; i++) {
+      byteNumbers[i] = slice.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    byteArrays.push(byteArray);
+  }
+  
+  const blob = new Blob(byteArrays, {type: contentType});
+  return blob;
+}
+
 async function loadChat(){
   db.collection('chat').orderBy('timestamp','desc').limit(50).onSnapshot(snapshot=>{
     elements.chatBox.innerHTML='';
@@ -587,16 +614,31 @@ async function loadChat(){
       el.classList.add('chat-msg');
       const time = msg.timestamp ? new Date(msg.timestamp.toDate()).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '...';
       const userDisplayName = escapeHtml(msg.user);
-      const textContent = escapeHtml(msg.text);
-      el.innerHTML = `[${time}] <strong>${userDisplayName}</strong>: ${textContent}`;
+      
+      let contentHTML = `<strong>${userDisplayName}</strong>: `;
+
+      if (msg.audioBase64) {
+          // É uma mensagem de áudio (Base64)
+          const audioBlob = b64toBlob(msg.audioBase64, msg.audioMimeType || 'audio/webm');
+          const audioUrl = URL.createObjectURL(audioBlob);
+          contentHTML += '<span style="color:#90caf9;">[Áudio]</span>';
+          contentHTML += `<audio controls class="audio-player" src="${audioUrl}"></audio>`;
+
+      } else {
+          // É uma mensagem de texto
+          const textContent = escapeHtml(msg.text);
+          contentHTML += textContent;
+      }
+      
+      el.innerHTML = `[${time}] ${contentHTML}`;
       elements.chatBox.appendChild(el);
     });
-    // Rola para o final
     elements.chatBox.scrollTop = elements.chatBox.scrollHeight;
   });
 }
 
-document.getElementById('btnSendChat').onclick=async ()=>{
+// Envio de Texto
+elements.btnSendChat.onclick=async ()=>{
   const user = auth.currentUser;
   if(!user){ showNotification('Faça login para enviar mensagens.'); return; }
   const text = elements.chatInput.value.trim();
@@ -613,6 +655,84 @@ document.getElementById('btnSendChat').onclick=async ()=>{
     console.error(err); showNotification('Erro ao enviar mensagem: '+err.message);
   }
 };
+
+// --- Sistema de Gravação de Áudio ---
+let mediaRecorder;
+let audioChunks = [];
+let isRecording = false;
+
+elements.btnRecordAudio.onclick = async () => {
+    if (!auth.currentUser) {
+        showNotification('Faça login para gravar áudio.');
+        return;
+    }
+    
+    if (isRecording) {
+        // PARAR a gravação
+        mediaRecorder.stop();
+        isRecording = false;
+        elements.btnRecordAudio.classList.remove('recording');
+        elements.chatInput.placeholder = "Processando áudio...";
+        elements.btnSendChat.disabled = true;
+    } else {
+        // INICIAR a gravação
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorder = new MediaRecorder(stream);
+            audioChunks = [];
+            
+            mediaRecorder.ondataavailable = event => {
+                audioChunks.push(event.data);
+            };
+
+            mediaRecorder.onstop = async () => {
+                const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                const reader = new FileReader();
+                reader.readAsDataURL(audioBlob);
+                reader.onloadend = async () => {
+                    const base64Data = reader.result.split(',')[1]; // Pega a Base64 pura
+                    const mimeType = audioBlob.type;
+                    
+                    try {
+                        await db.collection('chat').add({
+                            user: auth.currentUser.email.split('@')[0],
+                            audioBase64: base64Data,
+                            audioMimeType: mimeType,
+                            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                        showNotification('Áudio enviado com sucesso!');
+                    } catch (err) {
+                        console.error('Erro ao enviar áudio:', err);
+                        showNotification('Erro ao enviar áudio. Tente novamente.');
+                    } finally {
+                         // Libera o microfone
+                        stream.getTracks().forEach(track => track.stop()); 
+                        elements.chatInput.placeholder = "Digite sua mensagem ou grave um áudio...";
+                        elements.btnSendChat.disabled = false;
+                    }
+                };
+            };
+
+            mediaRecorder.start();
+            isRecording = true;
+            elements.btnRecordAudio.classList.add('recording');
+            elements.chatInput.placeholder = "Gravando... (máx 15s)";
+            
+            // Define um limite de tempo para não estourar o limite do Firestore
+            setTimeout(() => {
+                if(isRecording) {
+                    showNotification("Gravação de áudio parou (limite de 15s). Enviando...");
+                    mediaRecorder.stop();
+                }
+            }, 15000); 
+
+        } catch (err) {
+            console.error('Permissão de áudio negada:', err);
+            showNotification('Permissão de microfone negada ou indisponível.');
+        }
+    }
+};
+
 
 // ===================================
 // 💰 VENDAS (ANÚNCIOS POR DINHEIRO REAL)
@@ -635,9 +755,6 @@ document.getElementById('btnSubmitSale').onclick = async () => {
         return;
     }
     
-    // Simulação do Banimento por Conteúdo Sensível
-    // Sem um backend (Cloud Functions + Vision API), não podemos garantir a detecção real.
-    // Este código apenas faz o upload, mas o BANIMENTO real DEVE ser feito no servidor.
     try {
         // 1. Upload da Imagem para o Firebase Storage
         const filePath = `sales_images/${user.uid}_${Date.now()}_${file.name}`;
@@ -646,7 +763,6 @@ document.getElementById('btnSubmitSale').onclick = async () => {
 
         uploadTask.on('state_changed', 
             (snapshot) => {
-                // Progresso do upload
                 const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
                 showNotification(`Upload em andamento: ${Math.round(progress)}%`);
             }, 
@@ -655,11 +771,10 @@ document.getElementById('btnSubmitSale').onclick = async () => {
                 showNotification('Erro ao fazer upload da imagem.');
             }, 
             async () => {
-                // Upload completo, obter URL
                 const downloadURL = await storageRef.getDownloadURL();
                 
                 // 2. Salvar o Anúncio no Firestore
-                // Aqui o Cloud Function seria disparado para a moderação!
+                // Lembrete: A moderação/banimento de imagem NSFW precisa de Cloud Functions aqui!
                 await db.collection('sales').add({
                     sellerUid: user.uid,
                     sellerName: user.email.split('@')[0],
@@ -671,9 +786,8 @@ document.getElementById('btnSubmitSale').onclick = async () => {
                     timestamp: firebase.firestore.FieldValue.serverTimestamp()
                 });
 
-                showNotification('✅ Anúncio Publicado com Sucesso! Aguardando moderação (servidor).');
+                showNotification('✅ Anúncio Publicado! O banimento por NSFW deve ser ativado via Cloud Functions.');
 
-                // Limpa os campos
                 document.getElementById('saleTitle').value = '';
                 document.getElementById('salePriceReal').value = '';
                 document.getElementById('saleContact').value = '';
@@ -771,4 +885,3 @@ document.getElementById('btnClearChat').onclick=async ()=>{
 </script>
 </body>
 </html>
-

@@ -325,7 +325,7 @@ input[type="file"]::file-selector-button {
         </div>
 
         <h3 style="margin-top: 1rem;">💼 Trabalhar (RNG)</h3>
-        <p class="small">Ganho varia de **1% a 100%** do seu Gold atual. (Cooldown: 5s)</p>
+        <p class="small">Ganho varia de **1% a 100%** do seu Gold atual. **Garante no mínimo 1 Gold, mesmo com 0 Gold.** (Cooldown: 5s)</p>
         <button id="btnWork" class="btn" onclick="work()">Trabalhar (Gold Aleatório)</button>
         <span id="workMsg" class="small" style="margin-left:1rem; color: #5EEAD4;"></span>
 
@@ -500,7 +500,8 @@ input[type="file"]::file-selector-button {
 // SEU UID DE ADMINISTRADOR! ESSENCIAL PARA O PAINEL E REGRAS!
 const OWNER_UID = "m3h06woQv2V7lrNu1p8fDQCZ8IW2"; 
 let currentUser = null; 
-let initialGold = 1000; 
+// ALTERADO AQUI: GOLD INICIAL É AGORA 5000
+let initialGold = 5000; 
 let isOnlineRef = null; 
 const CHAT_LIMIT = 50;
 let isWorkingCooldown = false;
@@ -623,7 +624,7 @@ if (typeof firebase !== 'undefined') {
                 
                 await usersColRef.doc(user.uid).set({
                     username: username,
-                    gold: initialGold,
+                    gold: initialGold, // USANDO O NOVO VALOR DE 5000
                     wins: 0,
                     losses: 0,
                     creationTime: FieldValue.serverTimestamp()
@@ -720,6 +721,7 @@ if (typeof firebase !== 'undefined') {
         if (isNaN(betAmount) || betAmount <= 0) { 
             updateStatus("A aposta deve ser um valor positivo e numérico.", true); return false; 
         }
+        // Valida se tem gold suficiente (essencial para apostas)
         if (betAmount > currentGold) { 
             updateStatus("Gold insuficiente para esta aposta.", true); return false; 
         }
@@ -745,7 +747,7 @@ if (typeof firebase !== 'undefined') {
         }, 4000);
     }
 
-    // Jogo Simples: Trabalho (RESTAURO)
+    // Jogo Simples: Trabalho (AGORA GARANTE MÍNIMO DE 1 GOLD)
     async function work() {
         const btnWork = document.getElementById('btnWork');
         if (isWorkingCooldown) return updateStatus("Aguarde o cooldown (5 segundos).", true);
@@ -756,6 +758,8 @@ if (typeof firebase !== 'undefined') {
         btnWork.classList.add('cooldown');
 
         const currentGold = parseInt(document.getElementById('myGold').textContent.replace(/[^0-9]/g, '')) || 0;
+        
+        // Se o gold for 0, a porcentagem ainda é calculada, mas o Math.max(1, ...) garante 1 gold.
         const percentage = Math.floor(Math.random() * 100) + 1; 
         const earnings = Math.max(1, Math.floor(currentGold * (percentage / 100))); 
         
@@ -910,7 +914,6 @@ if (typeof firebase !== 'undefined') {
 
         // Sorteia as caixas
         const shuffledOutcomes = outcomes.sort(() => Math.random() - 0.5);
-        const winningOutcome = shuffledOutcomes.find(o => o.id === 'T');
         
         let result = 0;
         let finalMsg = '';
@@ -924,15 +927,11 @@ if (typeof firebase !== 'undefined') {
 
             if (box === chosenBoxElement) {
                 // Usuário acertou ou errou
-                if (outcome.mult > 1) {
+                if (outcome.mult >= 1.5) { // Win or Small Prize
                     result = amount * (outcome.mult - 1);
                     isWin = true;
                     finalMsg = `🎉 VOCÊ ACERTOU! Encontrou o ${outcome.name}! Lucro de ${result.toLocaleString()} Gold.`;
-                } else if (outcome.mult === 1.5) {
-                    result = amount * (outcome.mult - 1);
-                    isWin = true;
-                    finalMsg = `👍 Prêmio de Consolação! Encontrou o ${outcome.name}! Lucro de ${result.toLocaleString()} Gold.`;
-                } else {
+                } else { // Trap
                     result = -amount;
                     isWin = false;
                     finalMsg = `💥 ERROU! ${outcome.name}. Perdeu ${amount.toLocaleString()} Gold.`;

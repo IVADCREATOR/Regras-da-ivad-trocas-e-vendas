@@ -98,7 +98,35 @@ input:focus, textarea:focus{
     outline: none; border-color: var(--main-gold); 
     box-shadow: 0 0 8px var(--main-gold);
 }
-input[type="file"]{padding: 10px; background: rgba(255,255,255,0.05); border-radius: 10px; border: 1px dashed var(--border-color);}
+/* Estilo para input file */
+input[type="file"]{
+    padding: 10px; 
+    background: rgba(255,255,255,0.05); 
+    border-radius: 10px; 
+    border: 1px dashed var(--border-color); 
+    color: var(--text-secondary);
+}
+input[type="file"]::-webkit-file-upload-button {
+    background: var(--btn-blue);
+    color: white;
+    padding: 8px 15px;
+    border-radius: 8px;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    margin-right: 10px;
+}
+input[type="file"]::file-selector-button { /* Padrão moderno */
+    background: var(--btn-blue);
+    color: white;
+    padding: 8px 15px;
+    border-radius: 8px;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    margin-right: 10px;
+}
+
 
 /* VENDAS GRID */
 .sales-grid {
@@ -119,15 +147,17 @@ input[type="file"]{padding: 10px; background: rgba(255,255,255,0.05); border-rad
     font-size: 1.8rem; color: var(--green-win); font-weight: bold; margin: 5px 0;
 }
 .sale-contact-btn {
-    display: block; width: 100%; margin-top: 15px; background: #25d366; color: white;
+    display: block; width: 100%; margin-top: 15px; 
     padding: 14px; border-radius: 10px; text-decoration: none; text-align: center;
     font-weight: bold; font-size: 1.1rem; transition: background .3s, transform .2s;
+    border: none; cursor: pointer;
 }
-.sale-contact-btn:hover { background: #128c7e; transform: scale(1.02); }
+.sale-contact-btn:hover { transform: scale(1.02); }
+
 
 /* RANKING */
 .rank-list{max-height:500px;overflow-y:auto;padding:1.5rem; background: rgba(0,0,0,0.6); border-radius: 10px;}
-.rank-list li{padding: 5px 0; border-bottom: 1px dotted var(--border-color); transition: background-color 0.2s, padding-left 0.2s;}
+.rank-list li{padding: 5px 0; border-bottom: 1px dotted var(--border-color); transition: background-color 0.2s, padding-left 0.2s; display: flex; justify-content: space-between; align-items: center;}
 .rank-list li:last-child { border-bottom: none; }
 .rank-list li:hover { background-color: rgba(255,255,255,0.1); padding-left: 15px; border-radius: 6px; }
 
@@ -136,9 +166,7 @@ input[type="file"]{padding: 10px; background: rgba(255,255,255,0.05); border-rad
 .chat-input-area{margin-top:1rem; display: flex; gap: 8px; align-items: stretch;}
 .chat-input-area input[type=text]{margin: 0; flex-grow: 1; padding: 1rem; border-radius: 12px;}
 .chat-input-area button{padding: 0 1.5rem; margin: 0; font-size: 1.2rem; border-radius: 12px;}
-#btnRecordAudio{background: var(--btn-blue); color: #fff; width: 65px; font-size: 1.6rem;}
-#btnRecordAudio.recording{background: var(--btn-red); animation: pulse 1s infinite;}
-@keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
+#btnRecordAudio{background: var(--btn-blue); color: #fff; width: 65px; font-size: 1.6rem; opacity: 0.5;} /* Desabilitado por enquanto */
 
 /* JOGOS */
 .game-area{
@@ -157,6 +185,13 @@ input[type="file"]{padding: 10px; background: rgba(255,255,255,0.05); border-rad
     font-weight:900;box-shadow:0 8px 30px rgba(0,0,0,0.9);
     animation: fadeInOut 4.5s cubic-bezier(0.19, 1, 0.22, 1) forwards;
 }
+/* Requisito de Cooldown para o Trabalho */
+#btnWork.cooldown {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background: var(--btn-red);
+}
+
 @keyframes fadeInOut {
     0% { opacity: 0; transform: translateY(-20px); }
     10% { opacity: 1; transform: translateY(0); }
@@ -226,7 +261,6 @@ input[type="file"]{padding: 10px; background: rgba(255,255,255,0.05); border-rad
       <input id="adminName" placeholder="Nome do Usuário (exato)">
       <input id="adminAmount" type="number" placeholder="Gold (+/-)">
       <button id="btnGive" class="btn" onclick="adminGiveGold()" style="width: 100%; margin-top: .5rem; background: var(--btn-blue);">Dar/Remover Gold</button>
-      <button id="btnReset" class="btn" onclick="adminResetRank()" style="background:var(--btn-red);margin-top:.5rem; width: 100%;">Resetar Ranking</button>
       <button id="btnClearChat" class="btn" onclick="adminClearChat()" style="background:var(--btn-red);margin-top:.5rem; width: 100%;">Limpar Chat Global</button>
       <p class="small" style="margin-top: 5px; color: #F87171;">Apenas para OWNER_UID.</p>
     </div>
@@ -355,12 +389,12 @@ input[type="file"]{padding: 10px; background: rgba(255,255,255,0.05); border-rad
             
             <div class="bet-option-card">
                 <h3 style="margin-top: 0;">Número Mágico (4x)</h3>
-                <p class="small">Aposte 50 Gold. Chance de 25% de acertar.</p>
-                <button onclick="betRNG(4, 50, 25)" class="btn" style="width: 100%; background: var(--btn-blue);">Apostar 50 Gold (4x)</button>
+                <p class="small">Aposta fixa de 50 Gold. Chance de 25% de acertar.</p>
+                <button onclick="betRNG(4, 50, 25, 'betRNGMsg_4x')" class="btn" style="width: 100%; background: var(--btn-blue);">Apostar 50 Gold (4x)</button>
                 <span id="betRNGMsg_4x" class="small" style="display: block; margin-top: 5px;"></span>
             </div>
             
-             <div class="bet-option-card" style="grid-column: 1 / -1; opacity: 0.5;">
+             <div class="bet-option-card" style="opacity: 0.5;">
                 <h3 style="margin-top: 0;">Roleta de Prêmios VIP</h3>
                 <p class="small">Custo 100 Gold. (Em desenvolvimento: Funcionalidade visual da roleta)</p>
                 <div style="position: relative; text-align: center; margin-bottom: 20px;">
@@ -424,7 +458,7 @@ input[type="file"]{padding: 10px; background: rgba(255,255,255,0.05); border-rad
         <div class="chat-input-area">
             <input type="text" id="chatInput" placeholder="Digite sua mensagem...">
             <button id="btnSendMsg" class="btn" onclick="sendMessage()">Enviar</button>
-            <button id="btnRecordAudio" class="btn">🎤</button>
+            <button id="btnRecordAudio" class="btn" disabled>🎤</button>
         </div>
         <p id="chatError" class="small" style="color: var(--red-loss); margin-top: 5px;"></p>
     </div>
@@ -438,7 +472,8 @@ input[type="file"]{padding: 10px; background: rgba(255,255,255,0.05); border-rad
 // 1. CONFIGURAÇÃO E INICIALIZAÇÃO DO FIREBASE (v8)
 // ----------------------------------------------------
 // SEU UID DE ADMINISTRADOR! ESSENCIAL PARA O PAINEL E REGRAS!
-const OWNER_UID = "m3h06woQv2V7lrNu1p8fDQCZ8IW2"; 
+// **SUBSTITUA ESTE VALOR PELO SEU UID REAL**
+const OWNER_UID = "SEU_UID_DE_ADMINISTRADOR"; 
 let currentUser = null; 
 let initialGold = 1000; 
 let isOnlineRef = null; 
@@ -447,8 +482,9 @@ let isWorkingCooldown = false;
 
 // ATENÇÃO: SUBSTITUA OS VALORES ABAIXO PELOS SEUS DADOS REAIS DO FIREBASE
 const firebaseConfig = {
-    apiKey: "SEU_API_KEY", 
-    authDomain: "SEU_AUTH_DOMAIN",
+    apiKey: "AIzaSyCkmyMqEJaM8jVvmTN8I3gLnbC8YtMPWOI", // Sua chave fornecida
+    // **SUBSTITUA ESTES VALORES PELOS SEUS DADOS**
+    authDomain: "SEU_AUTH_DOMAIN", 
     projectId: "SEU_PROJECT_ID",
     storageBucket: "SEU_STORAGE_BUCKET",
     messagingSenderId: "SEU_MESSAGING_SENDER_ID",
@@ -461,7 +497,7 @@ if (typeof firebase !== 'undefined') {
     const auth = firebase.auth();
     const db = firebase.firestore();
     const FieldValue = firebase.firestore.FieldValue;
-    const storage = firebase.storage(); // Adicionando Storage para Vendas (Imagens)
+    const storage = firebase.storage(); 
 
     // Referências Comuns
     const usersColRef = db.collection('users');
@@ -510,13 +546,8 @@ if (typeof firebase !== 'undefined') {
         const content = document.getElementById(tabId);
         if (content) {
             content.style.display = 'block';
-            // Ajuste para o grid de ranking/chat
-            if (tabId === 'rankTab' || tabId === 'chatTab') {
-                document.querySelector('.content').style.display = 'grid';
-                document.querySelector('.content').style.gridTemplateColumns = tabId === 'rankTab' ? '1fr' : '1fr';
-            } else {
-                 document.querySelector('.content').style.display = 'block';
-            }
+             // Reset CSS display for the main content area
+            document.querySelector('.content').style.display = 'block';
         }
 
         // 4. Ativa o botão selecionado
@@ -532,7 +563,7 @@ if (typeof firebase !== 'undefined') {
 
 
     // ----------------------------------------------------
-    // 3. AUTENTICAÇÃO E PERFIL (Sincronizado com Regras)
+    // 3. AUTENTICAÇÃO E PERFIL
     // ----------------------------------------------------
 
     async function checkUsernameAvailability(username) {
@@ -542,7 +573,7 @@ if (typeof firebase !== 'undefined') {
 
     async function signup() {
         const username = document.getElementById('username').value.trim();
-        const email = document.getElementById('username').value.trim() + "@ivad.com"; // Usando username como parte do email
+        const email = document.getElementById('username').value.trim() + "@ivad.com"; 
         const password = document.getElementById('pwd').value;
         
         if (username.length < 3) {
@@ -565,7 +596,7 @@ if (typeof firebase !== 'undefined') {
             .then(async (userCredential) => {
                 const user = userCredential.user;
                 
-                // 3. Cria documento no Firestore (permitido pelas Regras)
+                // 3. Cria documento no Firestore 
                 await usersColRef.doc(user.uid).set({
                     username: username,
                     gold: initialGold,
@@ -576,7 +607,6 @@ if (typeof firebase !== 'undefined') {
                 updateStatus(`Conta de ${username} criada com sucesso!`, false);
             })
             .catch(error => {
-                // Se o email (username + @ivad.com) já existir
                 if (error.code === 'auth/email-already-in-use') {
                      updateStatus("Um usuário com este nome já existe. Tente outro nome.", true);
                 } else {
@@ -611,7 +641,6 @@ if (typeof firebase !== 'undefined') {
         userRef.onSnapshot(docSnapshot => {
             if (docSnapshot.exists) {
                 const data = docSnapshot.data();
-                // Usa Math.max(0, ...) para evitar gold negativo
                 const currentGold = Math.max(0, data.gold || 0); 
                 
                 document.getElementById('myGold').textContent = currentGold.toLocaleString();
@@ -621,7 +650,6 @@ if (typeof firebase !== 'undefined') {
                 document.getElementById('socialUserId').textContent = user.uid;
                 document.getElementById('playerInfoSocial').style.display = 'block';
 
-                // Atualiza o nome de usuário se o admin mudou
                 if (data.username !== document.getElementById('username').value.trim()) {
                     document.getElementById('username').value = data.username; 
                 }
@@ -640,28 +668,41 @@ if (typeof firebase !== 'undefined') {
     // 4. JOGOS E SISTEMA ANTI-HACK DE GOLD
     // ----------------------------------------------------
 
-    async function updateGold(amount) {
+    async function updateGold(amount, isWin = false) {
         if (!currentUser) return false;
-        // O uso de FieldValue.increment garante que as Regras Anti-Hack sejam respeitadas.
-        return usersColRef.doc(currentUser.uid).update({
+        
+        const updateData = {
             gold: FieldValue.increment(amount)
-        }).catch(error => {
-            updateStatus(`Erro ao atualizar Gold: ${error.message}`, true);
-            return false;
-        });
+        };
+
+        if (isWin && amount > 0) {
+            updateData.wins = FieldValue.increment(1);
+        } else if (!isWin && amount < 0) {
+            updateData.losses = FieldValue.increment(1);
+        }
+
+        return usersColRef.doc(currentUser.uid).update(updateData)
+            .catch(error => {
+                updateStatus(`Erro ao atualizar Gold: ${error.message}`, true);
+                return false;
+            });
     }
 
     function validateBet(amount) {
-        // Lê o gold atual, removendo vírgulas de formatação. Se não tiver gold, usa 0.
-        const currentGold = parseInt(document.getElementById('myGold').textContent.replace(/,/g, '')) || 0; 
+        // Lê o gold atual, removendo formatação. Se não tiver gold, usa 0.
+        const currentGoldText = document.getElementById('myGold').textContent.replace(/,/g, '');
+        const currentGold = parseInt(currentGoldText) || 0;
         
         if (!currentUser) { 
             updateStatus("Faça login para apostar.", true); return false; 
         }
-        if (isNaN(amount) || amount <= 0) { 
-            updateStatus("A aposta deve ser um valor positivo.", true); return false; 
+        // Garante que o amount seja um número inteiro positivo
+        const betAmount = parseInt(amount); 
+        
+        if (isNaN(betAmount) || betAmount <= 0) { 
+            updateStatus("A aposta deve ser um valor positivo e numérico.", true); return false; 
         }
-        if (amount > currentGold) { 
+        if (betAmount > currentGold) { 
             updateStatus("Gold insuficiente para esta aposta.", true); return false; 
         }
         return true;
@@ -686,39 +727,42 @@ if (typeof firebase !== 'undefined') {
         }, 4000);
     }
 
-    // Jogo Simples: Trabalho
+    // Jogo Simples: Trabalho (AGORA COM COOLDOWN VISUAL)
     async function work() {
+        const btnWork = document.getElementById('btnWork');
         if (isWorkingCooldown) return updateStatus("Aguarde o cooldown (5 segundos).", true);
         if (!currentUser) return updateStatus("Você precisa estar logado para trabalhar.", true);
         
         isWorkingCooldown = true;
-        document.getElementById('btnWork').disabled = true;
+        btnWork.disabled = true;
+        btnWork.classList.add('cooldown');
 
         const currentGold = parseInt(document.getElementById('myGold').textContent.replace(/,/g, '')) || 0;
         const percentage = Math.floor(Math.random() * 100) + 1; // 1% a 100%
-        // O ganho mínimo é 1, para evitar loops infinitos de 0
         const earnings = Math.max(1, Math.floor(currentGold * (percentage / 100))); 
         
-        await updateGold(earnings);
+        await updateGold(earnings, true);
 
         document.getElementById('workMsg').textContent = `Você trabalhou e ganhou +${earnings.toLocaleString()} Gold (${percentage}%).`;
         
         setTimeout(() => {
             isWorkingCooldown = false;
-            document.getElementById('btnWork').disabled = false;
+            btnWork.disabled = false;
+            btnWork.classList.remove('cooldown');
             document.getElementById('workMsg').textContent = '';
         }, 5000); // 5 segundos de cooldown
     }
 
     // Jogo Simples: Multiplicador (CORRIGIDO)
     async function betSimple(multiplier, inputId, msgId, winChance) {
-        const amount = parseInt(document.getElementById(inputId).value);
+        const inputElement = document.getElementById(inputId);
+        const amount = parseInt(inputElement.value);
         if (!validateBet(amount)) return;
         
         const win = Math.random() * 100 < winChance;
-        const result = win ? amount * (multiplier - 1) : -amount; // Lucro: (Mult - 1) * Aposta
+        const result = win ? amount * (multiplier - 1) : -amount; 
         
-        await updateGold(result);
+        await updateGold(result, win);
         
         const msg = win 
             ? `✅ GANHOU ${multiplier}x! Lucro de ${result.toLocaleString()} Gold.` 
@@ -738,13 +782,13 @@ if (typeof firebase !== 'undefined') {
         let outcome = '';
         let mult = 0;
 
-        if (rand < 0.48) { // 48%
+        if (rand < 0.48) { 
             outcome = 'red';
             mult = 2;
-        } else if (rand < 0.96) { // 48% (0.48 a 0.96)
+        } else if (rand < 0.96) { 
             outcome = 'black';
             mult = 2;
-        } else { // 4% (0.96 a 1.0)
+        } else { 
             outcome = 'green';
             mult = 4;
         }
@@ -752,7 +796,7 @@ if (typeof firebase !== 'undefined') {
         const win = choice === outcome;
         const result = win ? amount * (mult - 1) : -amount;
         
-        await updateGold(result);
+        await updateGold(result, win);
         
         const msg = win 
             ? `✅ GANHOU ${mult}x! Sorteado: ${outcome.toUpperCase()}. Lucro: ${result.toLocaleString()} Gold.` 
@@ -772,7 +816,7 @@ if (typeof firebase !== 'undefined') {
         const win = choice === outcome;
         const result = win ? amount : -amount;
         
-        await updateGold(result);
+        await updateGold(result, win);
         
         const msg = win 
             ? `✅ GANHOU 2x! Deu ${outcome.toUpperCase()}. Lucro: ${result.toLocaleString()} Gold.` 
@@ -795,7 +839,7 @@ if (typeof firebase !== 'undefined') {
         const win = choice === outcome;
         const result = win ? amount * (multiplier - 1) : -amount;
         
-        await updateGold(result);
+        await updateGold(result, win);
         
         const msg = win 
             ? `✅ ACERTOU ${outcome}! Lucro de ${result.toLocaleString()} Gold (${multiplier}x).` 
@@ -806,21 +850,21 @@ if (typeof firebase !== 'undefined') {
     }
 
     // Aposta Avançada: RNG Mágico (4x) - (CORRIGIDO)
-    async function betRNG(multiplier, fixedAmount, winChance) {
+    async function betRNG(multiplier, fixedAmount, winChance, msgId) {
         const amount = fixedAmount;
-        if (!validateBet(amount)) return; // Valida se o Gold atual é suficiente
+        if (!validateBet(amount)) return; 
 
         const rand = Math.random() * 100;
         const win = rand < winChance;
         const result = win ? amount * (multiplier - 1) : -amount;
         
-        await updateGold(result);
+        await updateGold(result, win);
         
         const msg = win 
             ? `✅ NÚMERO MÁGICO! Lucro de ${result.toLocaleString()} Gold (${multiplier}x).` 
             : `❌ NÃO FOI DESSA VEZ. Perdeu ${amount.toLocaleString()} Gold.`;
         
-        document.getElementById('betRNGMsg_4x').textContent = msg;
+        document.getElementById(msgId).textContent = msg;
         notify(msg, win);
     }
 
@@ -830,7 +874,6 @@ if (typeof firebase !== 'undefined') {
     // ----------------------------------------------------
 
     function loadRanking() {
-        // Leitura permitida pelas regras 'allow read: if true;'
         usersColRef.orderBy('gold', 'desc').limit(15).onSnapshot(snapshot => {
             const rankingList = document.getElementById('rankingList');
             rankingList.innerHTML = ''; 
@@ -846,9 +889,14 @@ if (typeof firebase !== 'undefined') {
                 li.style.color = doc.id === currentUser.uid ? 'var(--main-gold)' : 'var(--text-primary)';
                 li.style.fontWeight = doc.id === currentUser.uid ? 'bold' : 'normal';
 
+                let usernameDisplay = data.username;
+                if (doc.id === OWNER_UID) {
+                     usernameDisplay = `<span style="color: #ff00ff;">${data.username} [DONO]</span>`;
+                }
+
                 li.innerHTML = `
                     <span style="width: 30px; display: inline-block;">#${index + 1}</span>
-                    <span style="color: ${doc.id === OWNER_UID ? '#ff00ff' : 'inherit'};">${data.username}</span>
+                    ${usernameDisplay}
                     <span style="color: var(--main-gold);">${data.gold ? data.gold.toLocaleString() : '0'} Gold</span>
                 `;
                 rankingList.appendChild(li);
@@ -875,7 +923,6 @@ if (typeof firebase !== 'undefined') {
         document.getElementById('chatError').textContent = "";
         const userData = (await usersColRef.doc(currentUser.uid).get()).data();
         
-        // A regra verifica se o username enviado é o mesmo do perfil
         chatColRef.add({
             username: userData.username,
             text: message,
@@ -899,21 +946,11 @@ if (typeof firebase !== 'undefined') {
                 const div = document.createElement('div');
                 div.className = 'chat-message';
                 
-                const usernameSpan = document.createElement('span');
-                usernameSpan.className = 'chat-user';
-                
                 let nameColor = data.uid === OWNER_UID ? '#ff00ff' : 'var(--text-secondary)';
                 let nameDisplay = data.uid === OWNER_UID ? `${data.username} [DONO]:` : `${data.username}:`;
 
-                usernameSpan.textContent = nameDisplay;
-                usernameSpan.style.color = nameColor;
+                div.innerHTML = `<span style="color: ${nameColor}; font-weight: bold;">${nameDisplay}</span> <span>${data.text}</span>`;
                 
-                const textSpan = document.createElement('span');
-                textSpan.className = 'chat-text';
-                textSpan.textContent = data.text;
-                
-                div.appendChild(usernameSpan);
-                div.appendChild(textSpan);
                 chatWindow.appendChild(div);
             });
             
@@ -951,7 +988,7 @@ if (typeof firebase !== 'undefined') {
             const snapshot = await imageRef.put(imageFile);
             const imageUrl = await snapshot.ref.getDownloadURL();
 
-            // 2. Criação do Documento no Firestore (permitido pelas Regras)
+            // 2. Criação do Documento no Firestore 
             await salesColRef.add({
                 title: title,
                 description: description,
@@ -978,7 +1015,6 @@ if (typeof firebase !== 'undefined') {
     }
 
     function loadSales() {
-        // Leitura permitida 'allow read: if true;'
         salesColRef.orderBy('timestamp', 'desc').onSnapshot(snapshot => {
             const salesList = document.getElementById('salesList');
             salesList.innerHTML = '';
@@ -993,16 +1029,23 @@ if (typeof firebase !== 'undefined') {
                 const div = document.createElement('div');
                 div.className = 'sale-post';
                 
-                let buttons = `<a href="https://wa.me/?text=Tenho interesse no seu item '${data.title}' no IVAD!" target="_blank" class="sale-contact-btn">CHAMAR NO WHATSAPP</a>`;
-                if (data.contact && data.contact.toLowerCase().includes('discord')) {
-                     buttons = `<a href="#" onclick="updateStatus('Contato: ${data.contact}', false)" class="sale-contact-btn" style="background: #7289da;">VER DISCORD</a>`;
-                } else if (data.contact) {
-                     // Adiciona a funcionalidade de copiar contato
-                     buttons = `<a href="#" onclick="navigator.clipboard.writeText('${data.contact}'); updateStatus('Contato copiado!', false);" class="sale-contact-btn" style="background: #4A90E2;">COPIAR CONTATO</a>`;
+                let buttons = '';
+
+                // Botão de Contato Padrão
+                if (data.contact) {
+                     if (data.contact.toLowerCase().includes('discord')) {
+                        buttons += `<a href="#" onclick="updateStatus('Contato: ${data.contact} - Copiado!', false); navigator.clipboard.writeText('${data.contact}')" class="sale-contact-btn" style="background: #7289da;">VER DISCORD</a>`;
+                     } else if (data.contact.toLowerCase().includes('wa.me') || data.contact.match(/^\+?\d{10,15}$/)) {
+                         const waLink = data.contact.startsWith('https://wa.me') ? data.contact : `https://wa.me/${data.contact.replace(/[^\d+]/g, '')}?text=Tenho%20interesse%20no%20seu%20item%20'${data.title}'%20no%20IVAD!`;
+                         buttons += `<a href="${waLink}" target="_blank" class="sale-contact-btn" style="background: #25d366;">CHAMAR NO WHATSAPP</a>`;
+                     } else {
+                         buttons += `<a href="#" onclick="navigator.clipboard.writeText('${data.contact}'); updateStatus('Contato copiado!', false);" class="sale-contact-btn" style="background: #4A90E2;">COPIAR CONTATO</a>`;
+                     }
                 }
                 
+                // Botão de Excluir (para o vendedor ou dono)
                 if (currentUser && (data.sellerUid === currentUser.uid || currentUser.uid === OWNER_UID)) {
-                    buttons = `<button onclick="deleteSale('${doc.id}', '${data.imageUrl}')" class="btn" style="background: var(--btn-red); width: 100%;">Excluir Postagem</button>`;
+                    buttons += `<button onclick="deleteSale('${doc.id}', '${data.imageUrl}')" class="btn" style="background: var(--btn-red); width: 100%; margin-top: 10px;">Excluir Postagem</button>`;
                 }
 
                 div.innerHTML = `
@@ -1029,7 +1072,7 @@ if (typeof firebase !== 'undefined') {
                 await fileRef.delete();
             }
             
-            // 2. Excluir documento do Firestore (Regras verificam permissão)
+            // 2. Excluir documento do Firestore 
             await salesColRef.doc(saleId).delete();
             updateStatus("Postagem excluída com sucesso.", false);
         } catch (error) {
@@ -1043,7 +1086,7 @@ if (typeof firebase !== 'undefined') {
     // ----------------------------------------------------
 
     async function adminGiveGold() {
-        if (currentUser.uid !== OWNER_UID) return;
+        if (currentUser.uid !== m3h06woQv2V7lrNu1p8fDQCZ8IW2) return;
 
         const targetUsername = document.getElementById('adminName').value.trim();
         const amount = parseInt(document.getElementById('adminAmount').value);
@@ -1053,16 +1096,18 @@ if (typeof firebase !== 'undefined') {
         }
         
         try {
-            // 1. Busca o UID pelo username (sempre busca no backend)
             const snapshot = await usersColRef.where('username', '==', targetUsername).limit(1).get();
             if (snapshot.empty) {
                 return updateStatus(`[ADMIN] Usuário '${targetUsername}' não encontrado.`, true);
             }
             const targetUid = snapshot.docs[0].id;
+            const isWin = amount > 0;
 
-            // 2. Atualiza o Gold (Regras permitem esta alteração por ser OWNER_UID)
+            // Uso de FieldValue.increment para segurança
             await usersColRef.doc(targetUid).update({
-                gold: FieldValue.increment(amount) 
+                gold: FieldValue.increment(amount) ,
+                wins: isWin ? FieldValue.increment(1) : FieldValue.increment(0),
+                losses: isWin ? FieldValue.increment(0) : FieldValue.increment(1)
             });
 
             updateStatus(`[ADMIN] ${amount > 0 ? 'DADO' : 'REMOVIDO'} ${Math.abs(amount).toLocaleString()} Gold para ${targetUsername}.`);
@@ -1077,18 +1122,17 @@ if (typeof firebase !== 'undefined') {
         if (currentUser.uid !== OWNER_UID) return;
         if (!confirm("Tem certeza que deseja apagar TODAS as mensagens do Chat Global?")) return;
         
-        chatColRef.get().then(snapshot => {
+        // Limita o número de documentos para evitar timeout (Firestore limita batches)
+        chatColRef.limit(200).get().then(snapshot => {
             const batch = db.batch();
             snapshot.docs.forEach(doc => {
                 batch.delete(doc.ref);
             });
             return batch.commit();
         })
-        .then(() => updateStatus("[ADMIN] Chat Global limpo com sucesso!", false))
+        .then(() => updateStatus("[ADMIN] Chat Global limpo (parcialmente - repita se for necessário)!", false))
         .catch(error => updateStatus(`[ADMIN] Erro ao limpar chat: ${error.message}`, true));
     }
-
-    // TODO: Implementar adminResetRank (resetar gold e wins/losses de todos)
 
 
     // ----------------------------------------------------
@@ -1100,35 +1144,41 @@ if (typeof firebase !== 'undefined') {
         
         isOnlineRef = onlineUsersColRef.doc(uid);
         
-        // 1. Marca como online
         isOnlineRef.set({ 
-            username: document.getElementById('userLabel').textContent.split(', ')[1].replace('!', ''), // Pega o nome do label
+            username: document.getElementById('userLabel').textContent.split(', ')[1].replace('!', ''), 
             timestamp: FieldValue.serverTimestamp() 
         });
         
-        // 2. Marca como offline (limpeza)
+        // Marca como offline
         window.addEventListener('beforeunload', () => isOnlineRef.delete());
         auth.onAuthStateChanged(user => {
             if (!user && isOnlineRef) isOnlineRef.delete();
         });
 
-        // 3. Listener do contador em tempo real
+        // Listener do contador em tempo real
         onlineUsersColRef.onSnapshot(snapshot => {
-            let count = snapshot.size;
-            
-            // Limpeza de documentos antigos
+            let count = 0;
             const now = firebase.firestore.Timestamp.now().toMillis();
             const timeout = 5 * 60 * 1000; // 5 minutos
+            const batch = db.batch();
+            let hasCleanup = false;
 
-            let cleanupCount = 0;
             snapshot.forEach(doc => {
                 const data = doc.data();
                 if (data.timestamp && (now - data.timestamp.toMillis() > timeout)) {
-                    cleanupCount++;
+                    // Marca para exclusão se estiver desatualizado
+                    batch.delete(doc.ref);
+                    hasCleanup = true;
+                } else {
+                    count++;
                 }
             });
+
+            if (hasCleanup) {
+                 batch.commit().catch(e => console.error("Erro ao limpar usuários online: ", e));
+            }
             
-            document.getElementById('visitorCount').textContent = Math.max(0, count - cleanupCount).toLocaleString();
+            document.getElementById('visitorCount').textContent = count.toLocaleString();
         }, error => console.error("Erro no contador online: ", error));
     }
 
@@ -1139,7 +1189,6 @@ if (typeof firebase !== 'undefined') {
 
     auth.onAuthStateChanged(user => {
         if (user) {
-            // user.uid está logado, agora carrega o perfil do firestore
             loadUserData(user);
         } else {
             currentUser = null;
@@ -1147,6 +1196,8 @@ if (typeof firebase !== 'undefined') {
             document.getElementById('signedInUI').style.display = 'none';
             document.getElementById('ownerPanel').style.display = 'none';
             document.getElementById('playerInfoSocial').style.display = 'none';
+            // Garante que o contador online seja zerado para este usuário ao deslogar
+            if (isOnlineRef) { isOnlineRef.delete(); isOnlineRef = null; }
             updateStatus("Desconectado. Faça login para usar o sistema.", true);
         }
     });

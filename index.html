@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>IVAD TROCAS E VENDAS</title>
+<style>
+/* VARIÁVEIS DE COR E ESTILO */
+:root{
+  --card-bg: rgba(0,0,0,0.78); 
+  --btn-gradient: linear-gradient(90deg,#ffd54f,#ffb300);
+  --btn-blue: linear-gradient(90deg,#90caf9,#42a5f5);
+  --btn-red: linear-gradient(90deg,#ef9a9a,#e57373);
+  --text-primary: #fff;
+  --text-secondary: #ddd;
+  --main-gold: #ffb300;
+}
+
+/* ESTILO BASE */
+html,body{height:100%;margin:0;font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;color:var(--text-primary);background:#000}
+body{perspective:1000px;overflow-x:hidden}
+
+/* EFEITO DE FUNDO 3D (LIGHTWEIGHT) */
+.bg3d{
+  position:fixed;inset:0;background:url('/* LINK RAW IMAGEM */') no-repeat center center;
+  background-size:cover;z-index:-2;filter:contrast(0.92) saturate(0.95) brightness(0.9);
+  transform-origin:center center;animation:float3d 18s ease-in-out infinite alternate;
+}
+@keyframes float3d{
+  0%{transform:translateZ(0px) rotateY(0deg) rotateX(0deg) scale(1)}
+  50%{transform:translateZ(12px) rotateY(2deg) rotateX(1deg) scale(1.01)}
+  100%{transform:translateZ(0px) rotateY(-1deg) rotateX(-1deg) scale(1)}
+}
+.overlay{position:fixed;inset:0;z-index:-1;background:linear-gradient(135deg, rgba(0,0,0,0.7), rgba(0,0,0,0.5))}
+
+/* HEADER */
+header{background:rgba(0,0,0,0.8);padding:1.2rem;text-align:center;position:relative;z-index:2;border-bottom: 3px solid var(--main-gold); box-shadow: 0 4px 10px rgba(0,0,0,0.5);}
+header h1{margin:.2rem;font-size:1.8rem; letter-spacing: 2px; text-shadow: 0 0 8px rgba(255,179,0,0.7);}
+header p{margin:.1rem;color:var(--text-secondary);font-size:0.9rem}
+
+/* LAYOUT PRINCIPAL */
+.container{max-width:1100px;margin:2rem auto;padding:1rem;display:grid;grid-template-columns:300px 1fr;gap:2rem}
+.card{background:var(--card-bg);padding:1.5rem;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,0.8);border: 1px solid rgba(255,255,255,0.1);}
+
+/* MENU E BOTÕES DE ABA */
+.menu button{display:block;width:100%;margin-bottom:.8rem;padding:.9rem 1rem;border-radius:8px;border:none;background:rgba(255,255,255,0.08);color:var(--text-primary);font-weight:700;cursor:pointer;transition:transform .2s,box-shadow .2s, background .2s}
+.menu button:hover{transform:translateY(-2px);box-shadow:0 6px 15px rgba(255,179,0,0.3); background:rgba(255,255,255,0.15);}
+.menu button.active{background:var(--btn-gradient);color:#111;transform:translateY(0);box-shadow:0 4px 10px rgba(0,0,0,0.5)}
+
+/* CONTEÚDO DA ABA */
+.content h2{margin-top:0; border-bottom: 2px solid rgba(255,255,255,0.1); padding-bottom: 10px; margin-bottom: 1.5rem; color: var(--main-gold);}
+ul{padding-left:1.5rem}
+
+/* BOTÕES GERAIS */
+.btn{
+  display:inline-block;padding:.8rem 1.5rem;border-radius:8px;border:none;background:var(--btn-gradient);color:#111;font-weight:700;cursor:pointer; 
+  transition: all .2s; position: relative; overflow: hidden; transform: translateZ(0);
+}
+.btn:hover:not(:disabled){box-shadow: 0 0 20px rgba(255,179,0,0.5); transform: scale(1.02);}
+.btn:disabled{opacity:0.6; cursor: not-allowed; filter: grayscale(100%);}
+.btn::before { /* Efeito Shine */
+    content: ''; position: absolute; top: 0; left: -75%; width: 50%; height: 100%;
+    background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.4) 100%);
+    transform: skewX(-25deg); transition: all 0.7s;
+}
+.btn:not(:disabled):hover::before { left: 125%; }
+.small{font-size:.85rem;color:var(--text-secondary)}
+
+/* FORMULÁRIOS */
+input[type="text"],input[type="password"],input[type=number],select{width:100%;padding:.8rem;margin:.5rem 0;border-radius:8px;border:1px solid rgba(255,255,255,0.2);background:rgba(0,0,0,0.4);color:var(--text-primary);box-sizing: border-box; transition: border-color .2s;}
+input:focus{outline: none; border-color: var(--main-gold);}
+
+/* RANKING */
+.rank-list{max-height:420px;overflow-y:auto;padding:1rem; background: rgba(0,0,0,0.3);}
+.rank-list ol{padding-left: 0; margin: 0;}
+.rank-list li{list-style: none; padding: .6rem 0; border-bottom: 1px dashed rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center;}
+.rank-list li:last-child{border-bottom: none;}
+.rank-list li strong{color: #ffd54f; font-weight: bold;}
+.rank-list li span{color: var(--text-secondary);}
+
+/* FOOTER */
+footer{padding:1.5rem;text-align:center;color:#999;font-size:0.75rem}
+@media(max-width:880px){ .container{grid-template-columns:1fr; padding:.5rem; margin-top: 1rem} .menu{order:2} }
+
+/* CHAT */
+.chat-box{max-height:250px;overflow-y:auto;background:rgba(0,0,0,0.4);padding:.75rem;margin-top:.75rem;border-radius:8px;border: 1px solid rgba(255,255,255,0.1)}
+.chat-msg{margin:.4rem 0; font-size: 0.9rem; word-wrap: break-word;}
+.chat-msg strong{color: #42a5f5; margin-right: 5px; font-weight: 600;}
+.chat-box::-webkit-scrollbar { width: 6px; }
+.chat-box::-webkit-scrollbar-thumb { background-color: rgba(255,255,255,0.2); border-radius: 3px; }
+
+/* NOTIFICAÇÃO GLOBAL */
+#globalNotice{
+    position:fixed;top:10px;right:10px;background:var(--main-gold);color:#111;padding:.8rem 1.5rem;border-radius:8px;display:none;z-index:9999;
+    font-weight:700;box-shadow:0 4px 15px rgba(0,0,0,0.7);
+    animation: fadeInOut 4.5s cubic-bezier(0.19, 1, 0.22, 1) forwards;
+}
+@keyframes fadeInOut { 0%{opacity:0; transform: translateX(100px)} 5%{opacity:1; transform: translateX(0)} 95%{opacity:1; transform: translateX(0)} 100%{opacity:0; transform: translateX(100px)} }
+</style>
+</head>
+<body>
+<div class="bg3d" aria-hidden="true"></div>
+<div class="overlay" aria-hidden="true"></div>
+
+<header>
+  <h1>IVAD TROCAS E VENDAS</h1>
+  <p>Criado por IVADCREATOR</p>
+</header>
+
+<main class="container">
+  <aside class="card menu">
+    <button class="tabbtn active" data-tab="regrasTab">REGRAS</button>
+    <button class="tabbtn" data-tab="jogoTab">🎮 JOGUINHO</button>
+    <button class="tabbtn" data-tab="rankTab">🏆 RANK GLOBAL</button>
+    <button class="tabbtn" data-tab="chatTab">💬 CHAT</button>
+    <hr style="border:none;height:1px;background:rgba(255,255,255,0.08);margin:15px 0">
+
+    <div id="authArea" class="small">
+      <div id="signedOutUI">
+        <input id="username" type="text" placeholder="Escolha um nome (sem espaços)">
+        <input id="pwd" type="password" placeholder="Senha (≥6)">
+        <div style="display:flex;gap:.5rem">
+          <button id="btnSignup" class="btn" style="background:var(--btn-blue)">Criar conta</button>
+          <button id="btnLogin" class="btn">Entrar</button>
+        </div>
+        <p class="small" style="margin-top: 5px;">Nome único (A-z, 0-9, _) — se já existir, escolha outro.</p>
+      </div>
+
+      <div id="signedInUI" style="display:none">
+        <p><strong id="userLabel"></strong></p>
+        <div style="display:flex;gap:.5rem;align-items:center">
+          <button id="btnLogout" class="btn" style="background:var(--btn-red); padding: .6rem 1rem;">Sair</button>
+          <div style="margin-left:auto; font-size: 1.2rem;"><span class="small" style="color:#ffd54f">Gold: </span><strong id="myGold">0</strong></div>
+        </div>
+      </div>
+    </div>
+
+    <hr style="border:none;height:1px;background:rgba(255,255,255,0.08);margin:15px 0">
+    <div id="ownerPanel" style="display:none">
+      <h4 style="margin:.3rem 0; color: #e57373;">Painel do Dono</h4>
+      <input id="adminName" placeholder="nome do usuário (exact)">
+      <input id="adminAmount" type="number" placeholder="gold (+/-)">
+      <button id="btnGive" class="btn" style="width: 100%; margin-top: .5rem; background: var(--btn-blue);">Dar/Remover gold</button>
+      <button id="btnReset" class="btn" style="background:var(--btn-red);margin-top:.5rem; width: 100%;">Resetar ranking</button>
+      <button id="btnClearChat" class="btn" style="background:var(--btn-red);margin-top:.5rem; width: 100%;">Limpar Chat Global</button>
+      <p class="small" style="margin-top: 5px;">Somente OWNER_UID pode usar</p>
+    </div>
+    <hr style="border:none;height:1px;background:rgba(255,255,255,0.08);margin:15px 0">
+    <p class="small">Ranking público salvo no Firestore.</p>
+    <p class="small">Visitantes online: <strong id="visitorCount">0</strong></p>
+  </aside>
+
+  <section class="card content">
+    <div id="regrasTab">
+      <h2>Regras</h2>
+      <h3>🚫 Proibido</h3>
+      <ul>
+        <li>Flodar mensagens (spam) ou enviar mensagens vazias repetidamente.</li>
+        <li>Compartilhar links suspeitos ou conteúdo ilegal/impróprio.</li>
+        <li>Colocar preço ou valor em contas de outros usuários.</li>
+        <li>Ofensas, xingamentos ou desrespeito entre membros.</li>
+        <li>Vendas de itens ilegais, roubados ou que violem regras do site/servidor.</li>
+      </ul>
+      <h3>✅ Permitido</h3>
+      <ul>
+        <li>Postar links que não sejam suspeitos.</li>
+        <li>Comprar e vender produtos de forma clara e respeitosa.</li>
+        <li>Negociar e interagir com bom senso e educação.</li>
+      </ul>
+      <h3>⚠️ Observações</h3>
+      <ul>
+        <li>Descumprimento das regras pode levar a banimento.</li>
+        <li>Negociações são **responsabilidade exclusiva** entre as partes envolvidas.</li>
+        <li>O Chat é moderado e monitorado. Mantenha o respeito.</li>
+      </ul>
+    </div>
+
+    <div id="jogoTab" style="display:none">
+      <h2>🎮 Cassino & Joguinho</h2>
+      
+      <div id="playerInfo" class="card" style="margin-bottom:1.5rem; padding: .8rem; background: rgba(255,255,255,0.1); display:none;">
+        <p style="margin: 0;">Seu Gold: <strong id="playerGold" style="color: var(--main-gold);">0</strong></p>
+      </div>
+
+      <p class="small">Clique <strong>Trabalhar</strong> para ganhar <strong>+1 gold</strong>. (Rate-limit: 5s)</p>
+      <button id="btnWork" class="btn">Trabalhar (+1 gold)</button>
+      <span id="workMsg" class="small" style="margin-left:1rem; color: #90caf9;"></span>
+
+      <h3 style="margin-top: 2rem;">Aposta Simples 50/50 (1x)</h3>
+      <input type="number" id="betAmount" placeholder="Quantos golds apostar?" min="1">
+      <button id="btnBet" class="btn">Apostar 50/50</button>
+      <span id="betMsg" class="small" style="color: #ffd54f;"></span>
+
+      <h3 style="margin-top: 2rem;">Aposta Alta (5x)</h3>
+      <p class="small">Chance menor (20%), mas paga 5x o valor apostado se ganhar.</p>
+      <input type="number" id="highBetAmount" placeholder="Quantos golds apostar (chance menor)?" min="1">
+      <button id="btnHighBet" class="btn" style="background:var(--btn-red)">Apostar Alto</button>
+      <span id="highBetMsg" class="small" style="color: #ef9a9a;"></span>
+    </div>
+
+    <div id="rankTab" style="display:none">
+      <h2>🏆 Rank Global</h2>
+      <p class="small">Top 50 jogadores (atualiza automaticamente)</p>
+      <div class="rank-list card" id="rankList"></div>
+    </div>
+
+    <div id="chatTab" style="display:none">
+      <h2>💬 Chat Global</h2>
+      <div class="chat-box" id="chatBox"></div>
+      <div style="margin-top:.75rem; display: flex; gap: 5px;">
+        <input type="text" id="chatInput" placeholder="Digite sua mensagem" style="flex-grow: 1; margin: 0;">
+        <button id="btnSendChat" class="btn" style="padding: 0 1.2rem; margin: 0;">Enviar</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div id="globalNotice"></div>
+
+<footer>© 2025 IVAD TROCAS E VENDAS | IVADCREATOR</footer>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<script>
+// =======================
+// CONFIGURAÇÕES FIREBASE
+// =======================
+const firebaseConfig = {
+  apiKey: "AIzaSyCkmyMqEJaM8jVvmTN8I3gLnbC8YtMPWOI",
+  authDomain: "regras-ivad.firebaseapp.com",
+  projectId: "regras-ivad",
+  storageBucket: "regras-ivad.firebasestorage.app",
+  messagingSenderId: "812565896201",
+  appId: "1:812565896201:android:afc3bddd8edb14071aacd8"
+};
+const OWNER_UID = "m3h06woQv2V7lrNu1p8fDQCZ8IW2"; 
+
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+// =======================
+// ELEMENTOS DO DOM
+// =======================
+const signedOutUI = document.getElementById('signedOutUI');
+const signedInUI = document.getElementById('signedInUI');
+const userLabel = document.getElementById('userLabel');
+const myGold = document.getElementById('myGold');
+const playerGold = document.getElementById('playerGold');
+const playerInfo = document.getElementById('playerInfo');
+const chatBox = document.getElementById('chatBox');
+const chatInput = document.getElementById('chatInput');
+const rankList = document.getElementById('rankList');
+const visitorCounter = document.getElementById('visitorCount');
+const workMsg = document.getElementById('workMsg');
+const betMsg = document.getElementById('betMsg');
+const highBetMsg = document.getElementById('highBetMsg');
+const globalNotice = document.getElementById('globalNotice');
+
+// =======================
+// FUNÇÕES AUXILIARES
+// =======================
+function showTab(id){
+  ['regrasTab','jogoTab','rankTab','chatTab'].forEach(t=>document.getElementById(t).style.display=(t===id?'block':'none'));
+}
+document.querySelectorAll('.tabbtn').forEach(b=>{
+  b.addEventListener('click',e=>{
+    document.querySelectorAll('.tabbtn').forEach(x=>x.classList.remove('active'));
+    e.currentTarget.classList.add('active');
+    showTab(e.currentTarget.dataset.tab);
+  });
+});
+showTab('regrasTab');
+
+function usernameToEmail(u){ return `${u}@ivad.local`; }
+function validUsername(u){ return /^[a-zA-Z0-9_]{3,20}$/.test(u); }
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+
+/** Exibe uma notificação estilizada no canto superior direito */
+function showNotification(message) {
+  globalNotice.textContent = message;
+  // Reinicia a animação para garantir que apareça em seguida
+  globalNotice.style.animation = 'none';
+  globalNotice.offsetHeight; // Força o reflow para reiniciar a animação
+  globalNotice.style.animation = 'fadeInOut 4.5s cubic-bezier(0.19, 1, 0.22, 1) forwards';
+  globalNotice.style.display = 'block';
+  setTimeout(() => { globalNotice.style.display = 'none'; }, 4000);
+}
+
+// =======================
+// AUTENTICAÇÃO
+// =======================
+document.getElementById('btnSignup').onclick = async ()=>{
+  const uname = document.getElementById('username').value.trim();
+  const pw = document.getElementById('pwd').value;
+  if(!validUsername(uname)){ showNotification('Nome de usuário inválido (3-20 caracteres, sem espaços/caracteres especiais, exceto _).'); return; }
+  if(pw.length<6){ showNotification('Senha precisa ter 6 ou mais caracteres.'); return; }
+  try{
+    const q = await db.collection('users').where('displayName','==',uname).limit(1).get();
+    if(!q.empty){ showNotification('Nome de usuário já existe, escolha outro.'); return; }
+    const syntheticEmail = usernameToEmail(uname);
+    await auth.createUserWithEmailAndPassword(syntheticEmail,pw);
+    // O onAuthStateChanged cuidará da criação do documento
+  }catch(err){ console.error(err); showNotification('Erro ao criar conta: '+err.message); }
+};
+
+document.getElementById('btnLogin').onclick = async ()=>{
+  const uname = document.getElementById('username').value.trim();
+  const pw = document.getElementById('pwd').value;
+  if(!validUsername(uname)){ showNotification('Nome de usuário inválido.'); return; }
+  if(pw.length<6){ showNotification('Senha precisa ter 6 ou mais caracteres.'); return; }
+  try{ await auth.signInWithEmailAndPassword(usernameToEmail(uname), pw); }
+  catch(err){ console.error(err); showNotification('Erro ao entrar: '+err.message); }
+};
+
+document.getElementById('btnLogout').onclick = ()=>auth.signOut();
+
+// =======================
+// ESTADO DE AUTENTICAÇÃO
+// =======================
+auth.onAuthStateChanged(async user=>{
+  if(user){
+    signedOutUI.style.display='none';
+    signedInUI.style.display='block';
+    const displayName = user.email ? user.email.split('@')[0] : user.uid;
+    userLabel.textContent = `Conectado: ${displayName}`;
+    
+    // Configuração inicial do usuário no Firestore (se não existir)
+    const userRef = db.collection('users').doc(user.uid);
+    const doc = await userRef.get();
+    if (!doc.exists) {
+        await userRef.set({
+            uid: user.uid,
+            email: user.email,
+            displayName: displayName,
+            gold: 0,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+    }
+
+    if(user.uid === OWNER_UID) document.getElementById('ownerPanel').style.display='block';
+    else document.getElementById('ownerPanel').style.display='none';
+    
+    updateMyInfo(user.uid);
+    loadChat();
+    reloadRank();
+  }else{
+    signedOutUI.style.display='block';
+    signedInUI.style.display='none';
+    document.getElementById('ownerPanel').style.display='none';
+    myGold.textContent='0';
+    playerInfo.style.display='none';
+  }
+});
+
+// =======================
+// ATUALIZAÇÃO DE INFO DO JOGADOR
+// =======================
+async function updateMyInfo(uid){
+  try {
+    // Escuta em tempo real o documento do usuário
+    db.collection('users').doc(uid).onSnapshot(doc => {
+        if(doc.exists){
+            const data = doc.data();
+            const gold = Number(data.gold||0);
+            const goldFormatted = gold.toLocaleString('pt-BR');
+            
+            myGold.textContent = goldFormatted;
+            playerGold.textContent = goldFormatted;
+            playerInfo.style.display='block';
+        }
+    });
+  } catch (err) {
+    console.error("Erro ao carregar info do jogador:", err);
+    showNotification("Erro ao carregar seus dados. Verifique a ativação do Firestore.");
+  }
+}
+
+// =======================
+// JOGOS (COM TRANSAÇÃO PARA MAIOR SEGURANÇA)
+// =======================
+let lastWork=0;
+document.getElementById('btnWork').onclick=async ()=>{
+  const user = auth.currentUser;
+  if(!user){ showNotification('Faça login para trabalhar.'); return; }
+  const btn = document.getElementById('btnWork');
+  
+  const now = Date.now();
+  if(now-lastWork<5000){ workMsg.textContent=`Aguarde ${Math.ceil((5000 - (now - lastWork)) / 1000)}s`; return; }
+  lastWork=now;
+  
+  btn.disabled = true;
+  workMsg.textContent='...';
+  
+  try{
+    const userRef = db.collection('users').doc(user.uid);
+    await db.runTransaction(async tx=>{
+      const d = await tx.get(userRef);
+      if(!d.exists) throw new Error('Usuário não encontrado');
+      
+      const currentGold = d.data().gold || 0;
+      const newGold = currentGold + 1;
+      tx.update(userRef,{gold:newGold});
+      
+      if(newGold>=10000 && currentGold < 10000){
+        db.collection('globalNotifications').add({
+          message: `${d.data().displayName} atingiu 10.000 gold trabalhando!`,
+          timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      }
+    });
+    workMsg.textContent='+1 gold!';
+    reloadRank();
+  }catch(err){ 
+    console.error(err); 
+    workMsg.textContent='Erro!';
+    showNotification('Erro ao trabalhar: '+err.message); 
+  } finally {
+    setTimeout(() => { btn.disabled = false; workMsg.textContent=''; }, 5000);
+  }
+};
+
+async function handleBet(amount, multiplier, chance, msgEl, highBet = false) {
+    const user = auth.currentUser;
+    if(!user){ showNotification('Faça login para apostar.'); return; }
+    
+    const amt = Number(amount);
+    if(isNaN(amt) || amt<=0){ showNotification('Insira um valor válido (mínimo 1 gold).'); return; }
+    
+    const userRef = db.collection('users').doc(user.uid);
+    const btnId = highBet ? 'btnHighBet' : 'btnBet';
+    const btn = document.getElementById(btnId);
+    
+    btn.disabled = true;
+    msgEl.textContent = 'Apostando...';
+    
+    try {
+        await db.runTransaction(async tx => {
+            const doc = await tx.get(userRef);
+            if (!doc.exists) throw new Error('Usuário não encontrado');
+            
+            const currentGold = doc.data().gold || 0;
+            if(currentGold < amt){ throw new Error('Gold insuficiente para esta aposta.'); }
+            
+            const win = Math.random() < chance;
+            const winAmount = amt * multiplier;
+            const diff = win ? winAmount : -amt;
+            const newGold = currentGold + diff;
+
+            tx.update(userRef, { gold: newGold });
+
+            if (win) {
+                msgEl.textContent = `🏆 Você ganhou ${winAmount.toLocaleString('pt-BR')} gold!`;
+                if (newGold >= 10000 && currentGold < 10000) {
+                    db.collection('globalNotifications').add({
+                        message: `${doc.data().displayName} atingiu 10.000 gold em uma aposta!`,
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                }
+            } else {
+                msgEl.textContent = `😔 Você perdeu ${amt.toLocaleString('pt-BR')} gold!`;
+            }
+        });
+        reloadRank();
+    } catch(err) {
+        console.error(err); 
+        msgEl.textContent = 'Erro na aposta!';
+        showNotification('Erro na aposta: '+err.message);
+    } finally {
+        btn.disabled = false;
+        setTimeout(() => msgEl.textContent='', 3000);
+    }
+}
+
+// Aposta 50/50
+document.getElementById('btnBet').onclick=()=> {
+    const amount = document.getElementById('betAmount').value;
+    handleBet(amount, 1, 0.5, betMsg);
+};
+
+// Aposta Alta (chance menor)
+document.getElementById('btnHighBet').onclick=()=> {
+    const amount = document.getElementById('highBetAmount').value;
+    handleBet(amount, 5, 0.2, highBetMsg, true);
+};
+
+// =======================
+// RANK GLOBAL
+// =======================
+async function reloadRank(){
+  try {
+    // Otimizado para não depender do updateMyInfo e carregar mais rápido
+    const snap=await db.collection('users').orderBy('gold','desc').limit(50).get();
+    let html='<ol>';
+    snap.forEach((doc, index)=>{
+      const d=doc.data();
+      const goldFormatted = Number(d.gold||0).toLocaleString('pt-BR');
+      const rankColor = index === 0 ? 'color: var(--main-gold);' : index === 1 ? 'color: #c0c0c0;' : index === 2 ? 'color: #cd7f32;' : '';
+      html+=`<li style="${rankColor}"><span>${index + 1}.</span> <strong>${escapeHtml(d.displayName||'Usuário')}</strong> <span>${goldFormatted} gold</span></li>`;
+    });
+    html+='</ol>';
+    rankList.innerHTML=html;
+  } catch (err) {
+    console.error("Erro ao carregar rank:", err);
+    rankList.innerHTML = `<p class="small" style="color: #e57373;">Erro ao carregar o ranking. Verifique a ativação do Firestore.</p>`;
+  }
+}
+
+// =======================
+// CHAT GLOBAL
+// =======================
+async function loadChat(){
+  // Escuta em tempo real o chat, ordenando pelo timestamp
+  db.collection('chat').orderBy('timestamp','desc').limit(50).onSnapshot(snapshot=>{
+    chatBox.innerHTML='';
+    const messages = [];
+    snapshot.forEach(doc=>{ messages.push(doc.data()); });
+    messages.reverse().forEach(msg => { 
+      const el = document.createElement('div');
+      el.classList.add('chat-msg');
+      const time = msg.timestamp ? new Date(msg.timestamp.toDate()).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '...';
+      const userDisplayName = escapeHtml(msg.user);
+      const textContent = escapeHtml(msg.text);
+      el.innerHTML = `[${time}] <strong>${userDisplayName}</strong>: ${textContent}`;
+      chatBox.appendChild(el);
+    });
+    // Rola para o final APENAS se o usuário não estiver rolando ativamente
+    if (chatBox.scrollHeight - chatBox.clientHeight <= chatBox.scrollTop + 50) {
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
+  });
+}
+
+document.getElementById('btnSendChat').onclick=async ()=>{
+  const user = auth.currentUser;
+  if(!user){ showNotification('Faça login para enviar mensagens.'); return; }
+  const text = chatInput.value.trim();
+  if(!text){ showNotification('A mensagem não pode ser vazia.'); return; }
+
+  try {
+    await db.collection('chat').add({
+      user: user.email.split('@')[0],
+      text: text, 
+      timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    chatInput.value='';
+  } catch (err) {
+    console.error(err); showNotification('Erro ao enviar mensagem: '+err.message);
+  }
+};
+
+// =======================
+// CONTADOR DE VISITANTES (Presença Básica)
+// =======================
+// Esta lógica é básica e mais precisa se for usada com "onDisconnect" de Realtime Database,
+// mas vamos mantê-la simples aqui.
+if (!sessionStorage.getItem('visited')) {
+  db.collection('visitors').doc('count').update({total:firebase.firestore.FieldValue.increment(1)})
+    .catch(() => db.collection('visitors').doc('count').set({total:1})); // Cria se não existir
+  sessionStorage.setItem('visited', 'true');
+}
+
+db.collection('visitors').doc('count').onSnapshot(doc=>{
+  visitorCounter.textContent = doc.data()?.total?.toLocaleString('pt-BR') || 0;
+});
+
+
+// =======================
+// NOTIFICAÇÕES GLOBAIS
+// =======================
+db.collection('globalNotifications').orderBy('timestamp','desc').limit(1).onSnapshot(snapshot=>{
+  snapshot.docChanges().forEach(change => {
+    if (change.type === "added") {
+      showNotification(change.doc.data().message);
+      // Limpa a notificação para que a próxima sempre gere um "added"
+      // Note: Isso pode gerar custos adicionais se muitas notificações forem criadas rapidamente
+      setTimeout(() => change.doc.ref.delete().catch(console.error), 4000); 
+    }
+  });
+});
+
+// =======================
+// PAINEL DO DONO
+// =======================
+document.getElementById('btnGive').onclick=async ()=>{
+  const user = auth.currentUser;
+  if(!user || user.uid!==OWNER_UID){ showNotification('Acesso negado. Somente o dono pode usar.'); return; }
+  const uname = document.getElementById('adminName').value.trim();
+  const amount = Number(document.getElementById('adminAmount').value);
+  if(!uname || isNaN(amount)){ showNotification('Preencha corretamente o nome e a quantidade (número positivo/negativo).'); return; }
+
+  try {
+    const q = await db.collection('users').where('displayName','==',uname).limit(1).get();
+    if(q.empty){ showNotification('Usuário não encontrado.'); return; }
+    const docSnapshot = q.docs[0];
+    const uid = docSnapshot.id;
+    const userRef = db.collection('users').doc(uid);
+    await userRef.update({gold: firebase.firestore.FieldValue.increment(amount)});
+    
+    reloadRank();
+    const action = amount >= 0 ? 'adicionado' : 'removido';
+    showNotification(`${Math.abs(amount).toLocaleString('pt-BR')} gold ${action} para ${uname}.`);
+
+  } catch(err) {
+    console.error(err);
+    showNotification('Erro na transação de gold: '+err.message);
+  }
+};
+
+document.getElementById('btnReset').onclick=async ()=>{
+  const user = auth.currentUser;
+  if(!user || user.uid!==OWNER_UID){ showNotification('Acesso negado. Somente o dono pode usar.'); return; }
+  if(!confirm('ATENÇÃO: Certeza que deseja ZERAR o GOLD de TODOS os jogadores?')) return;
+
+  try {
+    const snap = await db.collection('users').get();
+    const batch = db.batch();
+    snap.forEach(doc => {
+       batch.update(doc.ref, { gold: 0 });
+    });
+    await batch.commit();
+    showNotification('Ranking COMPLETAMENTE RESETADO! Todo o gold foi zerado.');
+    reloadRank();
+  } catch(err) {
+    console.error(err);
+    showNotification('Erro ao resetar o ranking: '+err.message);
+  }
+};
+
+// Nova Função: Limpar Chat
+document.getElementById('btnClearChat').onclick=async ()=>{
+  const user = auth.currentUser;
+  if(!user || user.uid!==OWNER_UID){ showNotification('Acesso negado. Somente o dono pode usar.'); return; }
+  if(!confirm('ATENÇÃO: Certeza que deseja APAGAR TODAS as mensagens do Chat Global?')) return;
+
+  try {
+    const snap = await db.collection('chat').get();
+    const batch = db.batch();
+    snap.forEach(doc => {
+       batch.delete(doc.ref);
+    });
+    await batch.commit();
+    showNotification('Chat Global limpo com sucesso.');
+  } catch(err) {
+    console.error(err);
+    showNotification('Erro ao limpar o chat: '+err.message);
+  }
+};
+</script>
+</body>
+</html>

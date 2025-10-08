@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>IVAD TROCAS E VENDAS</title>
+<style>
+:root{
+  --card-bg: rgba(0,0,0,0.75); /* Mais escuro */
+  --btn-gradient: linear-gradient(90deg,#ffd54f,#ffb300);
+  --btn-blue: linear-gradient(90deg,#90caf9,#42a5f5);
+  --btn-red: linear-gradient(90deg,#ef9a9a,#e57373);
+  --text-primary: #fff;
+  --text-secondary: #ddd;
+}
+html,body{height:100%;margin:0;font-family:Arial,Helvetica,sans-serif;color:var(--text-primary);background:#000}
+body{perspective:1000px;overflow-x:hidden}
+.bg3d{
+  position:fixed;inset:0;background:url('https://i.imgur.com/your-background-image.jpg') no-repeat center center; /* IMAGEM DE FUNDO AQUI */
+  background-size:cover;z-index:-2;filter:contrast(0.92) saturate(0.95) brightness(0.9);
+  transform-origin:center center;animation:float3d 18s ease-in-out infinite alternate;
+}
+@keyframes float3d{
+  0%{transform:translateZ(0px) rotateY(0deg) rotateX(0deg) scale(1)}
+  50%{transform:translateZ(12px) rotateY(2deg) rotateX(1deg) scale(1.01)}
+  100%{transform:translateZ(0px) rotateY(-1deg) rotateX(-1deg) scale(1)}
+}
+.overlay{position:fixed;inset:0;z-index:-1;background:linear-gradient(135deg, rgba(0,0,0,0.65), rgba(0,0,0,0.45))} /* Mais escura */
+header{background:rgba(0,0,0,0.7);padding:1.2rem;text-align:center;position:relative;z-index:2;border-bottom: 2px solid #ffb300}
+header h1{margin:.2rem;font-size:1.6rem; letter-spacing: 1px; text-shadow: 0 0 5px rgba(255,179,0,0.5);}
+header p{margin:.1rem;color:var(--text-secondary);font-size:0.9rem}
+.container{max-width:1100px;margin:2rem auto;padding:1rem;display:grid;grid-template-columns:300px 1fr;gap:2rem}
+.card{background:var(--card-bg);padding:1.5rem;border-radius:12px;box-shadow:0 8px 25px rgba(0,0,0,0.6);border: 1px solid rgba(255,255,255,0.08);}
+.menu button{display:block;width:100%;margin-bottom:.8rem;padding:.9rem 1rem;border-radius:8px;border:none;background:#222;color:#fff;font-weight:700;cursor:pointer;transition:transform .15s,box-shadow .15s, background .15s}
+.menu button:hover{transform:translateY(-2px);box-shadow:0 6px 15px rgba(255,179,0,0.3); background:#333;}
+.menu button.active{background:var(--btn-gradient);color:#111;transform:translateY(0);box-shadow:0 4px 10px rgba(0,0,0,0.5)}
+.content h2{margin-top:0; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;}
+ul{padding-left:1.5rem}
+.btn{display:inline-block;padding:.8rem 1.5rem;border-radius:8px;border:none;background:var(--btn-gradient);color:#111;font-weight:700;cursor:pointer; transition: opacity .15s}
+.btn:hover:not(:disabled){opacity:0.9; transform: scale(1.02)}
+.btn:disabled{opacity:0.5; cursor: not-allowed;}
+.small{font-size:.85rem;color:var(--text-secondary)}
+input[type="text"],input[type="password"],input[type=number],select{width:100%;padding:.8rem;margin:.5rem 0;border-radius:8px;border:1px solid rgba(255,255,255,0.2);background:rgba(0,0,0,0.3);color:var(--text-primary);box-sizing: border-box;}
+.rank-list{max-height:420px;overflow:auto;padding:1rem}
+.rank-list li{list-style: none; padding: .4rem 0; border-bottom: 1px dashed rgba(255,255,255,0.1); display: flex; justify-content: space-between;}
+.rank-list li strong{color: #ffd54f;}
+footer{padding:1.5rem;text-align:center;color:#999;font-size:0.75rem}
+@media(max-width:880px){ .container{grid-template-columns:1fr; padding:.5rem; margin-top: 1rem} .menu{order:2} }
+.chat-box{max-height:250px;overflow-y:auto;background:rgba(0,0,0,0.3);padding:.75rem;margin-top:.75rem;border-radius:8px;border: 1px solid rgba(255,255,255,0.1)}
+.chat-msg{margin:.35rem 0; font-size: 0.9rem; word-wrap: break-word;}
+.chat-msg strong{color: #42a5f5; margin-right: 5px;}
+#globalNotice{position:fixed;top:10px;right:10px;background:#ffd700;color:#111;padding:.8rem 1.5rem;border-radius:8px;display:none;z-index:9999;font-weight:700;box-shadow:0 4px 15px rgba(0,0,0,0.7); animation: fadeInOut 4s ease-in-out forwards;}
+@keyframes fadeInOut { 0%{opacity:0} 10%{opacity:1} 90%{opacity:1} 100%{opacity:0} }
+</style>
+</head>
+<body>
+<div class="bg3d" aria-hidden="true"></div>
+<div class="overlay" aria-hidden="true"></div>
+
+<header>
+  <h1>IVAD TROCAS E VENDAS</h1>
+  <p>Criado por IVADCREATOR</p>
+</header>
+
+<main class="container">
+  <aside class="card menu">
+    <button class="tabbtn active" data-tab="regrasTab">REGRAS</button>
+    <button class="tabbtn" data-tab="jogoTab">🎮 JOGUINHO</button>
+    <button class="tabbtn" data-tab="rankTab">🏆 RANK GLOBAL</button>
+    <button class="tabbtn" data-tab="chatTab">💬 CHAT</button>
+    <hr style="border:none;height:1px;background:rgba(255,255,255,0.06);margin:15px 0">
+
+    <div id="authArea" class="small">
+      <div id="signedOutUI">
+        <input id="username" type="text" placeholder="Escolha um nome (sem espaços)">
+        <input id="pwd" type="password" placeholder="Senha (≥6)">
+        <div style="display:flex;gap:.5rem">
+          <button id="btnSignup" class="btn" style="background:var(--btn-blue)">Criar conta</button>
+          <button id="btnLogin" class="btn">Entrar</button>
+        </div>
+        <p class="small" style="margin-top: 5px;">Nome único — se já existir, escolha outro.</p>
+      </div>
+
+      <div id="signedInUI" style="display:none">
+        <p><strong id="userLabel"></strong></p>
+        <div style="display:flex;gap:.5rem;align-items:center">
+          <button id="btnLogout" class="btn" style="background:var(--btn-red)">Sair</button>
+          <div style="margin-left:auto; font-size: 1.1rem;"><span class="small" style="color:#ffd54f">Gold: </span><strong id="myGold">0</strong></div>
+        </div>
+      </div>
+    </div>
+
+    <hr style="border:none;height:1px;background:rgba(255,255,255,0.06);margin:15px 0">
+    <div id="ownerPanel" style="display:none">
+      <h4 style="margin:.3rem 0; color: #e57373;">Painel do Dono</h4>
+      <input id="adminName" placeholder="nome do usuário (exact)">
+      <input id="adminAmount" type="number" placeholder="gold (+/-)">
+      <button id="btnGive" class="btn" style="width: 100%; margin-top: .5rem; background: var(--btn-blue);">Dar/Remover gold</button>
+      <button id="btnReset" class="btn" style="background:var(--btn-red);margin-top:.5rem; width: 100%;">Resetar ranking</button>
+      <p class="small" style="margin-top: 5px;">Somente OWNER_UID pode usar</p>
+    </div>
+    <hr style="border:none;height:1px;background:rgba(255,255,255,0.06);margin:15px 0">
+    <p class="small">Ranking público salvo no Firestore.</p>
+    <p class="small">Visitantes: <strong id="visitorCount">0</strong></p>
+  </aside>
+
+  <section class="card content">
+    <div id="regrasTab">
+      <h2>Regras</h2>
+      <h3>🚫 Proibido</h3>
+      <ul>
+        <li>Flodar mensagens (spam).</li>
+        <li>Compartilhar links suspeitos (pornografia, vírus, phishing, etc.).</li>
+        <li>Colocar preço ou valor em contas de outras pessoas.</li>
+        <li>Ofensas, xingamentos ou desrespeito entre membros.</li>
+        <li>Vendas de itens ilegais, roubados ou que violem regras.</li>
+      </ul>
+      <h3>✅ Permitido</h3>
+      <ul>
+        <li>Postar links (não suspeitos).</li>
+        <li>Comprar e vender produtos de forma clara e respeitosa.</li>
+        <li>Negociar e interagir com bom senso.</li>
+      </ul>
+      <h3>⚠️ Observações</h3>
+      <ul>
+        <li>Descumprimento pode levar a banimento.</li>
+        <li>Negociações são responsabilidade entre partes.</li>
+        <li>Chat é moderado automaticamente pelo Firestore — respeite todos.</li>
+      </ul>
+    </div>
+
+    <div id="jogoTab" style="display:none">
+      <h2>🎮 Cassino & Joguinho</h2>
+      <p class="small">Clique <strong>Trabalhar</strong> para ganhar <strong>+1 gold</strong>. (Rate-limit: 5s)</p>
+      <button id="btnWork" class="btn">Trabalhar (+1 gold)</button>
+      <span id="workMsg" class="small" style="margin-left:1rem"></span>
+
+      <h3 style="margin-top: 1.5rem;">Aposta Simples 50/50 (1x)</h3>
+      <input type="number" id="betAmount" placeholder="Quantos golds apostar?" min="1">
+      <button id="btnBet" class="btn">Apostar 50/50</button>
+      <span id="betMsg" class="small"></span>
+
+      <h3 style="margin-top: 1.5rem;">Aposta Alta (5x)</h3>
+      <p class="small">Chance menor (20%), mas paga 5x o valor apostado se ganhar.</p>
+      <input type="number" id="highBetAmount" placeholder="Quantos golds apostar (chance menor)?" min="1">
+      <button id="btnHighBet" class="btn" style="background:var(--btn-red)">Apostar Alto</button>
+      <span id="highBetMsg" class="small"></span>
+
+      <div id="playerInfo" class="card" style="margin-top:1.5rem;display:none; padding: .8rem;">
+        <p>Jogador: <strong id="playerName"></strong> — Gold: <strong id="playerGold">0</strong></p>
+      </div>
+    </div>
+
+    <div id="rankTab" style="display:none">
+      <h2>🏆 Rank Global</h2>
+      <p class="small">Top 50 jogadores (atualiza automaticamente)</p>
+      <div class="rank-list card" id="rankList" style="margin-top:1rem; background: rgba(0,0,0,0.3);"></div>
+    </div>
+
+    <div id="chatTab" style="display:none">
+      <h2>💬 Chat Global</h2>
+      <div class="chat-box" id="chatBox"></div>
+      <div style="margin-top:.5rem; display: flex; gap: 5px;">
+        <input type="text" id="chatInput" placeholder="Digite sua mensagem" style="flex-grow: 1; margin: 0;">
+        <button id="btnSendChat" class="btn" style="padding: 0 1.2rem; margin: 0;">Enviar</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div id="globalNotice"></div>
+
+<footer>© 2025 IVAD TROCAS E VENDAS | IVADCREATOR</footer>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<script>
+// =======================
+// CONFIGURAÇÕES FIREBASE (INCLUÍDAS PELO USUÁRIO)
+// =======================
+const firebaseConfig = {
+  apiKey: "AIzaSyCkmyMqEJaM8jVvmTN8I3gLnbC8YtMPWOI",
+  authDomain: "regras-ivad.firebaseapp.com",
+  projectId: "regras-ivad",
+  storageBucket: "regras-ivad.firebasestorage.app",
+  messagingSenderId: "812565896201",
+  appId: "1:812565896201:android:afc3bddd8edb14071aacd8"
+};
+const OWNER_UID = "m3h06woQv2V7lrNu1p8fDQCZ8IW2"; // UID do dono
+
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+// =======================
+// ELEMENTOS DO DOM
+// =======================
+const signedOutUI = document.getElementById('signedOutUI');
+const signedInUI = document.getElementById('signedInUI');
+const userLabel = document.getElementById('userLabel');
+const myGold = document.getElementById('myGold');
+const playerName = document.getElementById('playerName');
+const playerGold = document.getElementById('playerGold');
+const playerInfo = document.getElementById('playerInfo');
+const chatBox = document.getElementById('chatBox');
+const chatInput = document.getElementById('chatInput');
+const rankList = document.getElementById('rankList');
+const visitorCounter = document.getElementById('visitorCount');
+const workMsg = document.getElementById('workMsg');
+const betMsg = document.getElementById('betMsg');
+const highBetMsg = document.getElementById('highBetMsg');
+const globalNotice = document.getElementById('globalNotice');
+
+// =======================
+// FUNÇÕES AUXILIARES
+// =======================
+function showTab(id){
+  ['regrasTab','jogoTab','rankTab','chatTab'].forEach(t=>document.getElementById(t).style.display=(t===id?'block':'none'));
+}
+document.querySelectorAll('.tabbtn').forEach(b=>{
+  b.addEventListener('click',e=>{
+    document.querySelectorAll('.tabbtn').forEach(x=>x.classList.remove('active'));
+    e.currentTarget.classList.add('active');
+    showTab(e.currentTarget.dataset.tab);
+  });
+});
+showTab('regrasTab');
+
+function usernameToEmail(u){ return `${u}@ivad.local`; }
+function validUsername(u){ return /^[a-zA-Z0-9_]{3,20}$/.test(u); }
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+
+/** Exibe uma notificação estilizada no canto superior direito */
+function showNotification(message) {
+  globalNotice.textContent = message;
+  globalNotice.style.display = 'block';
+  setTimeout(() => { globalNotice.style.display = 'none'; }, 4000);
+}
+
+// =======================
+// AUTENTICAÇÃO
+// =======================
+document.getElementById('btnSignup').onclick = async ()=>{
+  const uname = document.getElementById('username').value.trim();
+  const pw = document.getElementById('pwd').value;
+  if(!validUsername(uname)){ showNotification('Nome de usuário inválido (3-20 caracteres, sem espaços).'); return; }
+  if(pw.length<6){ showNotification('Senha precisa ter 6 ou mais caracteres.'); return; }
+  try{
+    const q = await db.collection('users').where('displayName','==',uname).limit(1).get();
+    if(!q.empty){ showNotification('Nome de usuário já existe, escolha outro.'); return; }
+    const syntheticEmail = usernameToEmail(uname);
+    const cred = await auth.createUserWithEmailAndPassword(syntheticEmail,pw);
+    const user = cred.user;
+    await db.collection('users').doc(user.uid).set({
+      uid:user.uid,
+      email:syntheticEmail,
+      displayName:uname,
+      gold:0,
+      createdAt:firebase.firestore.FieldValue.serverTimestamp()
+    });
+    showNotification('Conta criada! Você já está logado.');
+  }catch(err){ console.error(err); showNotification('Erro ao criar conta: '+err.message); }
+};
+
+document.getElementById('btnLogin').onclick = async ()=>{
+  const uname = document.getElementById('username').value.trim();
+  const pw = document.getElementById('pwd').value;
+  if(!validUsername(uname)){ showNotification('Nome de usuário inválido.'); return; }
+  if(pw.length<6){ showNotification('Senha precisa ter 6 ou mais caracteres.'); return; }
+  try{ await auth.signInWithEmailAndPassword(usernameToEmail(uname), pw); }
+  catch(err){ console.error(err); showNotification('Erro ao entrar: '+err.message); }
+};
+
+document.getElementById('btnLogout').onclick = ()=>auth.signOut();
+
+// =======================
+// ESTADO DE AUTENTICAÇÃO
+// =======================
+auth.onAuthStateChanged(async user=>{
+  if(user){
+    signedOutUI.style.display='none';
+    signedInUI.style.display='block';
+    userLabel.textContent = 'Conectado: '+(user.email?user.email.split('@')[0]:user.uid);
+    if(user.uid === OWNER_UID) document.getElementById('ownerPanel').style.display='block';
+    else document.getElementById('ownerPanel').style.display='none';
+    updateMyInfo(user.uid);
+    loadChat();
+    reloadRank();
+  }else{
+    signedOutUI.style.display='block';
+    signedInUI.style.display='none';
+    document.getElementById('ownerPanel').style.display='none';
+    myGold.textContent='0';
+    playerInfo.style.display='none';
+  }
+});
+
+// =======================
+// ATUALIZAÇÃO DE INFO DO JOGADOR
+// =======================
+async function updateMyInfo(uid){
+  try {
+    const doc = await db.collection('users').doc(uid).get();
+    if(doc.exists){
+      const data = doc.data();
+      myGold.textContent = Number(data.gold||0).toLocaleString('pt-BR');
+      playerName.textContent = data.displayName;
+      playerGold.textContent = Number(data.gold||0).toLocaleString('pt-BR');
+      playerInfo.style.display='block';
+    }
+  } catch (err) {
+    console.error("Erro ao carregar info do jogador:", err);
+    showNotification("Erro ao carregar seus dados. Verifique a ativação do Firestore.");
+  }
+}
+
+// =======================
+// JOGOS
+// =======================
+let lastWork=0;
+document.getElementById('btnWork').onclick=async ()=>{
+  const user = auth.currentUser;
+  if(!user){ showNotification('Faça login para trabalhar.'); return; }
+  const now = Date.now();
+  if(now-lastWork<5000){ workMsg.textContent='Aguarde 5s'; return; }
+  lastWork=now;
+  try{
+    const userRef = db.collection('users').doc(user.uid);
+    await db.runTransaction(async tx=>{
+      const d = await tx.get(userRef);
+      if(!d.exists) throw new Error('Usuário não encontrado');
+      const newGold = (d.data().gold||0)+1;
+      tx.update(userRef,{gold:newGold});
+      if(newGold>=10000 && d.data().gold < 10000){ // Notifica se atingir 10k pela primeira vez
+        db.collection('globalNotifications').add({
+          message: `${d.data().displayName} atingiu 10.000 gold!`,
+          timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      }
+    });
+    updateMyInfo(user.uid);
+    workMsg.textContent='+1 gold!';
+    setTimeout(()=>workMsg.textContent='',1200);
+    reloadRank();
+  }catch(err){ console.error(err); showNotification('Erro ao trabalhar: '+err.message); }
+};
+
+// Aposta 50/50
+document.getElementById('btnBet').onclick=async ()=>{
+  const user = auth.currentUser;
+  if(!user){ showNotification('Faça login para apostar.'); return; }
+  const amt = Number(document.getElementById('betAmount').value);
+  if(isNaN(amt) || amt<=0){ showNotification('Insira um valor válido (mínimo 1 gold).'); return; }
+  const userRef = db.collection('users').doc(user.uid);
+  try {
+    const doc = await userRef.get();
+    const currentGold = doc.data().gold || 0;
+    if(currentGold < amt){ showNotification('Gold insuficiente.'); return; }
+    
+    const win = Math.random()<0.5;
+    const diff = win?amt: -amt;
+    const newGold = currentGold + diff;
+
+    await userRef.update({gold: newGold});
+    updateMyInfo(user.uid);
+    betMsg.textContent=win?`🏆 Você ganhou ${amt.toLocaleString('pt-BR')} gold!`:`😔 Você perdeu ${amt.toLocaleString('pt-BR')} gold!`;
+    setTimeout(()=>betMsg.textContent='',3000);
+    
+    if(win && newGold >= 10000 && currentGold < 10000){
+      db.collection('globalNotifications').add({
+        message: `${doc.data().displayName} atingiu 10.000 gold em uma aposta!`,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    }
+    reloadRank();
+  } catch(err) {
+    console.error(err); showNotification('Erro na aposta: '+err.message);
+  }
+};
+
+// Aposta Alta (chance menor)
+document.getElementById('btnHighBet').onclick=async ()=>{
+  const user = auth.currentUser;
+  if(!user){ showNotification('Faça login para apostar.'); return; }
+  const amt = Number(document.getElementById('highBetAmount').value);
+  if(isNaN(amt) || amt<=0){ showNotification('Insira um valor válido (mínimo 1 gold).'); return; }
+  const userRef = db.collection('users').doc(user.uid);
+  try {
+    const doc = await userRef.get();
+    const currentGold = doc.data().gold || 0;
+    if(currentGold < amt){ showNotification('Gold insuficiente.'); return; }
+    
+    const win = Math.random()<0.2; // 20% de chance
+    const winAmount = amt * 5;
+    const diff = win?winAmount: -amt;
+    const newGold = currentGold + diff;
+
+    await userRef.update({gold: newGold});
+    updateMyInfo(user.uid);
+    highBetMsg.textContent=win?`🎉 Mega Ganho! Você levou ${winAmount.toLocaleString('pt-BR')} gold!`:`😭 Você perdeu ${amt.toLocaleString('pt-BR')} gold!`;
+    setTimeout(()=>highBetMsg.textContent='',3000);
+
+    if(win && newGold >= 10000 && currentGold < 10000){
+      db.collection('globalNotifications').add({
+        message: `${doc.data().displayName} ganhou ALTO, totalizando ${newGold.toLocaleString('pt-BR')} gold!`,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    }
+    reloadRank();
+  } catch(err) {
+    console.error(err); showNotification('Erro na aposta alta: '+err.message);
+  }
+};
+
+// =======================
+// RANK GLOBAL
+// =======================
+async function reloadRank(){
+  try {
+    const snap=await db.collection('users').orderBy('gold','desc').limit(50).get();
+    let html='<ol>';
+    snap.forEach(doc=>{
+      const d=doc.data();
+      const goldFormatted = Number(d.gold||0).toLocaleString('pt-BR');
+      html+=`<li style="margin:.4rem 0"><strong>${escapeHtml(d.displayName||'Usuário')}</strong> <span>${goldFormatted} gold</span></li>`;
+    });
+    html+='</ol>';
+    rankList.innerHTML=html;
+  } catch (err) {
+    console.error("Erro ao carregar rank:", err);
+    rankList.innerHTML = `<p class="small" style="color: #e57373;">Erro ao carregar o ranking. Verifique o console ou a conexão com o Firestore.</p>`;
+  }
+}
+
+// =======================
+// CHAT GLOBAL
+// =======================
+async function loadChat(){
+  db.collection('chat').orderBy('timestamp','desc').limit(50).onSnapshot(snapshot=>{
+    chatBox.innerHTML='';
+    const messages = [];
+    snapshot.forEach(doc=>{ messages.push(doc.data()); });
+    messages.reverse().forEach(msg => { // Inverte para exibir do mais antigo ao mais novo
+      const el = document.createElement('div');
+      el.classList.add('chat-msg');
+      const time = msg.timestamp ? new Date(msg.timestamp.toDate()).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '...';
+      const userDisplayName = escapeHtml(msg.user);
+      const textContent = escapeHtml(msg.text);
+      el.innerHTML = `[${time}] <strong>${userDisplayName}</strong>: ${textContent}`;
+      chatBox.appendChild(el);
+    });
+    chatBox.scrollTop = chatBox.scrollHeight;
+  });
+}
+
+document.getElementById('btnSendChat').onclick=async ()=>{
+  const user = auth.currentUser;
+  if(!user){ showNotification('Faça login para enviar mensagens.'); return; }
+  const text = chatInput.value.trim();
+  if(!text) return;
+
+  try {
+    await db.collection('chat').add({
+      user: user.email.split('@')[0],
+      text: text, // Salva o texto não-escapado (a exibição escapa)
+      timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    chatInput.value='';
+  } catch (err) {
+    console.error(err); showNotification('Erro ao enviar mensagem: '+err.message);
+  }
+};
+
+// =======================
+// CONTADOR DE VISITANTES
+// =======================
+// Incrementa apenas uma vez por sessão/load (usa sessionStorage)
+if (!sessionStorage.getItem('visited')) {
+  db.collection('visitors').doc('count').get().then(doc=>{
+    if(!doc.exists) db.collection('visitors').doc('count').set({total:0});
+    db.collection('visitors').doc('count').update({total:firebase.firestore.FieldValue.increment(1)});
+    sessionStorage.setItem('visited', 'true');
+  });
+}
+db.collection('visitors').doc('count').onSnapshot(doc=>{
+  visitorCounter.textContent = doc.data()?.total?.toLocaleString('pt-BR') || 0;
+});
+
+
+// =======================
+// NOTIFICAÇÕES GLOBAIS
+// =======================
+db.collection('globalNotifications').orderBy('timestamp','desc').limit(1).onSnapshot(snapshot=>{
+  snapshot.docChanges().forEach(change => {
+    if (change.type === "added") {
+      showNotification(change.doc.data().message);
+      // Opcional: deletar a notificação após exibição para não acumular
+      // change.doc.ref.delete();
+    }
+  });
+});
+
+// =======================
+// PAINEL DO DONO
+// =======================
+document.getElementById('btnGive').onclick=async ()=>{
+  const user = auth.currentUser;
+  if(!user || user.uid!==OWNER_UID){ showNotification('Acesso negado. Somente o dono pode usar.'); return; }
+  const uname = document.getElementById('adminName').value.trim();
+  const amount = Number(document.getElementById('adminAmount').value);
+  if(!uname || isNaN(amount)){ showNotification('Preencha corretamente o nome e a quantidade (número).'); return; }
+
+  try {
+    const q = await db.collection('users').where('displayName','==',uname).limit(1).get();
+    if(q.empty){ showNotification('Usuário não encontrado.'); return; }
+    const docSnapshot = q.docs[0];
+    const uid = docSnapshot.id;
+    const userRef = db.collection('users').doc(uid);
+    await userRef.update({gold: firebase.firestore.FieldValue.increment(amount)});
+    
+    // Atualiza o painel do dono e o rank
+    if(uid === user.uid) updateMyInfo(user.uid);
+    reloadRank();
+
+    const action = amount >= 0 ? 'adicionado' : 'removido';
+    showNotification(`${Math.abs(amount).toLocaleString('pt-BR')} gold ${action} para ${uname}.`);
+
+  } catch(err) {
+    console.error(err);
+    showNotification('Erro ao processar a transação de gold: '+err.message);
+  }
+};
+
+document.getElementById('btnReset').onclick=async ()=>{
+  const user = auth.currentUser;
+  if(!user || user.uid!==OWNER_UID){ showNotification('Acesso negado. Somente o dono pode usar.'); return; }
+  if(!confirm('ATENÇÃO: Tem certeza que deseja RESETAR o GOLD de TODOS os jogadores para 0? Esta ação é irreversível.')) return;
+
+  try {
+    const snap = await db.collection('users').get();
+    const batch = db.batch();
+    snap.forEach(doc => {
+      // Ignora o próprio gold do dono no reset se quiser
+      // if (doc.id !== OWNER_UID) {
+      //   batch.update(doc.ref, { gold: 0 });
+      // }
+       batch.update(doc.ref, { gold: 0 });
+    });
+    await batch.commit();
+    showNotification('Ranking COMPLETAMENTE RESETADO! Todo o gold foi zerado.');
+    updateMyInfo(user.uid);
+    reloadRank();
+  } catch(err) {
+    console.error(err);
+    showNotification('Erro ao resetar o ranking: '+err.message);
+  }
+};
+</script>
+</body>
+</html>

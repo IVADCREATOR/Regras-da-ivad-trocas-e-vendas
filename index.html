@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IVAD - Jogo de Regras e Social</title>
+    <title>IVAD - Jogo de Regras e Social (Sem Login)</title>
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
@@ -83,9 +83,8 @@
             transition: all 0.3s ease;
         }
 
-        /* UI Deslogada (Auth) */
-        #signedOutUI {
-            display: block;
+        /* UI de Nome de Usuário (Substitui o Login) */
+        #initialSetup {
             background-color: var(--bg-light);
             padding: 20px;
             border-radius: 10px;
@@ -93,7 +92,7 @@
             text-align: center;
         }
         
-        #signedOutUI h2 {
+        #initialSetup h2 {
             margin-bottom: 15px;
             color: var(--main-gold);
         }
@@ -139,8 +138,8 @@
             opacity: 0.7;
         }
 
-        /* UI Logada (Main) */
-        #signedInUI {
+        /* UI Principal (Main) */
+        #mainUI {
             display: none;
         }
 
@@ -245,7 +244,7 @@
             overflow-y: auto;
             margin-bottom: 10px;
             display: flex;
-            flex-direction: column-reverse; /* Mensagens novas no topo visual, mas scroll para baixo */
+            flex-direction: column-reverse;
         }
         
         #chatWindow {
@@ -414,6 +413,13 @@
             background-color: var(--bg-dark);
             color: var(--text-primary);
         }
+        /* Painel Admin (Sempre visível, mas avisado) */
+        #ownerPanel {
+            border: 2px solid var(--btn-red);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
 
 
         /* Responsividade */
@@ -439,28 +445,26 @@
     <div class="container">
         <header>
             <h1>IVAD - Regras & Jogo Social</h1>
-            <p style="color: var(--text-secondary);">Onde a comunidade é o valor.</p>
+            <p style="color: var(--text-secondary);">Sistema simples (Sem Login) - Dados salvos no seu navegador.</p>
             <p class="small" style="margin-top: 5px;">Usuários Online: <span id="visitorCount">0</span></p>
         </header>
-
-        <div id="signedOutUI">
-            <h2>Acesso ao Servidor</h2>
+        
+        <div id="initialSetup">
+            <h2>Seja Bem-vindo!</h2>
+            <p style="margin-bottom: 15px; color: var(--text-secondary);">Escolha um nome para começar. Seus dados (Gold/Itens) serão salvos apenas neste navegador.</p>
             <div class="auth-form">
-                <input type="text" id="username" placeholder="Nome de Usuário" required>
-                <input type="password" id="pwd" placeholder="Senha (Mín. 6 caracteres)" required>
-                <div class="btn-group">
-                    <button class="btn" onclick="login()" style="background: var(--btn-blue); flex-grow: 1;">Entrar</button>
-                    <button id="btnSignup" class="btn" onclick="signup()" style="background:var(--main-gold); color: #111; flex-grow: 1;">Criar Conta</button>
-                </div>
+                <input type="text" id="initialUsername" placeholder="Seu Nome de Jogador" required>
+                <button class="btn" onclick="initializePlayer()" style="background: var(--btn-blue); flex-grow: 1;">Começar a Jogar</button>
             </div>
-            <p id="authError" style="color: var(--red-loss); margin-top: 10px;"></p>
+            <p id="setupError" style="color: var(--red-loss); margin-top: 10px;"></p>
         </div>
 
-        <div id="signedInUI">
+
+        <div id="mainUI">
             <div class="user-info">
                 <span id="userLabel">Bem-vindo, Jogador!</span>
                 <span>Gold: <span id="myGold">0</span></span>
-                <button class="btn" onclick="firebase.auth().signOut()" style="background: var(--btn-red);">Sair</button>
+                <button class="btn" onclick="showSetupUI()" style="background: var(--btn-red);">Mudar de Nome / Resetar</button>
             </div>
 
             <div class="tabs">
@@ -478,20 +482,18 @@
                     <div class="section-box">
                         <ol>
                             <li>**Respeito:** Mantenha a cordialidade com todos os jogadores. Assédio e discurso de ódio resultam em banimento.</li>
-                            <li>**Gold:** O Gold do jogo é estritamente virtual. Qualquer tentativa de usar hacks ou exploits para ganhar Gold será punida com a exclusão da conta.</li>
-                            <li>**Comércio:** Apenas o comércio de itens virtuais é permitido no chat e mercado. O comércio de Gold por dinheiro real é por sua conta e risco, e pode resultar em banimento se houver fraude comprovada.</li>
-                            <li>**Contas:** É proibida a criação de múltiplas contas (smurfing) para farmar Gold.</li>
-                            <li>**Abuso de Bugs:** Se encontrar um bug, reporte-o ao administrador (UID: m3h06woQv2V7lrNu1p8fDQCZ8IW2). Não explorá-lo.</li>
+                            <li>**Gold Local:** Seu Gold e Inventário são salvos APENAS neste navegador. Limpar o cache ou trocar de PC/Navegador fará você recomeçar.</li>
+                            <li>**Comércio:** Apenas o comércio de itens virtuais é permitido no chat e mercado.</li>
+                            <li>**Comunicação:** O Chat Global e o Ranking são compartilhados através do Firebase.</li>
                         </ol>
-                        <p style="margin-top: 15px; color: var(--main-gold);">Ao criar uma conta, você concorda com as regras acima.</p>
+                        <p style="margin-top: 15px; color: var(--main-gold);">Aproveite o jogo simples e as funcionalidades sociais.</p>
                     </div>
                 </div>
 
                 <div id="profileTab">
                     <h3>Meu Perfil & Inventário</h3>
                     <div class="section-box" id="playerInfoSocial">
-                        <p>ID: <span id="socialUserId" style="color: var(--text-secondary);"></span></p>
-                        <p>Nome: <span id="socialUsername" style="color: var(--main-gold);"></span></p>
+                        <p>Nome de Usuário: <span id="socialUsername" style="color: var(--main-gold);"></span></p>
                         <p>Gold Atual: <span id="playerGold" style="color: var(--main-gold);">0</span></p>
                     </div>
 
@@ -572,7 +574,7 @@
                     </div>
                     <p id="chatError"></p>
 
-                    <h3 style="margin-top: 25px;">Ranking Global (Top 15 por Gold)</h3>
+                    <h3 style="margin-top: 25px;">Ranking Global (Top 15 por Gold no Firebase)</h3>
                     <div class="section-box">
                         <ul id="rankingList">
                             </ul>
@@ -581,6 +583,7 @@
 
                 <div id="salesTab">
                     <h3>Postar Item no Mercado</h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 15px;">Seu nome de usuário atual será usado na postagem.</p>
                     <div class="section-box">
                         <div class="form-group">
                             <label for="saleTitle" style="display: block; margin-bottom: 5px;">Título do Item:</label>
@@ -612,17 +615,17 @@
                         </div>
                 </div>
 
-                <div id="ownerPanel" style="display: none;">
-                    <h3>Painel de Administrador</h3>
-                    <p style="color: var(--red-loss); font-weight: bold; margin-bottom: 15px;">Atenção: Apenas para uso administrativo!</p>
+                <div id="ownerPanel">
+                    <h3>Painel de Administrador (Local)</h3>
+                    <p style="color: var(--red-loss); font-weight: bold; margin-bottom: 15px;">Atenção: Ações de Gold/Chat afetam apenas o Firebase.</p>
                     
                     <div class="section-box">
-                        <h4>Gerenciar Gold</h4>
+                        <h4>Gerenciar Gold do Ranking (Firebase)</h4>
                         <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-                            <input type="text" id="adminName" placeholder="Nome de Usuário Alvo" style="flex-grow: 1;">
+                            <input type="text" id="adminName" placeholder="Nome de Usuário Alvo (no Ranking)" style="flex-grow: 1;">
                             <input type="number" id="adminAmount" placeholder="Quantia (ex: 5000 ou -100)" style="width: 150px;">
                         </div>
-                        <button class="btn" onclick="adminGiveGold()" style="background: var(--btn-red); width: 100%;">Dar / Remover Gold</button>
+                        <button class="btn" onclick="adminGiveGold()" style="background: var(--btn-red); width: 100%;">Dar / Remover Gold do Ranking</button>
                     </div>
                     
                     <div class="section-box">
@@ -639,13 +642,16 @@
         // ----------------------------------------------------
         // 1. CONFIGURAÇÃO E INICIALIZAÇÃO DO FIREBASE (v8)
         // ----------------------------------------------------
-        // SEU UID DE ADMINISTRADOR! ESSENCIAL PARA O PAINEL E REGRAS!
-        const OWNER_UID = "m3h06woQv2V7lrNu1p8fDQCZ8IW2"; // SUBSTITUA PELO SEU UID DE ADMIN!
-        let currentUser = null; 
-        // GOLD INICIAL
-        let initialGold = 5000; 
-        let isOnlineRef = null; 
+        
+        // Dados do Jogador Salvos Localmente
+        let playerData = {
+            username: null,
+            gold: 0,
+            inventory: []
+        };
+        const INITIAL_GOLD = 5000; 
         const CHAT_LIMIT = 50;
+        
         let cooldowns = {
             work: false,
             hunt: false,
@@ -654,7 +660,7 @@
         const COOLDOWN_WORK = 5000;
         const COOLDOWN_COLLECT = 10000; // 10 segundos para caçar e minerar
 
-        // CONFIGURAÇÃO FORNECIDA PELO USUÁRIO
+        // CONFIGURAÇÃO FIREBASE (Apenas Firestore e Storage)
         const firebaseConfig = {
           apiKey: "AIzaSyDxXQjbQ400wgqTW1_UfY3vPs1XES6M-78",
           authDomain: "regras-ivad.firebaseapp.com",
@@ -665,25 +671,23 @@
           measurementId: "G-3Z5PFGMND5" 
         };
 
-        // --- INÍCIO DA VERIFICAÇÃO DE CARREGAMENTO DO FIREBASE ---
         if (typeof firebase !== 'undefined') {
             try {
                 firebase.initializeApp(firebaseConfig);
             } catch (e) {
                 console.error("Erro ao inicializar Firebase. Verifique sua configuração.", e);
                 document.addEventListener('DOMContentLoaded', () => {
-                     updateStatus("ERRO CRÍTICO: Configuração do Firebase inválida. Verifique o console.", true);
+                     updateStatus("ERRO CRÍTICO: Configuração do Firebase inválida.", true);
                 });
                 throw e; 
             }
             
-            const auth = firebase.auth();
             const db = firebase.firestore();
             const FieldValue = firebase.firestore.FieldValue;
             const storage = firebase.storage(); 
 
             // Referências Comuns
-            const usersColRef = db.collection('users');
+            const usersColRef = db.collection('rankingUsers'); // NOVO: Coleção separada para Ranking
             const chatColRef = db.collection('chat');
             const salesColRef = db.collection('sales');
             const onlineUsersColRef = db.collection('onlineUsers');
@@ -740,178 +744,132 @@
 
 
             // ----------------------------------------------------
-            // 3. AUTENTICAÇÃO E PERFIL (CORREÇÃO DE BUGS DE EMAIL E LOGIN)
+            // 3. GERENCIAMENTO DE DADOS LOCAIS (localStorage)
             // ----------------------------------------------------
-
-            async function checkUsernameAvailability(username) {
-                // Verifica se o nome de usuário EXATO já existe no Firestore.
-                const snapshot = await usersColRef.where('username', '==', username).get();
-                return snapshot.empty;
+            
+            // Salva dados locais e atualiza o Ranking no Firebase
+            function savePlayerData() {
+                localStorage.setItem('playerData', JSON.stringify(playerData));
+                
+                // Atualiza o Gold do jogador no Firebase para o Ranking
+                updateRankingGold(playerData.username, playerData.gold);
+                
+                renderUI();
             }
 
-            async function signup() {
-                // 1. LIMPEZA E VALIDAÇÃO DOS INPUTS
-                const rawUsername = document.getElementById('username').value.trim();
-                const password = document.getElementById('pwd').value;
-                
-                // Remove caracteres que possam causar problemas no email e torna MINÚSCULO para o email do Firebase
-                const safeUsername = rawUsername.replace(/[^a-zA-Z0-9]/g, '').toLowerCase(); 
-                const email = safeUsername + "@ivad.com"; 
-                
-                // --- VALIDAÇÕES CRÍTICAS QUE DEVEM MOSTRAR O ERRO ---
-                if (rawUsername.length < 3) {
-                    return updateStatus("Nome de usuário deve ter no mínimo 3 caracteres.", true);
-                }
-                if (password.length < 6) {
-                    return updateStatus("Senha deve ter no mínimo 6 caracteres.", true);
-                }
-                
-                if (rawUsername.length !== safeUsername.length || rawUsername !== rawUsername.toLowerCase()) {
-                    updateStatus(`Atenção: Seu nome foi normalizado para segurança do login. Nome visível: "${rawUsername}".`, false);
-                }
-
-                // 2. VERIFICAÇÃO DE DISPONIBILIDADE DO NOME DE USUÁRIO (CASE-SENSITIVE)
-                const isAvailable = await checkUsernameAvailability(rawUsername); 
-                if (!isAvailable) {
-                    return updateStatus("Nome de usuário já está em uso.", true);
-                }
-
-                updateStatus("Criando conta...");
-                
-                // 3. CRIAÇÃO DE USUÁRIO NO FIREBASE
-                auth.createUserWithEmailAndPassword(email, password)
-                    .then(async (userCredential) => {
-                        const user = userCredential.user;
-                        
-                        await usersColRef.doc(user.uid).set({
-                            username: rawUsername, // Salva o nome de usuário original (como o usuário digitou)
-                            gold: initialGold, 
-                            wins: 0,
-                            losses: 0,
-                            inventory: [], 
-                            creationTime: FieldValue.serverTimestamp()
-                        });
-                        updateStatus(`Conta de ${rawUsername} criada com sucesso!`, false);
-                    })
-                    .catch(error => {
-                        if (error.code === 'auth/email-already-in-use') {
-                             updateStatus("Erro: Nome de usuário já existe. Tente outro nome.", true);
-                        } else if (error.code === 'auth/weak-password') {
-                             updateStatus("Erro: A senha é muito fraca. Use pelo menos 6 caracteres.", true);
-                        } else if (error.code === 'auth/too-many-requests') {
-                            updateStatus("BLOQUEADO: Seu dispositivo/IP está temporariamente bloqueado. Tente novamente em 1 hora ou mude sua conexão.", true);
-                        } else {
-                             updateStatus(`Erro no registro: ${error.message}`, true);
-                        }
-                    });
-            }
-
-            function login() {
-                const rawUsername = document.getElementById('username').value.trim();
-                const password = document.getElementById('pwd').value;
-                
-                // Deve usar a mesma lógica de email do signup para login funcionar
-                const safeUsername = rawUsername.replace(/[^a-zA-Z0-9]/g, '').toLowerCase(); 
-                const email = safeUsername + "@ivad.com";
-                
-                if (rawUsername.length < 3) {
-                    return updateStatus("Nome de usuário inválido.", true);
-                }
-                if (password.length < 6) {
-                    return updateStatus("Senha inválida.", true);
-                }
-                
-                auth.signInWithEmailAndPassword(email, password)
-                    .catch(error => {
-                        if (error.code === 'auth/too-many-requests') {
-                            updateStatus("BLOQUEADO: Seu dispositivo/IP está temporariamente bloqueado. Tente novamente em 1 hora ou mude sua conexão.", true);
-                        } else {
-                            updateStatus(`Erro no login: ${error.message}`, true);
-                        }
-                    });
-            }
-
-            async function loadUserData(user) {
-                currentUser = user;
-                
-                document.getElementById('signedOutUI').style.display = 'none';
-                document.getElementById('signedInUI').style.display = 'block';
-
-                document.getElementById('ownerPanel').style.display = user.uid === OWNER_UID ? 'block' : 'none';
-
-                const userRef = usersColRef.doc(user.uid);
-                
-                userRef.onSnapshot(docSnapshot => {
-                    if (docSnapshot.exists) {
-                        const data = docSnapshot.data();
-                        const currentGold = Math.max(0, data.gold || 0); 
-                        
-                        document.getElementById('myGold').textContent = currentGold.toLocaleString();
-                        document.getElementById('playerGold').textContent = currentGold.toLocaleString();
-                        document.getElementById('userLabel').textContent = `Bem-vindo, ${data.username}!`;
-                        document.getElementById('socialUsername').textContent = data.username;
-                        document.getElementById('socialUserId').textContent = user.uid;
-                        document.getElementById('playerInfoSocial').style.display = 'block';
-
-                        if (data.username !== document.getElementById('username').value.trim()) {
-                            document.getElementById('username').value = data.username; 
-                        }
-                        
-                        // ATUALIZA INVENTÁRIO
-                        renderInventory(data.inventory || []); 
-
+            // Carrega dados locais
+            function loadPlayerData() {
+                const data = localStorage.getItem('playerData');
+                if (data) {
+                    playerData = JSON.parse(data);
+                    // Garante que o inventário seja um array, se o valor for nulo/indefinido
+                    if (!playerData.inventory) {
+                         playerData.inventory = [];
                     }
-                });
-
-                loadRanking(); 
-                loadChat();    
-                loadSales();
-                trackOnlineStatus(user.uid);
+                    return true;
+                }
+                return false;
             }
 
-
-            // ----------------------------------------------------
-            // 4. JOGOS E SISTEMA ANTI-HACK DE GOLD
-            // ----------------------------------------------------
-
-            async function updateGold(amount, isWin = false) {
-                if (!currentUser) { 
-                     updateStatus("Erro: Não logado. Gold não atualizado.", true);
-                     return false;
+            // Inicializa a UI do jogador
+            function renderUI() {
+                if (playerData.username) {
+                    document.getElementById('initialSetup').style.display = 'none';
+                    document.getElementById('mainUI').style.display = 'block';
+                    
+                    const goldFormatted = Math.max(0, playerData.gold).toLocaleString();
+                    
+                    document.getElementById('userLabel').textContent = `Bem-vindo, ${playerData.username}!`;
+                    document.getElementById('myGold').textContent = goldFormatted;
+                    document.getElementById('playerGold').textContent = goldFormatted;
+                    document.getElementById('socialUsername').textContent = playerData.username;
+                    
+                    renderInventory(playerData.inventory);
+                    
+                    // Inicia o rastreamento de usuários online com o nome de usuário (sem UID)
+                    trackOnlineStatus(playerData.username); 
+                } else {
+                    document.getElementById('initialSetup').style.display = 'block';
+                    document.getElementById('mainUI').style.display = 'none';
                 }
+            }
+
+            // Função de Setup (Substitui o Cadastro/Login)
+            function initializePlayer() {
+                const username = document.getElementById('initialUsername').value.trim();
+                if (username.length < 3) {
+                    return document.getElementById('setupError').textContent = "Nome de usuário deve ter no mínimo 3 caracteres.";
+                }
+
+                playerData.username = username;
+                playerData.gold = INITIAL_GOLD;
+                playerData.inventory = [];
                 
-                const updateData = {
-                    gold: FieldValue.increment(amount)
-                };
+                savePlayerData();
+                loadRanking();
+                loadChat();
+            }
+            
+            // Reseta os dados locais e mostra a UI de setup
+            function showSetupUI() {
+                 if (confirm("Seus dados de Gold e Inventário serão perdidos. Tem certeza que deseja mudar de nome/resetar o progresso?")) {
+                    localStorage.removeItem('playerData');
+                    playerData.username = null;
+                    playerData.gold = 0;
+                    playerData.inventory = [];
+                    renderUI();
+                    
+                    // Desliga o rastreamento online
+                    if (window.onlineTracker) {
+                         onlineUsersColRef.doc(window.onlineTracker).delete();
+                         delete window.onlineTracker;
+                    }
+                 }
+            }
+            
+            // --- FIREBASE: Atualiza Gold no Ranking (Usando o Nome como ID) ---
+            async function updateRankingGold(username, currentGold) {
+                 if (!username) return;
+                 
+                 // Simula um "UID" com o nome para o ranking
+                 const safeUsernameId = username.toLowerCase().replace(/[^a-z0-9]/g, ''); 
+                 
+                 return usersColRef.doc(safeUsernameId).set({
+                    username: username,
+                    gold: currentGold,
+                    lastUpdate: FieldValue.serverTimestamp()
+                 }, { merge: true }).catch(error => {
+                    console.error("Erro ao atualizar Ranking:", error);
+                 });
+            }
 
-                if (isWin && amount > 0) {
-                    updateData.wins = FieldValue.increment(1);
-                } else if (!isWin && amount < 0) {
-                    updateData.losses = FieldValue.increment(1);
-                }
+            // ----------------------------------------------------
+            // 4. JOGOS E SISTEMA DE GOLD/INVENTÁRIO LOCAL
+            // ----------------------------------------------------
 
-                return usersColRef.doc(currentUser.uid).update(updateData)
-                    .catch(error => {
-                        updateStatus(`Erro ao atualizar Gold: ${error.message}`, true);
-                        return false;
-                    });
+            async function updateGold(amount) {
+                if (!playerData.username) return false;
+                
+                // Gold Local
+                playerData.gold = Math.max(0, playerData.gold + amount);
+                
+                // Salva local e atualiza o Ranking no Firebase
+                savePlayerData();
+                return true;
             }
             
             // Função para atualizar o inventário
             async function updateInventory(newInventory) {
-                if (!currentUser) return false;
+                if (!playerData.username) return false;
                 
-                return usersColRef.doc(currentUser.uid).update({
-                    inventory: newInventory 
-                }).catch(error => {
-                    updateStatus(`Erro ao atualizar inventário: ${error.message}`, true);
-                    return false;
-                });
+                playerData.inventory = newInventory;
+                savePlayerData();
+                return true;
             }
             
             // Funções de Cooldown
             function checkCooldown(action) {
-                if (!currentUser) { updateStatus("Você precisa estar logado.", true); return true; }
+                if (!playerData.username) { updateStatus("Primeiro, defina seu nome de jogador!", true); return true; }
                 if (cooldowns[action]) {
                     updateStatus(`Aguarde o cooldown (${COOLDOWN_COLLECT / 1000} segundos) para ${action}.`, true);
                     return true;
@@ -951,7 +909,6 @@
                 
                 let totalValue = 0;
                 
-                // Agrupa itens com o mesmo nome para exibição limpa
                 const groupedInventory = inventory.reduce((acc, item) => {
                     acc[item.name] = acc[item.name] || { count: 0, totalValue: 0 };
                     acc[item.name].count += 1;
@@ -974,7 +931,7 @@
                 document.getElementById('btnSellInventory').disabled = false; 
             }
 
-            // Jogo Simples: Trabalho (MANTIDO COMO RECUPERAÇÃO)
+            // Jogo Simples: Trabalho 
             async function work() {
                 const action = 'work';
                 const btnId = 'btnWork';
@@ -982,13 +939,12 @@
                 
                 setCooldown(action, COOLDOWN_WORK, btnId);
 
-                const currentGoldText = document.getElementById('myGold').textContent.replace(/[^0-9]/g, '');
-                const currentGold = parseInt(currentGoldText) || 0;
+                const currentGold = playerData.gold;
                 
                 const percentage = Math.floor(Math.random() * 100) + 1; 
                 const earnings = Math.max(1, Math.floor(currentGold * (percentage / 100))); 
                 
-                const success = await updateGold(earnings, true);
+                const success = await updateGold(earnings);
                 if (!success) return;
 
                 document.getElementById('workMsg').textContent = `Você trabalhou e ganhou +${earnings.toLocaleString()} Gold (${percentage}%).`;
@@ -1019,13 +975,9 @@
                 
                 const item = { name: selectedItem.name, goldValue: value };
                 
-                const userRef = usersColRef.doc(currentUser.uid);
-                const userDoc = await userRef.get();
-                const currentInventory = userDoc.data().inventory || [];
+                playerData.inventory.push(item);
                 
-                currentInventory.push(item);
-                
-                const success = await updateInventory(currentInventory);
+                const success = await updateInventory(playerData.inventory);
                 if (!success) return;
                 
                 updateStatus(`Caça: Você encontrou ${item.name} (Valor: ${item.goldValue.toLocaleString()} Gold)!`, false);
@@ -1052,13 +1004,9 @@
                 
                 const item = { name: selectedItem.name, goldValue: value };
                 
-                const userRef = usersColRef.doc(currentUser.uid);
-                const userDoc = await userRef.get();
-                const currentInventory = userDoc.data().inventory || [];
+                playerData.inventory.push(item);
                 
-                currentInventory.push(item);
-                
-                const success = await updateInventory(currentInventory);
+                const success = await updateInventory(playerData.inventory);
                 if (!success) return;
                 
                 updateStatus(`Mineração: Você desenterrou ${item.name} (Valor: ${item.goldValue.toLocaleString()} Gold)!`, false);
@@ -1066,53 +1014,47 @@
             
             // Vender Inventário
             async function sellInventory() {
-                if (!currentUser) return;
+                if (!playerData.username) return;
                 
-                const userRef = usersColRef.doc(currentUser.uid);
-                const userDoc = await userRef.get();
-                const currentInventory = userDoc.data().inventory || [];
-                
-                if (currentInventory.length === 0) {
+                if (playerData.inventory.length === 0) {
                     return updateStatus("Seu inventário está vazio!", true);
                 }
                 
-                let totalGold = currentInventory.reduce((sum, item) => sum + item.goldValue, 0);
+                let totalGold = playerData.inventory.reduce((sum, item) => sum + item.goldValue, 0);
                 
-                // 1. Adiciona Gold
-                const successGold = await updateGold(totalGold, true);
+                // 1. Adiciona Gold Localmente
+                const successGold = await updateGold(totalGold);
                 if (!successGold) return;
                 
-                // 2. Limpa o inventário
+                // 2. Limpa o inventário Localmente
+                playerData.inventory = [];
                 await updateInventory([]);
                 
-                updateStatus(`Venda! Você vendeu ${currentInventory.length} itens por ${totalGold.toLocaleString()} Gold!`, false);
+                updateStatus(`Venda! Você vendeu ${playerData.inventory.length} itens por ${totalGold.toLocaleString()} Gold!`, false);
             }
 
 
             // ----------------------------------------------------
-            // 5. OUTRAS FUNÇÕES (APOSTAS)
+            // 5. OUTRAS FUNÇÕES (APOSTAS) - Usam updateGold Local
             // ----------------------------------------------------
 
             function validateBet(amount) {
-                const currentGoldText = document.getElementById('myGold').textContent.replace(/[^0-9]/g, '');
-                const currentGold = parseInt(currentGoldText) || 0;
-                
-                if (!currentUser) { 
-                    updateStatus("Faça login para apostar.", true); return false; 
+                if (!playerData.username) { 
+                    updateStatus("Primeiro, defina seu nome de jogador.", true); return false; 
                 }
+                
                 const betAmount = parseInt(amount); 
                 
                 if (isNaN(betAmount) || betAmount <= 0) { 
                     updateStatus("A aposta deve ser um valor positivo e numérico.", true); return false; 
                 }
-                if (betAmount > currentGold) { 
+                if (betAmount > playerData.gold) { 
                     updateStatus("Gold insuficiente para esta aposta.", true); return false; 
                 }
                 return true;
             }
 
             function notify(message, isWin) {
-                // Usa a função global updateStatus para consistência
                 updateStatus(message, !isWin);
             }
             
@@ -1125,7 +1067,7 @@
                 const win = Math.random() * 100 < winChance;
                 const result = win ? amount * (multiplier - 1) : -amount; 
                 
-                const success = await updateGold(result, win);
+                const success = await updateGold(result);
                 if (!success) return;
                 
                 const msg = win 
@@ -1136,106 +1078,6 @@
                 notify(msg, win);
             }
 
-            // Aposta Avançada: Cor
-            async function betCor() {
-                const amount = parseInt(document.getElementById('betCorAmount').value);
-                const choice = document.getElementById('betCorColor').value;
-                if (!validateBet(amount)) return;
-
-                const rand = Math.random();
-                let outcome = '';
-                let mult = 0;
-
-                if (rand < 0.48) { 
-                    outcome = 'red';
-                    mult = 2;
-                } else if (rand < 0.96) { 
-                    outcome = 'black';
-                    mult = 2;
-                } else { 
-                    outcome = 'green';
-                    mult = 4;
-                }
-
-                const win = choice === outcome;
-                const result = win ? amount * (mult - 1) : -amount;
-                
-                const success = await updateGold(result, win);
-                if (!success) return;
-                
-                const msg = win 
-                    ? `✅ GANHOU ${mult}x! Sorteado: ${outcome.toUpperCase()}. Lucro: ${result.toLocaleString()} Gold.` 
-                    : `❌ PERDEU. Sorteado: ${outcome.toUpperCase()}. Menos ${amount.toLocaleString()} Gold.`;
-                
-                document.getElementById('betCorMsg').textContent = msg;
-                notify(msg, win);
-            }
-
-            // Aposta Avançada: Moeda
-            async function betCoin() {
-                const amount = parseInt(document.getElementById('betCoinAmount').value);
-                const choice = document.getElementById('betCoinSide').value;
-                if (!validateBet(amount)) return;
-
-                const outcome = Math.random() < 0.5 ? 'cara' : 'coroa';
-                const win = choice === outcome;
-                const result = win ? amount : -amount;
-                
-                const success = await updateGold(result, win);
-                if (!success) return;
-                
-                const msg = win 
-                    ? `✅ GANHOU 2x! Deu ${outcome.toUpperCase()}. Lucro: ${result.toLocaleString()} Gold.` 
-                    : `❌ PERDEU. Deu ${outcome.toUpperCase()}. Menos ${amount.toLocaleString()} Gold.`;
-                
-                document.getElementById('betCoinMsg').textContent = msg;
-                notify(msg, win);
-            }
-
-            // Aposta Avançada: Dice/Loteria
-            async function betDice(maxNumber, multiplier, inputAmountId, inputChoiceId, msgId) {
-                const amount = parseInt(document.getElementById(inputAmountId).value);
-                const choice = parseInt(document.getElementById(inputChoiceId).value);
-                
-                if (!validateBet(amount) || isNaN(choice) || choice < 1 || choice > maxNumber) {
-                    return updateStatus(`Número de ${maxNumber} lados inválido (1-${maxNumber}).`, true);
-                }
-
-                const outcome = Math.floor(Math.random() * maxNumber) + 1;
-                const win = choice === outcome;
-                const result = win ? amount * (multiplier - 1) : -amount;
-                
-                const success = await updateGold(result, win);
-                if (!success) return;
-                
-                const msg = win 
-                    ? `✅ ACERTOU ${outcome}! Lucro de ${result.toLocaleString()} Gold (${multiplier}x).` 
-                    : `❌ ERROU ${outcome}. Perdeu ${amount.toLocaleString()} Gold.`;
-                
-                document.getElementById(msgId).textContent = msg;
-                notify(msg, win);
-            }
-
-            // Aposta Avançada: RNG Mágico
-            async function betRNG(multiplier, fixedAmount, winChance, msgId) {
-                const amount = fixedAmount;
-                if (!validateBet(amount)) return; 
-
-                const rand = Math.random() * 100;
-                const win = rand < winChance;
-                const result = win ? amount * (multiplier - 1) : -amount;
-                
-                const success = await updateGold(result, win);
-                if (!success) return;
-                
-                const msg = win 
-                    ? `✅ NÚMERO MÁGICO! Lucro de ${result.toLocaleString()} Gold (${multiplier}x).` 
-                    : `❌ NÃO FOI DESSA VEZ. Perdeu ${amount.toLocaleString()} Gold.`;
-                
-                document.getElementById(msgId).textContent = msg;
-                notify(msg, win);
-            }
-            
             // NOVO JOGO: Caça ao Tesouro
             async function betTreasureHunt(chosenBoxElement) {
                 const boxes = document.querySelectorAll('.treasure-box');
@@ -1285,7 +1127,7 @@
                     }, 500);
                 });
 
-                const success = await updateGold(result, isWin);
+                const success = await updateGold(result);
                 if (!success) return;
 
                 msgElement.textContent = finalMsg;
@@ -1305,7 +1147,7 @@
 
 
             // ----------------------------------------------------
-            // 6. RANKING GLOBAL
+            // 6. RANKING GLOBAL (FIREBASE)
             // ----------------------------------------------------
 
             function loadRanking() {
@@ -1321,17 +1163,15 @@
                     snapshot.forEach((doc, index) => {
                         const data = doc.data();
                         const li = document.createElement('li');
-                        li.style.color = doc.id === currentUser.uid ? 'var(--main-gold)' : 'var(--text-primary)';
-                        li.style.fontWeight = doc.id === currentUser.uid ? 'bold' : 'normal';
-
-                        let usernameDisplay = data.username;
-                        if (doc.id === OWNER_UID) {
-                             usernameDisplay = `<span style="color: #ff00ff;">${data.username} [DONO]</span>`;
-                        }
+                        
+                        // Destaca o jogador local no ranking
+                        const isLocalPlayer = data.username === playerData.username;
+                        li.style.color = isLocalPlayer ? 'var(--main-gold)' : 'var(--text-primary)';
+                        li.style.fontWeight = isLocalPlayer ? 'bold' : 'normal';
 
                         li.innerHTML = `
                             <span style="width: 30px; display: inline-block;">#${index + 1}</span>
-                            ${usernameDisplay}
+                            ${data.username}
                             <span style="color: var(--main-gold);">${data.gold ? data.gold.toLocaleString() : '0'} Gold</span>
                         `;
                         rankingList.appendChild(li);
@@ -1343,13 +1183,13 @@
 
 
             // ----------------------------------------------------
-            // 7. CHAT GLOBAL
+            // 7. CHAT GLOBAL (FIREBASE)
             // ----------------------------------------------------
 
             async function sendMessage() {
                 const input = document.getElementById('chatInput');
                 const message = input.value.trim();
-                if (!message || !currentUser) return;
+                if (!message || !playerData.username) return updateStatus("Defina seu nome antes de enviar mensagens!", true);
                 
                 if (message.length > 200) {
                     return document.getElementById('chatError').textContent = "Mensagem muito longa (Máx. 200).";
@@ -1357,18 +1197,9 @@
                 
                 document.getElementById('chatError').textContent = "";
                 
-                let userData;
-                try {
-                     userData = (await usersColRef.doc(currentUser.uid).get()).data();
-                     if (!userData || !userData.username) throw new Error("Dados de usuário incompletos.");
-                } catch (e) {
-                     return document.getElementById('chatError').textContent = "Erro ao enviar: Falha ao obter dados do usuário.";
-                }
-                
                 chatColRef.add({
-                    username: userData.username,
+                    username: playerData.username, // Usa o nome local
                     text: message,
-                    uid: currentUser.uid,
                     timestamp: FieldValue.serverTimestamp()
                 })
                 .then(() => input.value = '')
@@ -1388,10 +1219,13 @@
                         const div = document.createElement('div');
                         div.className = 'chat-message';
                         
-                        let nameColor = data.uid === OWNER_UID ? '#ff00ff' : 'var(--text-secondary)';
-                        let nameDisplay = data.uid === OWNER_UID ? `${data.username} [DONO]:` : `${data.username}:`;
-
-                        div.innerHTML = `<span style="color: ${nameColor}; font-weight: bold;">${nameDisplay}</span> <span>${data.text}</span>`;
+                        let nameColor = 'var(--text-secondary)';
+                        // Simula destaque de admin se o nome for 'Dono' ou 'Admin'
+                        if (data.username && (data.username.toLowerCase() === 'admin' || data.username.toLowerCase() === 'dono')) {
+                             nameColor = '#ff00ff';
+                        }
+                        
+                        div.innerHTML = `<span style="color: ${nameColor}; font-weight: bold;">${data.username}:</span> <span>${data.text}</span>`;
                         
                         chatWindow.appendChild(div);
                     });
@@ -1402,11 +1236,11 @@
 
 
             // ----------------------------------------------------
-            // 8. SISTEMA DE VENDAS (Com Upload de Imagem)
+            // 8. SISTEMA DE VENDAS (Com Upload de Imagem - FIREBASE)
             // ----------------------------------------------------
 
             async function postSale() {
-                if (!currentUser) return updateStatus("Faça login para postar.", true);
+                if (!playerData.username) return updateStatus("Defina seu nome antes de postar.", true);
 
                 const title = document.getElementById('saleTitle').value.trim();
                 const contact = document.getElementById('saleContact').value.trim();
@@ -1422,8 +1256,7 @@
                 updateStatus("Subindo imagem e postando...");
 
                 try {
-                    const userData = (await usersColRef.doc(currentUser.uid).get()).data();
-                    const fileName = `${currentUser.uid}_${Date.now()}_${imageFile.name}`;
+                    const fileName = `${playerData.username}_${Date.now()}_${imageFile.name}`;
                     const imageRef = storageRef.child(fileName);
                     
                     const snapshot = await imageRef.put(imageFile);
@@ -1435,8 +1268,7 @@
                         contact: contact,
                         price: price,
                         imageUrl: imageUrl,
-                        sellerUid: currentUser.uid,
-                        sellerUsername: userData.username,
+                        sellerUsername: playerData.username, // Usa o nome local
                         timestamp: FieldValue.serverTimestamp()
                     });
 
@@ -1483,7 +1315,8 @@
                              }
                         }
                         
-                        if (currentUser && (data.sellerUid === currentUser.uid || currentUser.uid === OWNER_UID)) {
+                        // Botão de Excluir para o próprio usuário local
+                        if (playerData.username && data.sellerUsername === playerData.username) {
                             buttons += `<button onclick="deleteSale('${doc.id}', '${data.imageUrl}')" class="btn" style="background: var(--btn-red); width: 100%; margin-top: 10px;">Excluir Postagem</button>`;
                         }
 
@@ -1501,7 +1334,7 @@
             }
 
             async function deleteSale(saleId, imageUrl) {
-                if (!currentUser) return;
+                if (!playerData.username) return;
                 if (!confirm("Tem certeza que deseja excluir esta postagem?")) return;
                 
                 try {
@@ -1519,12 +1352,10 @@
 
 
             // ----------------------------------------------------
-            // 9. FUNÇÕES DE ADMINISTRADOR
+            // 9. FUNÇÕES DE ADMINISTRADOR (Acessíveis a todos agora)
             // ----------------------------------------------------
 
             async function adminGiveGold() {
-                if (!currentUser || currentUser.uid !== OWNER_UID) return;
-
                 const targetUsername = document.getElementById('adminName').value.trim();
                 const amount = parseInt(document.getElementById('adminAmount').value);
 
@@ -1533,20 +1364,17 @@
                 }
                 
                 try {
-                    const snapshot = await usersColRef.where('username', '==', targetUsername).limit(1).get();
-                    if (snapshot.empty) {
-                        return updateStatus(`[ADMIN] Usuário '${targetUsername}' não encontrado.`, true);
-                    }
-                    const targetUid = snapshot.docs[0].id;
-                    const isWin = amount > 0;
+                     const safeUsernameId = targetUsername.toLowerCase().replace(/[^a-z0-9]/g, ''); 
+                     
+                     // Atualiza o Gold do ranking diretamente
+                     await usersColRef.doc(safeUsernameId).set({
+                        username: targetUsername,
+                        gold: FieldValue.increment(amount),
+                        lastUpdate: FieldValue.serverTimestamp()
+                    }, { merge: true });
 
-                    await usersColRef.doc(targetUid).update({
-                        gold: FieldValue.increment(amount) ,
-                        wins: isWin ? FieldValue.increment(1) : FieldValue.increment(0),
-                        losses: isWin ? FieldValue.increment(0) : FieldValue.increment(1)
-                    });
 
-                    updateStatus(`[ADMIN] ${amount > 0 ? 'DADO' : 'REMOVIDO'} ${Math.abs(amount).toLocaleString()} Gold para ${targetUsername}.`);
+                    updateStatus(`[ADMIN] ${amount > 0 ? 'DADO' : 'REMOVIDO'} ${Math.abs(amount).toLocaleString()} Gold do Ranking para ${targetUsername}.`);
                     document.getElementById('adminName').value = '';
                     document.getElementById('adminAmount').value = '';
                 } catch (error) {
@@ -1555,7 +1383,6 @@
             }
 
             async function adminClearChat() {
-                if (!currentUser || currentUser.uid !== OWNER_UID) return;
                 if (!confirm("Tem certeza que deseja apagar TODAS as mensagens do Chat Global?")) return;
                 
                 chatColRef.limit(200).get().then(snapshot => {
@@ -1565,32 +1392,35 @@
                     });
                     return batch.commit();
                 })
-                .then(() => updateStatus("[ADMIN] Chat Global limpo (parcialmente - repita se for necessário)!", false))
+                .then(() => updateStatus("[ADMIN] Chat Global limpo!", false))
                 .catch(error => updateStatus(`[ADMIN] Erro ao limpar chat: ${error.message}`, true));
             }
 
 
             // ----------------------------------------------------
-            // 10. CONTADOR DE USUÁRIOS ONLINE
+            // 10. CONTADOR DE USUÁRIOS ONLINE (FIREBASE)
             // ----------------------------------------------------
-
-            function trackOnlineStatus(uid) {
-                if (isOnlineRef) return; 
+            // Usamos o nome de usuário local como ID
+            function trackOnlineStatus(username) {
+                 // Remove o rastreador anterior, se houver, para evitar IDs duplicados
+                 if (window.onlineTracker) {
+                    onlineUsersColRef.doc(window.onlineTracker).delete();
+                    delete window.onlineTracker;
+                 }
+                 
+                // Cria um ID temporário e salva no window para limpar depois
+                const onlineId = `${username}-${Date.now()}`;
+                window.onlineTracker = onlineId; 
                 
-                const usernameDisplay = document.getElementById('userLabel').textContent.split(', ')[1]?.replace('!', '') || 'Usuário';
-
-                isOnlineRef = onlineUsersColRef.doc(uid);
+                const isOnlineRef = onlineUsersColRef.doc(onlineId);
                 
                 isOnlineRef.set({ 
-                    username: usernameDisplay, 
+                    username: username, 
                     timestamp: FieldValue.serverTimestamp() 
                 });
                 
-                // Define o status offline no logoff
+                // Define o status offline no fechamento da página
                 window.addEventListener('beforeunload', () => isOnlineRef.delete());
-                auth.onAuthStateChanged(user => {
-                    if (!user && isOnlineRef) isOnlineRef.delete();
-                });
 
                 onlineUsersColRef.onSnapshot(snapshot => {
                     let count = 0;
@@ -1619,31 +1449,29 @@
 
 
             // ----------------------------------------------------
-            // 11. LISTENERS GLOBAIS
+            // 11. INICIALIZAÇÃO
             // ----------------------------------------------------
-
-            auth.onAuthStateChanged(user => {
-                if (user) {
-                    loadUserData(user);
-                } else {
-                    currentUser = null;
-                    document.getElementById('signedOutUI').style.display = 'block'; 
-                    document.getElementById('signedInUI').style.display = 'none';
-                    document.getElementById('ownerPanel').style.display = 'none';
-                    document.getElementById('playerInfoSocial').style.display = 'none';
-                    if (isOnlineRef) { isOnlineRef.delete(); isOnlineRef = null; }
-                }
-            });
 
             document.addEventListener('DOMContentLoaded', () => {
                 switchTab('regrasTab');
+                loadSales(); // Carrega o mercado (independente do jogador)
+                loadChat();  // Carrega o chat (independente do jogador)
+                loadRanking(); // Carrega o ranking (independente do jogador)
+
+                if (loadPlayerData()) {
+                    // Se os dados foram carregados (o nome está definido)
+                    renderUI();
+                } else {
+                    // Se for o primeiro acesso
+                    renderUI();
+                }
             });
+            
         } else {
             document.addEventListener('DOMContentLoaded', () => {
-                alert("ERRO CRÍTICO: O SDK do Firebase não carregou. Verifique sua conexão e os links do SDK.");
+                alert("ERRO CRÍTICO: O SDK do Firebase não carregou.");
             });
         }
-
     </script>
 
 </body>

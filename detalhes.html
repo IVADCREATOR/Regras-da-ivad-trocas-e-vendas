@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="page-title">Detalhes do Anúncio</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    
+    <style>
+        :root {
+            --purple-vibrant: #7f00ff;
+            --pink-vibrant: #ff007f;
+            --font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background-color: #f8f9fa;
+            padding-top: 56px;
+        }
+
+        .details-container {
+            background-color: #ffffff;
+            border-radius: 1rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            margin-top: 20px;
+            padding: 30px;
+        }
+
+        .price-tag {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--pink-vibrant);
+        }
+
+        .btn-chat-vendedor {
+            background-color: var(--purple-vibrant);
+            border-color: var(--purple-vibrant);
+            color: white;
+            font-size: 1.25rem;
+            transition: background-color 0.3s;
+        }
+        .btn-chat-vendedor:hover {
+            background-color: #5d00cc;
+            border-color: #5d00cc;
+        }
+
+        .info-box {
+            border: 1px solid #eee;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            background-color: #fcfcfc;
+        }
+
+        /* Estilo para Carrossel de Imagens */
+        .carousel-item img {
+            height: 400px; /* Altura fixa para visualização */
+            object-fit: contain; /* Garante que a imagem se ajuste sem cortar */
+            width: 100%;
+            background-color: #eee;
+            border-radius: 0.75rem;
+        }
+
+        /* Estilo para Avaliação (Estrelas) */
+        .rating-stars {
+            color: gold;
+            font-size: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+        <div class="container">
+            <a class="navbar-brand" href="index.html">IVAD | Marketplace</a>
+            <span class="navbar-text text-white-50 ms-3">/ Detalhes</span>
+        </div>
+    </nav>
+
+    <div class="container details-container">
+        
+        <div class="row">
+            
+            <div class="col-lg-7">
+                
+                <h1 id="listing-title" class="mb-3 text-dark">Título do Anúncio (Carregando...)</h1>
+                
+                <div class="mb-4">
+                    <span class="text-muted me-2">Vendedor: <strong id="vendedor-username">N/A</strong></span>
+                    <span class="rating-stars" id="vendedor-rating">
+                        <i class="far fa-star"></i><i class="far fa-star"></i><i class="far fa-star"></i><i class="far fa-star"></i><i class="far fa-star"></i>
+                    </span>
+                    <small class="text-muted" id="rating-count">(0 avaliações)</small>
+                </div>
+
+                <div id="listingCarousel" class="carousel slide mb-4" data-bs-ride="carousel">
+                    <div class="carousel-inner" id="carousel-inner">
+                        <div class="carousel-item active">
+                            <img src="https://via.placeholder.com/700x400?text=Imagens+Locais+Nao+Disponiveis" class="d-block w-100" alt="Imagem Padrão">
+                            <div class="carousel-caption d-none d-md-block text-danger">
+                                <h5>Imagens Locais</h5>
+                                <p>As imagens foram salvas localmente no navegador do vendedor.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="carousel-control-prev" type="button" data-bs-target="#listingCarousel" data-bs-slide="prev">
+                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                        <span class="visually-hidden">Anterior</span>
+                    </button>
+                    <button class="carousel-control-next" type="button" data-bs-target="#listingCarousel" data-bs-slide="next">
+                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                        <span class="visually-hidden">Próximo</span>
+                    </button>
+                </div>
+
+                <h3 class="mt-4 border-bottom pb-2">Descrição da Conta</h3>
+                <p id="listing-description" class="lead text-secondary">A descrição completa do vendedor será carregada aqui, incluindo detalhes sobre itens raros e o estado da conta.</p>
+
+            </div>
+
+            <div class="col-lg-5">
+                
+                <div class="info-box">
+                    <h2 class="price-tag mb-3" id="listing-price">R$ 0,00</h2>
+                    <div class="mb-3">
+                        <span id="exchange-status" class="badge bg-danger"></span>
+                    </div>
+
+                    <button id="chat-button" class="btn btn-chat-vendedor w-100 mb-2 disabled" data-vendedor-uid="" disabled>
+                        <i class="fas fa-headset me-2"></i> Conversar com Vendedor
+                    </button>
+
+                    <button class="btn btn-success w-100 disabled">
+                        <i class="fas fa-shield-alt me-2"></i> Comprar com Escrow (R$ 0,00)
+                    </button>
+
+                </div>
+
+                <div class="info-box mt-4">
+                    <h5 class="text-purple-vibrant">Detalhes do Anúncio</h5>
+                    <ul class="list-unstyled mb-0">
+                        <li><i class="fas fa-tag me-2 text-primary"></i> Categoria: <span id="listing-category">N/A</span></li>
+                        <li><i class="fas fa-calendar-alt me-2 text-primary"></i> Listado em: <span id="listing-date">N/A</span></li>
+                        <li><i class="fas fa-lock me-2 text-primary"></i> ID do Anúncio: <span id="listing-id">N/A</span></li>
+                    </ul>
+                </div>
+
+                <div class="alert alert-info mt-4" role="alert">
+                    <i class="fas fa-info-circle me-2"></i> **Negocie com Confiança:** Utilize o chat privado para esclarecer todas as dúvidas antes de comprar.
+                </div>
+            </div>
+            
+        </div>
+        
+    </div>
+
+    <footer class="py-3 mt-5 bg-dark text-white-50 text-center">
+        <div class="container">
+            <p class="mb-0">&copy; 2024 IVAD - Marketplace.</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    
+    <script src="script.js"></script> 
+
+    <script>
+        // =================================================================
+        // CONFIGURAÇÃO INDEXEDDB (Para tentar carregar as imagens locais)
+        // =================================================================
+        const DB_NAME = 'IVAD_Local_Media';
+        const DB_VERSION = 1;
+        const STORE_NAME = 'anuncio_imagens';
+        let dbInstance = null;
+
+        function openIndexedDB() {
+            return new Promise((resolve, reject) => {
+                if (dbInstance) {
+                    resolve(dbInstance);
+                    return;
+                }
+                const request = indexedDB.open(DB_NAME, DB_VERSION);
+                request.onsuccess = event => {
+                    dbInstance = event.target.result;
+                    resolve(dbInstance);
+                };
+                request.onerror = event => {
+                    console.error("Erro ao abrir IndexedDB:", event.target.error);
+                    reject(event.target.error);
+                };
+                request.onupgradeneeded = event => {
+                    const db = event.target.result;
+                    if (!db.objectStoreNames.contains(STORE_NAME)) {
+                        db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+                    }
+                };
+            });
+        }
+        
+        /**
+         * Tenta buscar um arquivo local no IndexedDB pela chave.
+         */
+        async function getLocalFile(key) {
+            try {
+                const db = await openIndexedDB();
+                const transaction = db.transaction([STORE_NAME], 'readonly');
+                const store = transaction.objectStore(STORE_NAME);
+                const request = store.get(key);
+
+                return new Promise((resolve) => {
+                    request.onsuccess = () => {
+                        // Se a chave for encontrada, retorna o Blob/File
+                        if (request.result && request.result.file instanceof Blob) {
+                            resolve(URL.createObjectURL(request.result.file));
+                        } else {
+                            resolve(null);
+                        }
+                    };
+                    request.onerror = () => resolve(null);
+                });
+            } catch (error) {
+                console.error("Erro ao acessar IndexedDB:", error);
+                return null;
+            }
+        }
+        
+        // =================================================================
+        // LÓGICA DE CARREGAMENTO DO ANÚNCIO
+        // =================================================================
+        
+        const chatButton = document.getElementById('chat-button');
+
+        /**
+         * Carrega os dados do anúncio a partir do Firestore.
+         */
+        async function loadListingDetails() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const listingId = urlParams.get('id');
+
+            if (!listingId) {
+                document.getElementById('listing-title').textContent = "Erro: ID do anúncio não fornecido.";
+                return;
+            }
+
+            document.getElementById('listing-id').textContent = listingId;
+            
+            try {
+                // 1. Busca os Dados do Anúncio no Firestore
+                const docRef = db.collection('anuncios').doc(listingId);
+                const doc = await docRef.get();
+
+                if (!doc.exists) {
+                    document.getElementById('listing-title').textContent = "Anúncio não encontrado.";
+                    return;
+                }
+
+                const data = doc.data();
+                
+                // 2. Preenche os Dados Básicos
+                document.getElementById('page-title').textContent = data.titulo;
+                document.getElementById('listing-title').textContent = data.titulo;
+                document.getElementById('listing-price').textContent = `R$ ${data.preco.toFixed(2).replace('.', ',')}`;
+                document.getElementById('listing-description').textContent = data.description;
+                document.getElementById('listing-category').textContent = data.category;
+                
+                const date = data.dataCriacao ? data.dataCriacao.toDate().toLocaleDateString('pt-BR') : 'N/A';
+                document.getElementById('listing-date').textContent = date;
+
+                document.getElementById('exchange-status').textContent = data.aceitaTroca ? 'Aceita Troca' : 'Apenas Venda';
+                document.getElementById('exchange-status').classList.replace(data.aceitaTroca ? 'bg-danger' : 'bg-warning', data.aceitaTroca ? 'bg-warning' : 'bg-danger');
+
+                // 3. Carrega Nome do Vendedor e Avaliação (Futuro)
+                const vendedorName = await getUsernameByUid(data.vendedorUid);
+                document.getElementById('vendedor-username').textContent = vendedorName;
+                
+                // 4. Configura o Botão de Chat Privado
+                chatButton.setAttribute('data-vendedor-uid', data.vendedorUid);
+                chatButton.disabled = false;
+                chatButton.classList.remove('disabled');
+                
+                // 5. Carrega Imagens (Agora, a partir do IndexedDB se o usuário for o Vendedor)
+                if (data.imageUrls && data.imageUrls.length > 0) {
+                    await loadLocalImages(data.imageUrls, data.vendedorUid);
+                }
+
+            } catch (error) {
+                console.error("Erro ao carregar detalhes do anúncio:", error);
+                document.getElementById('listing-title').textContent = "Erro ao carregar dados.";
+            }
+        }
+        
+        /**
+         * Tenta carregar as imagens locais (IndexedDB) e popular o carrossel.
+         */
+        async function loadLocalImages(imageKeys, vendedorUid) {
+            const carouselInner = document.getElementById('carousel-inner');
+            carouselInner.innerHTML = '';
+            let imagesLoaded = 0;
+
+            for (const key of imageKeys) {
+                // Tenta carregar a imagem localmente (só funcionará no navegador do vendedor)
+                const imageUrl = await getLocalFile(key);
+
+                if (imageUrl) {
+                    imagesLoaded++;
+                    const itemClass = imagesLoaded === 1 ? 'carousel-item active' : 'carousel-item';
+                    const itemHtml = `
+                        <div class="${itemClass}">
+                            <img src="${imageUrl}" class="d-block w-100" alt="Imagem da Conta ${imagesLoaded}">
+                        </div>
+                    `;
+                    carouselInner.insertAdjacentHTML('beforeend', itemHtml);
+                }
+            }
+
+            // Se nenhuma imagem local foi carregada (visitante), mantém o placeholder
+            if (imagesLoaded === 0) {
+                 carouselInner.innerHTML = `
+                    <div class="carousel-item active">
+                        <img src="https://via.placeholder.com/700x400?text=Imagens+Nao+Disponiveis+Publicamente" class="d-block w-100" alt="Imagem Padrão">
+                        <div class="carousel-caption d-none d-md-block text-danger">
+                            <h5>Aviso</h5>
+                            <p>As imagens foram salvas localmente no navegador do vendedor e não podem ser acessadas por outros usuários (IndexedDB).</p>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+
+        // =================================================================
+        // EVENT LISTENERS E INICIALIZAÇÃO GERAL
+        // =================================================================
+        
+        // Listener do botão de chat
+        chatButton.addEventListener('click', function() {
+            const vendedorUid = this.getAttribute('data-vendedor-uid');
+            if (vendedorUid && typeof startPrivateChat === 'function') {
+                // Chama a função global definida no script.js
+                startPrivateChat(vendedorUid); 
+            } else {
+                alert('Funcionalidade de chat indisponível ou login necessário.');
+            }
+        });
+
+        // Inicia o carregamento dos detalhes ao carregar a página
+        document.addEventListener('DOMContentLoaded', loadListingDetails);
+    </script>
+</body>
+</html>

@@ -1,26 +1,26 @@
 // =================================================================
-// script.js - Lógica Central do IVAD Marketplace (CONSOLIDADO E CORRIGIDO)
+// script.js - Lógica Central do IVAD Marketplace (ESTÁVEL E CORRIGIDO)
 // =================================================================
 
 // 1. Variáveis Globais e Inicialização do Firebase
 const auth = firebase.auth();
 const db = firebase.firestore();
-const storage = firebase.storage(); // Adicionando Storage para upload/download de imagens
+const storage = firebase.storage(); 
 
 let currentUserUid = null;
 let currentUsername = null;
 let globalChatListener = null;
 
-const PIX_KEY = "11913429349"; // Sua chave Pix
+const PIX_KEY = "11913429349";
 
 // =================================================================
-// 2. AUTENTICAÇÃO E FUNÇÕES AUXILIARES (CORREÇÃO CRÍTICA DO USERNAME)
+// 2. AUTENTICAÇÃO E FUNÇÕES AUXILIARES (CORREÇÃO DE LOGIN/USERNAME)
 // =================================================================
 
-const usernameCache = {}; // Cache para evitar múltiplas leituras de UIDs
+const usernameCache = {};
 
 /**
- * [CORREÇÃO CRÍTICA] Função utilitária para obter nome de usuário com cache.
+ * Função utilitária para obter nome de usuário com cache.
  */
 async function getUsernameByUid(uid) {
     if (!uid) return 'Usuário Desconhecido';
@@ -67,8 +67,7 @@ async function handleRegister() {
         });
 
         alert(`Bem-vindo, ${username}! Seu registro foi concluído.`);
-        const modalInstance = bootstrap.Modal.getInstance(document.getElementById('loginModal'));
-        if (modalInstance) modalInstance.hide();
+        // A função onAuthStateChanged cuidará da atualização da UI após o registro/login
 
     } catch (error) {
         console.error("Erro no Registro:", error);
@@ -83,18 +82,25 @@ async function handleLogin() {
     try {
         await auth.signInWithEmailAndPassword(email, password);
         alert("Login efetuado com sucesso!");
-        const modalInstance = bootstrap.Modal.getInstance(document.getElementById('loginModal'));
-        if (modalInstance) modalInstance.hide();
+        // A função onAuthStateChanged cuidará da atualização da UI
     } catch (error) {
         console.error("Erro no Login:", error);
         alert(`Falha no Login: ${error.message}`);
     }
 }
 
-// Listener de Status de Autenticação (Chama getUsernameByUid imediatamente após o login)
+// Listener de Status de Autenticação
 auth.onAuthStateChanged(async (user) => {
     const authBtn = document.getElementById('authBtn');
     const uidDisplay = document.getElementById('my-uid-display');
+    const modalElement = document.getElementById('loginModal');
+    
+    // Tenta fechar o modal de login se estiver aberto
+    if (modalElement) {
+        const modalInstance = bootstrap.Modal.getInstance(modalElement);
+        if (modalInstance) modalInstance.hide();
+    }
+
 
     if (user) {
         currentUserUid = user.uid;
@@ -105,14 +111,17 @@ auth.onAuthStateChanged(async (user) => {
             authBtn.textContent = `Olá, ${currentUsername} (Sair)`;
             authBtn.classList.remove('btn-primary', 'btn-danger');
             authBtn.classList.add('btn-success');
-            // Altera para um link de logout simples (o painel do usuário não existe, mas o logout sim)
-            authBtn.onclick = () => { auth.signOut(); }; 
+            // Ação de logout no clique
+            authBtn.onclick = () => { 
+                auth.signOut();
+                window.location.href = 'index.html'; // Redireciona para o index após logout
+            }; 
         }
         if (uidDisplay) {
             uidDisplay.textContent = currentUserUid;
         }
 
-        // Se estiver em uma página que precisa de login (ex: caixa_de_entrada.html ou chat_global.html)
+        // Inicialização de lógicas específicas de páginas (só se os elementos existirem)
         if (document.getElementById('inbox-list') && typeof loadInbox === 'function') {
             loadInbox();
         }
@@ -129,46 +138,38 @@ auth.onAuthStateChanged(async (user) => {
             authBtn.innerHTML = '<i class="fas fa-user me-1"></i> Entrar / Cadastrar';
             authBtn.classList.add('btn-primary');
             authBtn.classList.remove('btn-success', 'btn-danger');
+            // Ação de abrir o modal no clique (CORRIGIDO: garante que o modal é instanciado e mostrado)
             authBtn.onclick = () => {
-                const loginModal = new bootstrap.Modal(document.getElementById('loginModal'));
-                loginModal.show();
+                if (modalElement) {
+                    const loginModal = new bootstrap.Modal(modalElement);
+                    loginModal.show();
+                } else {
+                    alert('Erro: Modal de Login não encontrado.');
+                }
             };
         }
         if (uidDisplay) {
             uidDisplay.textContent = 'Deslogado';
         }
         
-        // Limpa a caixa de entrada se o usuário sair
+        // Limpa a caixa de entrada
         if (document.getElementById('inbox-list')) {
             document.getElementById('inbox-list').innerHTML = '<li class="list-group-item text-center text-danger py-5"><i class="fas fa-lock me-2"></i> Você precisa estar logado para ver suas mensagens.</li>';
         }
 
         // Para o Chat Global (se houver um listener)
         if (globalChatListener) {
-            globalChatListener();
+            globalChatListener(); // Chama a função de 'unsubscribe'
         }
     }
 });
 
-// Manipulador do DOM para botões do modal
-document.addEventListener('DOMContentLoaded', () => {
-    const registerBtn = document.getElementById('registerBtn');
-    const loginBtn = document.getElementById('loginBtn');
-    
-    if (registerBtn) {
-        registerBtn.addEventListener('click', handleRegister);
-    }
-    if (loginBtn) {
-        loginBtn.addEventListener('click', handleLogin);
-    }
-});
-
 
 // =================================================================
-// 3. EXIBIÇÃO DE ANÚNCIOS (INDEX.HTML / PESQUISA.HTML)
+// 3. EXIBIÇÃO DE ANÚNCIOS (CORREÇÃO DE CATEGORIAS)
 // =================================================================
 
-// Reutiliza esta função em index.html e pesquisa.html
+// Função para criar o Card de Anúncio
 function createListingCard(doc, data, vendedorName) {
     const price = data.preco ? `R$ ${data.preco.toFixed(2).replace('.', ',')}` : 'A Combinar';
     const imageUrl = data.imageUrls && data.imageUrls.length > 0 
@@ -199,7 +200,49 @@ function createListingCard(doc, data, vendedorName) {
     `;
 }
 
-// ... (loadExchangeListings e lógica de categorias - Mantida) ...
+/**
+ * Carrega anúncios que aceitam troca para a seção principal (index.html).
+ */
+async function loadExchangeListings() {
+    const container = document.getElementById('exchange-listings');
+    if (!container) return; 
+
+    container.innerHTML = '<div class="col-12 text-center text-primary"><i class="fas fa-spinner fa-spin me-2"></i> Buscando ofertas de troca...</div>';
+    
+    try {
+        const snapshot = await db.collection('anuncios')
+            .where('aceitaTroca', '==', true)
+            .where('status', '==', 'ativo') 
+            .orderBy('dataCriacao', 'desc')
+            .limit(6)
+            .get();
+
+        if (snapshot.empty) {
+            container.innerHTML = '<div class="col-12 text-center text-muted">Nenhuma oferta de troca disponível no momento.</div>';
+            return;
+        }
+
+        let listingsHtml = '';
+        const userCache = {}; 
+
+        for (const doc of snapshot.docs) {
+            const data = doc.data();
+            
+            if (!userCache[data.vendedorUid]) {
+                userCache[data.vendedorUid] = await getUsernameByUid(data.vendedorUid);
+            }
+            const vendedorName = userCache[data.vendedorUid];
+
+            listingsHtml += createListingCard(doc, data, vendedorName);
+        }
+
+        container.innerHTML = listingsHtml;
+
+    } catch (error) {
+        console.error("Erro CRÍTICO ao carregar ofertas de troca:", error);
+        container.innerHTML = '<div class="col-12 text-center text-danger"><i class="fas fa-exclamation-triangle me-2"></i> Erro de Conexão com o Banco de Dados. Tente novamente mais tarde.</div>';
+    }
+}
 
 
 // =================================================================
@@ -213,11 +256,11 @@ function loadGlobalChat() {
     
     if (!chatMessages || !chatInput || !chatSendBtn) return;
 
-    if (!currentUsername) {
+    if (!currentUserUid || !currentUsername) {
         chatInput.placeholder = "Você precisa estar logado para enviar mensagens.";
         chatInput.disabled = true;
         chatSendBtn.disabled = true;
-        chatMessages.innerHTML = '<p class="text-center text-danger">Por favor, faça login para acessar o chat global.</p>';
+        document.getElementById('chat-status').textContent = 'Login Necessário';
         return;
     }
     
@@ -225,8 +268,9 @@ function loadGlobalChat() {
     chatInput.placeholder = `Escreva sua mensagem como ${currentUsername}...`;
     chatInput.disabled = false;
     chatSendBtn.disabled = false;
+    document.getElementById('chat-status').textContent = 'Ativo';
 
-    // Remove listener antigo se houver
+    // Remove listener antigo
     if (globalChatListener) globalChatListener();
 
     // Carrega Mensagens Existentes e Monitora Novas Mensagens
@@ -236,13 +280,13 @@ function loadGlobalChat() {
         .onSnapshot(async (snapshot) => {
             chatMessages.innerHTML = '';
             const reversedDocs = snapshot.docs.reverse(); 
-            const nameCache = {}; // Cache de nomes para esta sessão do chat
+            const nameCache = {}; 
 
             for (const doc of reversedDocs) {
                 const data = doc.data();
                 const senderUid = data.uid;
                 
-                // Busca o nome, usando o cache de usernames
+                // Busca o nome, usando o cache
                 if (!nameCache[senderUid]) {
                     nameCache[senderUid] = await getUsernameByUid(senderUid);
                 }
@@ -303,43 +347,22 @@ function loadGlobalChat() {
     });
 }
 
-// Placeholder para chat privado (chamado de detalhes.html)
-function startPrivateChat(targetUid) {
-    if (!currentUserUid) {
-        alert("Você deve estar logado para iniciar um chat privado.");
-        return;
-    }
-    // A implementação futura redirecionará para a sala de chat com a pessoa
-    window.location.href = `chat_privado.html?user=${targetUid}`;
-}
-window.startPrivateChat = startPrivateChat;
-
 
 // =================================================================
-// 5. CAIXA DE ENTRADA (caixa_de_entrada.html) - NOVO BLOCO
+// 5. CAIXA DE ENTRADA (caixa_de_entrada.html)
 // =================================================================
 
-/**
- * Carrega a lista de conversas privadas do usuário logado.
- */
-async function loadInbox() {
+function loadInbox() {
     const inboxList = document.getElementById('inbox-list');
     if (!inboxList || !currentUserUid) return;
 
-    // Mensagem de loading
     inboxList.innerHTML = '<li class="list-group-item text-center py-5"><i class="fas fa-spinner fa-spin me-2"></i> Buscando conversas...</li>';
     
-    // A. Busca todas as conversas onde o usuário é o participante 1 OU o participante 2
-    // Esta lógica é complexa para o Firestore sem índices compostos.
-    // Vamos buscar todas as conversas e filtrar o lado do cliente (menos eficiente, mas funcional para demonstração).
-    // NO PROJETO REAL: Use uma coleção /users/UID/conversas e a regra de segurança do Firebase.
-
-    try {
-        // Assume que a coleção é 'conversas' e o ID é uma combinação de UIDs
-        const snapshot = await db.collection('conversas')
-            .where('participantes', 'array-contains', currentUserUid)
-            .orderBy('ultimaMensagem', 'desc')
-            .get();
+    // Monitora as conversas em tempo real
+    db.collection('conversas')
+        .where('participantes', 'array-contains', currentUserUid)
+        .orderBy('ultimaMensagem', 'desc')
+        .onSnapshot(async (snapshot) => {
 
         if (snapshot.empty) {
             inboxList.innerHTML = '<li class="list-group-item text-center text-muted py-5"><i class="fas fa-info-circle me-2"></i> Sua caixa de entrada está vazia.</li>';
@@ -347,15 +370,13 @@ async function loadInbox() {
         }
 
         let inboxHtml = '';
-        const userCache = {}; // Cache de usernames
+        const userCache = {};
 
         for (const doc of snapshot.docs) {
             const data = doc.data();
             
-            // Determina quem é o outro participante
             const otherUid = data.participantes.find(uid => uid !== currentUserUid);
             
-            // Busca o nome do outro participante
             if (!userCache[otherUid]) {
                 userCache[otherUid] = await getUsernameByUid(otherUid);
             }
@@ -363,14 +384,14 @@ async function loadInbox() {
             
             const lastMessage = data.ultimaMensagemTexto || 'Nenhuma mensagem.';
             const messageTime = data.ultimaMensagem ? data.ultimaMensagem.toDate().toLocaleString('pt-BR') : 'Sem data';
-            const unread = data.naoLidas && data.naoLidas[currentUserUid] > 0;
-            const unreadBadge = unread ? `<span class="badge bg-danger rounded-pill">${data.naoLidas[currentUserUid]}</span>` : '';
+            const unreadCount = (data.naoLidas && data.naoLidas[currentUserUid]) ? data.naoLidas[currentUserUid] : 0;
+            const unreadBadge = unreadCount > 0 ? `<span class="badge bg-danger rounded-pill">${unreadCount}</span>` : '';
 
             inboxHtml += `
                 <li class="list-group-item conversation-item d-flex justify-content-between align-items-center" 
                     onclick="window.location.href='chat_privado.html?conversationId=${doc.id}'">
                     <div>
-                        ${unread ? '<span class="unread-indicator"></span>' : ''}
+                        ${unreadCount > 0 ? '<span class="unread-indicator"></span>' : ''}
                         <strong>Conversa com: ${otherName}</strong> 
                         <span class="text-muted small ms-2">${unreadBadge}</span>
                     </div>
@@ -383,11 +404,10 @@ async function loadInbox() {
         }
 
         inboxList.innerHTML = inboxHtml;
-
-    } catch (error) {
-        console.error("Erro ao carregar a caixa de entrada:", error);
+    }, (error) => {
+        console.error("Erro no listener da caixa de entrada:", error);
         inboxList.innerHTML = '<li class="list-group-item text-center text-danger py-5"><i class="fas fa-exclamation-triangle me-2"></i> Erro ao carregar as conversas.</li>';
-    }
+    });
 }
 
 
@@ -395,47 +415,99 @@ async function loadInbox() {
 // 6. SISTEMA DE DOAÇÃO PIX
 // =================================================================
 
-// ... (setupDonationModal - Mantido) ...
+function setupDonationModal() {
+    const modalElement = document.getElementById('donationModal');
+    if (!modalElement) return;
+
+    const hasSeenDonation = sessionStorage.getItem('ivad_donation_seen');
+    const pixKeyDisplay = document.getElementById('pixKeyDisplay');
+    const copyPixKeyBtn = document.getElementById('copyPixKeyBtn');
+    const closeAndContinueBtn = document.getElementById('closeAndContinueBtn');
+
+    if (pixKeyDisplay) pixKeyDisplay.value = PIX_KEY;
+
+    if (copyPixKeyBtn) {
+        copyPixKeyBtn.addEventListener('click', () => {
+            navigator.clipboard.writeText(PIX_KEY).then(() => {
+                const originalText = copyPixKeyBtn.innerHTML;
+                copyPixKeyBtn.innerHTML = '<i class="fas fa-check"></i> Copiado!';
+                setTimeout(() => { copyPixKeyBtn.innerHTML = originalText; }, 2000);
+            });
+        });
+    }
+
+    if (!hasSeenDonation) {
+        const donationModal = new bootstrap.Modal(modalElement, {
+            backdrop: 'static', 
+            keyboard: false 
+        }); 
+        donationModal.show();
+        
+        const setSeen = () => {
+            sessionStorage.setItem('ivad_donation_seen', 'true');
+        };
+
+        modalElement.addEventListener('hidden.bs.modal', setSeen);
+        if (closeAndContinueBtn) {
+            closeAndContinueBtn.addEventListener('click', setSeen);
+        }
+    }
+    
+    document.querySelectorAll('#donationModal .btn[data-amount]').forEach(btn => {
+        btn.addEventListener('click', function() {
+            navigator.clipboard.writeText(PIX_KEY).then(() => {
+                 alert(`Chave Pix copiada! Sugestão de R$ ${this.getAttribute('data-amount')}. Utilize-a em seu app de banco. Obrigado!`);
+            });
+        });
+    });
+}
 
 
 // =================================================================
 // 7. LÓGICA DA PÁGINA DE PESQUISA (pesquisa.html)
 // =================================================================
 
-// ... (setupSearchPage e executeSearch - Mantido) ...
+const searchForm = document.getElementById('search-form');
+const searchInput = document.getElementById('searchInput');
+const categoryFilter = document.getElementById('categoryFilter');
+const listingsResultsContainer = document.getElementById('listings-results');
+const resultsCountSpan = document.getElementById('results-count');
 
-// =================================================================
-// 8. SETUP FINAL: CHAMADAS AO CARREGAR O DOM
-// =================================================================
 
-document.addEventListener('DOMContentLoaded', () => {
-    // Configura o sistema de doação Pix
-    if (document.getElementById('donationModal')) {
-        setupDonationModal();
+function setupSearchPage() {
+    if (!searchForm || !listingsResultsContainer) return;
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const categoryParam = urlParams.get('category');
+    const searchParam = urlParams.get('q');
+
+    if (categoryParam) {
+        categoryFilter.value = categoryParam;
     }
-    
-    // Configura a página de pesquisa, se os elementos existirem
-    if (document.getElementById('search-form')) {
-        setupSearchPage();
-    }
-    
-    // Carrega ofertas de troca na index.html, se o botão existir
-    const loadBtn = document.getElementById('loadExchangeBtn');
-    if (loadBtn && typeof loadExchangeListings === 'function') {
-        loadBtn.addEventListener('click', loadExchangeListings);
-        loadExchangeListings(); 
+    if (searchParam) {
+        searchInput.value = searchParam;
     }
 
-    // Configura o chat global, se estiver na página dedicada
-    if (document.getElementById('chat-messages') && currentUserUid) {
-        // A função loadGlobalChat é chamada dentro de auth.onAuthStateChanged
+    if (categoryParam || searchParam) {
+        executeSearch(searchParam, categoryParam);
     }
     
-    // Configura a caixa de entrada, se estiver na página dedicada
-    if (document.getElementById('inbox-list') && currentUserUid) {
-        // A função loadInbox é chamada dentro de auth.onAuthStateChanged
-    }
-    
-});
+    searchForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const term = searchInput.value.trim();
+        const category = categoryFilter.value;
+        
+        const newUrl = new URL(window.location.href);
+        newUrl.searchParams.set('q', term);
+        newUrl.searchParams.set('category', category);
+        window.history.replaceState({}, '', newUrl);
 
-console.log("script.js carregado: Lógica corrigida, Chat Global e Caixa de Entrada implementados.");
+        executeSearch(term, category);
+    });
+}
+
+async function executeSearch(searchTerm, category) {
+    listingsResultsContainer.innerHTML = '<div class="col-12 text-center text-primary"><i class="fas fa-spinner fa-spin me-2"></i> Buscando anúncios...</div>';
+    resultsCountSpan.textContent = '...';
+
+    let query 

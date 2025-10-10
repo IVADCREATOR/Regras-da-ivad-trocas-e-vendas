@@ -1,241 +1,254 @@
-// ==== CONFIG ====
-// Cole seu firebaseConfig abaixo
-const firebaseConfig = /* COLE AQUI */;
-const OWNER_UID = "COLE_AQUI_SEU_UID";
+// =================================================================
+// 1. VARIÁVEIS DE CONFIGURAÇÃO E INICIALIZAÇÃO DO FIREBASE
+// =================================================================
 
-firebase.initializeApp(firebaseConfig);
+// Supondo que 'firebaseConfig' e 'app' foram inicializados no index.html
+// e que as bibliotecas SDKs (app, auth, firestore) foram carregadas.
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-// ===== UI Refs =====
-const signedOutUI = document.getElementById('signedOutUI');
-const signedInUI = document.getElementById('signedInUI');
-const userLabel = document.getElementById('userLabel');
-const myGold = document.getElementById('myGold');
-const playerName = document.getElementById('playerName');
-const playerGold = document.getElementById('playerGold');
-const playerInfo = document.getElementById('playerInfo');
-const workMsg = document.getElementById('workMsg');
-const rouletteMsg = document.getElementById('rouletteMsg');
-const slotMsg = document.getElementById('slotMsg');
-const betMsg = document.getElementById('betMsg');
-const rankList = document.getElementById('rankList');
+// Elementos da UI
+const loginModalElement = document.getElementById('loginModal');
+const loginModal = loginModalElement ? new bootstrap.Modal(loginModalElement) : null;
+const loginBtn = document.getElementById('loginBtn');
+const registerBtn = document.getElementById('registerBtn');
+const logoutBtn = document.getElementById('logoutBtn'); // Necessário adicionar este botão na navbar do index.html
+const inputEmail = document.getElementById('inputEmail');
+const inputPassword = document.getElementById('inputPassword');
+const chatSendBtn = document.getElementById('chat-send-btn');
+const chatInput = document.getElementById('chat-input');
+const chatMessages = document.getElementById('chat-messages');
+const chatStatus = document.getElementById('chat-status');
+const myUidDisplay = document.getElementById('my-uid-display'); // Adicionar um elemento para mostrar o UID
 
-// Tabs
-function showTab(id){
-  ['regrasTab','jogoTab','rankTab','cassinoTab'].forEach(t=>{
-    const el=document.getElementById(t);
-    if(el) el.style.display=(t===id?'block':'none');
-  });
-}
-document.querySelectorAll('.tabbtn').forEach(b=>{
-  b.addEventListener('click',e=>{
-    document.querySelectorAll('.tabbtn').forEach(x=>x.classList.remove('active'));
-    e.currentTarget.classList.add('active');
-    showTab(e.currentTarget.dataset.tab);
-  });
-});
+let currentUserUid = null;
 
-// detect initial tab
-if(document.getElementById('regrasTab')) showTab('regrasTab');
-else if(document.getElementById('cassinoTab')) showTab('cassinoTab');
+// =================================================================
+// 2. FUNÇÕES DE AUTENTICAÇÃO
+// =================================================================
 
-// helper
-function usernameToEmail(u){ return `${u}@ivad.local`; }
-function validUsername(u){ return /^[a-zA-Z0-9_]{3,20}$/.test(u); }
-function escapeHtml(s){ return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+/**
+ * Realiza o login de um usuário com e-mail e senha.
+ */
+function handleLogin() {
+    const email = inputEmail.value;
+    const password = inputPassword.value;
 
-// ===== Auth =====
-document.getElementById('btnSignup').onclick = async ()=>{
-  const uname = document.getElementById('username').value.trim();
-  const pw = document.getElementById('pwd').value;
-  if(!validUsername(uname)){ alert('Nome inválido'); return; }
-  if(pw.length<6){ alert('Senha precisa ≥6'); return; }
-  try{
-    const q = await db.collection('users').where('displayName','==',uname).limit(1).get();
-    if(!q.empty){ alert('Nome já existe'); return; }
-    const syntheticEmail = usernameToEmail(uname);
-    const cred = await auth.createUserWithEmailAndPassword(syntheticEmail,pw);
-    const user = cred.user;
-    await db.collection('users').doc(user.uid).set({uid:user.uid,email:syntheticEmail,displayName:uname,gold:0,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
-    alert('Conta criada! Você já está logado.');
-  }catch(err){ console.error(err); alert('Erro: '+err.message); }
-};
-
-document.getElementById('btnLogin').onclick = async ()=>{
-  const uname = document.getElementById('username').value.trim();
-  const pw = document.getElementById('pwd').value;
-  if(!validUsername(uname)){ alert('Nome inválido'); return; }
-  if(pw.length<6){ alert('Senha precisa ≥6'); return; }
-  try{
-    const email = usernameToEmail(uname);
-    await auth.signInWithEmailAndPassword(email,pw);
-  }catch(err){ console.error(err); alert('Erro ao entrar: '+err.message); }
-};
-
-document.getElementById('btnLogout').onclick = ()=>auth.signOut();
-
-// Auth state
-auth.onAuthStateChanged(user=>{
-  if(user){
-    signedOutUI.style.display='none';
-    signedInUI.style.display='block';
-    userLabel.textContent = 'Conectado: '+(user.email?user.email.split('@')[0]:user.uid);
-    if(user.uid===OWNER_UID) document.getElementById('ownerPanel').style.display='block';
-    else document.getElementById('ownerPanel').style.display='none';
-    updateMyInfo(user.uid);
-  }else{
-    signedOutUI.style.display='block';
-    signedInUI.style.display='none';
-    document.getElementById('ownerPanel').style.display='none';
-    myGold.textContent='0';
-    if(playerInfo) playerInfo.style.display='none';
-  }
-});
-
-// ===== User Info =====
-async function updateMyInfo(uid){
-  const doc = await db.collection('users').doc(uid).get();
-  if(doc.exists){
-    const data = doc.data();
-    myGold.textContent = data.gold||0;
-    if(playerInfo){
-      playerName.textContent = data.displayName;
-      playerGold.textContent = data.gold||0;
-      playerInfo.style.display='block';
+    if (!email || !password) {
+        alert('Por favor, preencha E-mail e Senha.');
+        return;
     }
-  }
+
+    auth.signInWithEmailAndPassword(email, password)
+        .then((userCredential) => {
+            console.log("Login bem-sucedido:", userCredential.user.uid);
+            // O auth.onAuthStateChanged cuidará da atualização da UI
+            alert('Login realizado com sucesso!');
+            if (loginModal) loginModal.hide();
+
+        })
+        .catch((error) => {
+            console.error("Erro no login:", error);
+            alert(`Erro no Login: ${error.message}`);
+        });
 }
 
-// ===== Work Button (index.html) =====
-let lastWork=0;
-const btnWork=document.getElementById('btnWork');
-if(btnWork){
-  btnWork.onclick=async ()=>{
-    const user = auth.currentUser;
-    if(!user){ alert('Faça login'); return; }
-    const now = Date.now();
-    if(now-lastWork<5000){ workMsg.textContent='Aguarde 5s'; return; }
-    lastWork=now;
-    try{
-      await addGold(user.uid,1);
-      updateMyInfo(user.uid);
-      workMsg.textContent='+1 gold!';
-      setTimeout(()=>workMsg.textContent='',1200);
-      reloadRank();
-    }catch(err){ alert(err); }
-  };
+/**
+ * Realiza o cadastro de um novo usuário com e-mail e senha.
+ */
+function handleRegister() {
+    const email = inputEmail.value;
+    const password = inputPassword.value;
+
+    if (password.length < 6) {
+        alert('A senha deve ter pelo menos 6 caracteres.');
+        return;
+    }
+
+    auth.createUserWithEmailAndPassword(email, password)
+        .then((userCredential) => {
+            console.log("Cadastro bem-sucedido:", userCredential.user.uid);
+            alert('Cadastro e Login realizados com sucesso! Bem-vindo ao IVAD.');
+            if (loginModal) loginModal.hide();
+
+        })
+        .catch((error) => {
+            console.error("Erro no cadastro:", error);
+            alert(`Erro no Cadastro: ${error.message}`);
+        });
 }
 
-// ===== CASINO =====
-async function addGold(uid,amount){
-  const userRef = db.collection('users').doc(uid);
-  return db.runTransaction(async tx=>{
-    const d = await tx.get(userRef);
-    if(!d.exists) throw 'Usuário não encontrado';
-    const newGold = (d.data().gold||0)+amount;
-    if(newGold<0) throw 'Gold insuficiente';
-    tx.update(userRef,{gold:newGold});
-    return newGold;
-  });
+/**
+ * Realiza o logout do usuário.
+ */
+function handleLogout() {
+    auth.signOut()
+        .then(() => {
+            console.log("Logout bem-sucedido.");
+            alert('Você foi desconectado.');
+            // O auth.onAuthStateChanged cuidará da atualização da UI
+        })
+        .catch((error) => {
+            console.error("Erro no logout:", error);
+            alert(`Erro ao fazer Logout: ${error.message}`);
+        });
 }
 
-// Roleta
-const btnRoulette=document.getElementById('btnRoulette');
-if(btnRoulette){
-  btnRoulette.onclick=async ()=>{
-    const user = auth.currentUser;
-    if(!user){ alert('Faça login'); return; }
-    try{
-      await addGold(user.uid,-1);
-      const win=Math.random()<0.5;
-      if(win) await addGold(user.uid,2);
-      rouletteMsg.textContent = win ? '🎉 Ganhou 2 gold!' : '💀 Perdeu 1 gold.';
-      updateMyInfo(user.uid);
-    }catch(err){ alert(err); }
-  };
+// =================================================================
+// 3. LÓGICA DO CHAT GLOBAL EM TEMPO REAL
+// =================================================================
+
+/**
+ * Renderiza uma nova mensagem na área de chat.
+ * @param {string} senderEmail E-mail do remetente.
+ * @param {string} message Conteúdo da mensagem.
+ * @param {string} senderUid UID do remetente.
+ */
+function displayMessage(senderEmail, message, senderUid) {
+    const newMessage = document.createElement('div');
+    newMessage.className = 'chat-message';
+    
+    // Destaca o nome se for o usuário logado
+    const isMe = currentUserUid && currentUserUid === senderUid;
+    const emailClass = isMe ? 'my-uid-highlight' : '';
+
+    // Utiliza o UID do usuário logado na variável global para destaque
+    newMessage.innerHTML = `<strong class="${emailClass}">${senderEmail}:</strong> ${message}`;
+    
+    chatMessages.appendChild(newMessage);
+    // Rola para a mensagem mais recente
+    chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
-// Slot
-const btnSlot=document.getElementById('btnSlot');
-if(btnSlot){
-  btnSlot.onclick=async ()=>{
-    const user = auth.currentUser;
-    if(!user){ alert('Faça login'); return; }
-    try{
-      await addGold(user.uid,-1);
-      const symbols=['🍒','🍋','🔔','💎'];
-      const s=[symbols[Math.floor(Math.random()*4)],symbols[Math.floor(Math.random()*4)],symbols[Math.floor(Math.random()*4)]];
-      let msg=s.join(' ');
-      let win=(s[0]===s[1] && s[1]===s[2]);
-      if(win) await addGold(user.uid,5);
-      slotMsg.textContent=win ? msg+' 🎉 Ganhou 5 gold!' : msg+' 💀 Perdeu 1 gold.';
-      updateMyInfo(user.uid);
-    }catch(err){ alert(err); }
-  };
+/**
+ * Escuta novas mensagens no Firestore e as exibe.
+ */
+function setupGlobalChatListener() {
+    // Referência à coleção de chat
+    const chatRef = db.collection('chat-global').orderBy('timestamp', 'asc');
+
+    // Listener em tempo real
+    chatRef.onSnapshot(snapshot => {
+        snapshot.docChanges().forEach(change => {
+            if (change.type === 'added') {
+                const messageData = change.doc.data();
+                displayMessage(messageData.email, messageData.text, messageData.uid);
+            }
+        });
+    }, error => {
+        console.error("Erro ao escutar o Chat Global:", error);
+        if (chatStatus) {
+            chatStatus.textContent = "Erro ao carregar o chat. Verifique as regras do Firestore.";
+            chatStatus.classList.remove('text-success');
+            chatStatus.classList.add('text-danger');
+        }
+    });
 }
 
-// Coin Flip
-const btnBet=document.getElementById('btnBet');
-if(btnBet){
-  btnBet.onclick=async ()=>{
-    const user = auth.currentUser;
-    if(!user){ alert('Faça login'); return; }
-    const amt=Number(document.getElementById('betAmount').value);
-    const choice=Number(document.getElementById('betChoice').value);
-    if(!amt || amt<=0){ alert('Valor inválido'); return; }
-    try{
-      await addGold(user.uid,-amt);
-      const result=Math.random()<0.5?1:0;
-      const win=(result===choice);
-      if(win) await addGold(user.uid,amt*2);
-      betMsg.textContent = win ? `🎉 Ganhou ${amt*2} gold!` : `💀 Perdeu ${amt} gold.`;
-      updateMyInfo(user.uid);
-    }catch(err){ alert(err); }
-  };
+/**
+ * Envia uma nova mensagem para o Firestore.
+ */
+function handleChatSend() {
+    const text = chatInput.value.trim();
+    if (!text || !currentUserUid) return;
+
+    // Dados da mensagem
+    const messageData = {
+        uid: currentUserUid,
+        email: auth.currentUser.email,
+        text: text,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp() // Para ordenação
+    };
+
+    db.collection('chat-global').add(messageData)
+        .then(() => {
+            chatInput.value = ''; // Limpa o input após o envio
+            console.log("Mensagem enviada com sucesso!");
+        })
+        .catch((error) => {
+            console.error("Erro ao enviar mensagem:", error);
+            alert("Erro ao enviar mensagem. Tente novamente.");
+        });
 }
 
-// ===== Rank =====
-async function reloadRank(){
-  if(!rankList) return;
-  rankList.innerHTML='<p class="small">Carregando...</p>';
-  try{
-    const snap=await db.collection('users').orderBy('gold','desc').limit(50).get();
-    if(snap.empty){ rankList.innerHTML='<p class="small">Nenhum jogador ainda.</p>'; return; }
-    let html='<ol>';
-    snap.forEach(doc=>{const d=doc.data(); html+=`<li style="margin:.4rem 0"><strong>${escapeHtml(d.displayName||d.email||'user')}</strong> — ${Number(d.gold||0)} gold</li>`;});
-    html+='</ol>';
-    rankList.innerHTML=html;
-  }catch(err){ rankList.innerHTML='<p class="small">Erro ao carregar ranking</p>'; }
-}
-reloadRank(); setInterval(reloadRank,10000);
 
-// ===== OWNER ACTIONS =====
-const btnGive=document.getElementById('btnGive');
-if(btnGive){
-  btnGive.onclick=async ()=>{
-    const user = auth.currentUser;
-    if(!user||user.uid!==OWNER_UID){ alert('Somente dono'); return; }
-    const name=document.getElementById('adminName').value.trim();
-    const amt=Number(document.getElementById('adminAmount').value||0);
-    if(!name||!amt){ alert('Nome e quantidade necessários'); return; }
-    const q=await db.collection('users').where('displayName','==',name).limit(1).get();
-    if(q.empty){ alert('Usuário não encontrado'); return; }
-    const doc=q.docs[0];
-    await db.collection('users').doc(doc.id).update({gold:Number(doc.data().gold||0)+amt});
-    alert('Atualizado'); reloadRank();
-  };
-}
+// =================================================================
+// 4. GERENCIAMENTO DO ESTADO DA APLICAÇÃO (UI/AUTH)
+// =================================================================
 
-const btnReset=document.getElementById('btnReset');
-if(btnReset){
-  btnReset.onclick=async ()=>{
-    const user = auth.currentUser;
-    if(!user||user.uid!==OWNER_UID){ alert('Somente dono'); return; }
-    if(!confirm('Resetar gold de todos para 0?')) return;
-    const snap = await db.collection('users').get();
-    const batch=db.batch();
-    snap.forEach(d=>batch.update(db.collection('users').doc(d.id),{gold:0}));
-    await batch.commit(); alert('Resetado'); reloadRank();
-  };
-}
+/**
+ * Listener principal do Firebase Auth. Atualiza a UI e habilita/desabilita o chat.
+ */
+auth.onAuthStateChanged(user => {
+    if (user) {
+        // Usuário logado
+        currentUserUid = user.uid;
+        
+        // 1. Atualiza o Status do Chat
+        if (chatStatus) {
+            chatStatus.innerHTML = `Logado como: <strong>${user.email}</strong> (UID: <span class="my-uid-highlight">${user.uid}</span>). Chat Habilitado.`;
+            chatStatus.classList.remove('text-danger');
+            chatStatus.classList.add('text-success');
+        }
+
+        // 2. Habilita Elementos
+        if (chatSendBtn) chatSendBtn.disabled = false;
+        
+        // 3. Atualiza Navbar para Logout
+        const loginRegisterBtn = document.querySelector('[data-bs-target="#loginModal"]');
+        if (loginRegisterBtn) {
+            loginRegisterBtn.innerHTML = '<i class="fas fa-sign-out-alt me-1"></i> Sair';
+            loginRegisterBtn.removeEventListener('click', loginModal.show);
+            loginRegisterBtn.addEventListener('click', handleLogout);
+        }
+        
+    } else {
+        // Usuário deslogado
+        currentUserUid = null;
+        
+        // 1. Atualiza o Status do Chat
+        if (chatStatus) {
+            chatStatus.textContent = "Faça Login para enviar mensagens.";
+            chatStatus.classList.remove('text-success');
+            chatStatus.classList.add('text-danger');
+        }
+
+        // 2. Desabilita Elementos
+        if (chatSendBtn) chatSendBtn.disabled = true;
+
+        // 3. Atualiza Navbar para Login
+        const loginRegisterBtn = document.querySelector('[data-bs-target="#loginModal"]');
+        if (loginRegisterBtn) {
+            loginRegisterBtn.innerHTML = '<i class="fas fa-user me-1"></i> Entrar / Cadastrar';
+            loginRegisterBtn.removeEventListener('click', handleLogout);
+            if (loginModal) loginRegisterBtn.addEventListener('click', () => loginModal.show());
+        }
+        
+        // Limpa o chat
+        if (chatMessages) chatMessages.innerHTML = `<div class="chat-message text-muted"><small>Bem-vindo ao chat global! Mensagens em tempo real aparecerão aqui.</small></div>`;
+    }
+});
+
+
+// =================================================================
+// 5. EVENT LISTENERS
+// =================================================================
+
+// Chama a função principal de escuta de chat assim que o script é executado
+setupGlobalChatListener();
+
+// Eventos do Modal de Autenticação
+if (loginBtn) loginBtn.addEventListener('click', handleLogin);
+if (registerBtn) registerBtn.addEventListener('click', handleRegister);
+
+// Eventos de Chat
+if (chatSendBtn) chatSendBtn.addEventListener('click', handleChatSend);
+// Permite enviar mensagem com a tecla Enter
+if (chatInput) chatInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter' && !chatSendBtn.disabled) {
+        handleChatSend();
+    }
+});
+
+// Inicialização da aplicação
+console.log("script.js carregado e inicializado.");

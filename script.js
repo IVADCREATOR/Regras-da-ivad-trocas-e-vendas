@@ -1,370 +1,463 @@
 // =================================================================
-// 1. INICIALIZAÇÃO DO FIREBASE E VARIÁVEIS GLOBAIS
+// script.js - Lógica Central do IVAD Marketplace
 // =================================================================
 
+// 1. Variáveis Globais e Inicialização do Firebase
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-// Elementos da Interface
-const authBtn = document.getElementById('authBtn'); 
-const loginBtn = document.getElementById('loginBtn');
-const registerBtn = document.getElementById('registerBtn');
-const loginModalElement = document.getElementById('loginModal');
-const loginModal = loginModalElement ? new bootstrap.Modal(loginModalElement) : null; 
-
-const inputUsername = document.getElementById('inputUsername'); 
-const inputEmail = document.getElementById('inputEmail');
-const inputPassword = document.getElementById('inputPassword');
-
-const chatSendBtn = document.getElementById('chat-send-btn');
-const chatInput = document.getElementById('chat-input');
-const chatMessages = document.getElementById('chat-messages');
-const chatStatus = document.getElementById('chat-status');
-const myUidDisplay = document.getElementById('my-uid-display');
-
-let currentUserUid = null; 
-let currentUsername = 'Anônimo'; 
+let currentUserUid = null;
+let currentUsername = null;
+let globalChatListener = null;
 
 // =================================================================
-// 2. FUNÇÕES DE AUTENTICAÇÃO E PERFIL
+// 2. FUNÇÕES DE AUTENTICAÇÃO (LOGIN / REGISTRO)
 // =================================================================
 
-/**
- * Busca o Username de um UID específico no Firestore.
- */
+// Função utilitária para obter nome de usuário
 async function getUsernameByUid(uid) {
-    if (!uid) return 'Anônimo';
+    if (!uid) return 'Desconhecido';
     try {
         const userDoc = await db.collection('users').doc(uid).get();
-        const shortUid = uid.substring(0, 4) + '...'; 
-        return userDoc.exists && userDoc.data().username ? userDoc.data().username : `Usuário (UID: ${shortUid})`;
+        return userDoc.exists && userDoc.data().username ? userDoc.data().username : 'Usuário IVAD';
     } catch (error) {
         console.error("Erro ao buscar username:", error);
-        return 'Erro ao buscar nome';
+        return 'Erro na Busca';
     }
 }
 
-/**
- * Realiza o login do usuário.
- */
-function handleLogin() {
-    const email = inputEmail.value.trim();
-    const password = inputPassword.value;
-
-    if (!email || !password) {
-        alert('Por favor, preencha E-mail e Senha.');
-        return;
-    }
-
-    loginBtn.disabled = true;
-    registerBtn.disabled = true;
-
-    auth.signInWithEmailAndPassword(email, password)
-        .then(() => {
-            console.log("Login bem-sucedido.");
-            if (loginModal) loginModal.hide();
-        })
-        .catch((error) => {
-            console.error("Erro no login:", error);
-            alert(`Falha no Login: ${error.message}`);
-        })
-        .finally(() => {
-            loginBtn.disabled = false;
-            registerBtn.disabled = false;
+// Manipulador do botão principal de autenticação
+document.addEventListener('DOMContentLoaded', () => {
+    const authBtn = document.getElementById('authBtn');
+    if (authBtn) {
+        authBtn.addEventListener('click', () => {
+            if (currentUserUid) {
+                // Se logado, é o botão de Logout
+                auth.signOut().then(() => {
+                    alert("Você foi desconectado.");
+                }).catch(error => {
+                    console.error("Erro ao sair:", error);
+                    alert("Erro ao tentar sair.");
+                });
+            } else {
+                // Se deslogado, abre o modal
+                const loginModal = new bootstrap.Modal(document.getElementById('loginModal'));
+                loginModal.show();
+            }
         });
-}
+    }
 
-/**
- * Realiza o cadastro de um novo usuário.
- */
-async function handleRegister() {
-    const email = inputEmail.value.trim();
-    const password = inputPassword.value;
-    const username = inputUsername.value.trim(); 
+    // Lógica dentro do Modal de Login/Registro
+    const registerBtn = document.getElementById('registerBtn');
+    const loginBtn = document.getElementById('loginBtn');
     
-    if (!email || !password || !username) {
-        alert('Por favor, preencha E-mail, Senha e Nome de Usuário.');
+    if (registerBtn) {
+        registerBtn.addEventListener('click', handleRegister);
+    }
+    if (loginBtn) {
+        loginBtn.addEventListener('click', handleLogin);
+    }
+});
+
+async function handleRegister() {
+    const username = document.getElementById('inputUsername').value;
+    const email = document.getElementById('inputEmail').value;
+    const password = document.getElementById('inputPassword').value;
+
+    if (!username || !email || !password) {
+        alert("Preencha todos os campos para registro.");
         return;
     }
-    if (password.length < 6) {
-        alert('A senha deve ter pelo menos 6 caracteres.');
-        return;
-    }
-
-    loginBtn.disabled = true;
-    registerBtn.disabled = true;
-
+    
     try {
-        // 1. VERIFICAÇÃO DE UNICIDADE DO USERNAME
-        const usernameLower = username.toLowerCase();
-        const usernameQuery = await db.collection('usernames').doc(usernameLower).get();
-        
-        if (usernameQuery.exists) {
-            alert(`O nome de usuário "${username}" já está em uso. Por favor, escolha outro.`);
-            return;
-        }
-
-        // 2. CRIAÇÃO DO USUÁRIO NO AUTH
         const userCredential = await auth.createUserWithEmailAndPassword(email, password);
         const user = userCredential.user;
 
-        // 3. ARMAZENAMENTO NO FIRESTORE (users)
+        // Salva o nome de usuário no Firestore
         await db.collection('users').doc(user.uid).set({
             username: username,
-            email: email, 
+            email: email,
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
 
-        // 4. REGISTRO DO USERNAME
-        await db.collection('usernames').doc(usernameLower).set({
-            uid: user.uid
-        });
+        alert(`Bem-vindo, ${username}! Seu registro foi concluído.`);
+        // Fecha o modal de login
+        const modalInstance = bootstrap.Modal.getInstance(document.getElementById('loginModal'));
+        if (modalInstance) modalInstance.hide();
 
-        console.log("Cadastro bem-sucedido:", user.uid);
-        alert('Cadastro realizado! Seja bem-vindo, ' + username + '.');
-        if (loginModal) loginModal.hide();
-        
+
     } catch (error) {
-        console.error("Erro no cadastro:", error);
-        alert(`Falha no Cadastro: ${error.message}`);
-    } finally {
-        loginBtn.disabled = false;
-        registerBtn.disabled = false;
+        console.error("Erro no Registro:", error);
+        alert(`Falha no Registro: ${error.message}`);
     }
 }
 
-/**
- * Realiza o logout do usuário.
- */
-function handleLogout() {
-    auth.signOut()
-        .then(() => {
-            console.log("Logout bem-sucedido.");
-        })
-        .catch((error) => {
-            console.error("Erro no logout:", error);
-            alert(`Erro ao desconectar: ${error.message}`);
-        });
-}
+async function handleLogin() {
+    const email = document.getElementById('inputEmail').value;
+    const password = document.getElementById('inputPassword').value;
 
-// =================================================================
-// 3. LÓGICA DO CHAT GLOBAL EM TEMPO REAL
-// =================================================================
-// [Lógica do Chat Global Omitida para brevidade - Permanece Inalterada]
-async function displayMessage(senderUid, message, timestamp) {
-    const username = await getUsernameByUid(senderUid); 
-    const newMessage = document.createElement('div');
-    newMessage.className = 'chat-message';
-    const isMe = currentUserUid && currentUserUid === senderUid;
-    const usernameClass = isMe ? 'my-uid-highlight' : '';
-    
-    let timeString = '';
-    if (timestamp && timestamp.toDate) {
-        const date = timestamp.toDate();
-        timeString = date.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
+    try {
+        await auth.signInWithEmailAndPassword(email, password);
+        alert("Login efetuado com sucesso!");
+        // Fecha o modal de login
+        const modalInstance = bootstrap.Modal.getInstance(document.getElementById('loginModal'));
+        if (modalInstance) modalInstance.hide();
+    } catch (error) {
+        console.error("Erro no Login:", error);
+        alert(`Falha no Login: ${error.message}`);
     }
-
-    newMessage.innerHTML = `<small class="text-muted float-end">${timeString}</small><strong class="${usernameClass} me-2">${username}:</strong><span>${message}</span>`;
-    
-    chatMessages.appendChild(newMessage);
-    if (chatMessages.children.length > 50) {
-        chatMessages.removeChild(chatMessages.firstChild);
-    }
-    chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
-function setupGlobalChatListener() {
-    if (chatMessages) chatMessages.innerHTML = `<div class="chat-message text-muted"><small>Bem-vindo ao chat global! Faça login para participar da conversa.</small></div>`;
-    const chatRef = db.collection('chat-global').orderBy('timestamp', 'asc').limitToLast(50);
+// Listener de Status de Autenticação
+auth.onAuthStateChanged(async (user) => {
+    const authBtn = document.getElementById('authBtn');
+    const uidDisplay = document.getElementById('my-uid-display');
+    const chatSendBtn = document.getElementById('chat-send-btn');
+    const chatStatus = document.getElementById('chat-status');
 
-    chatRef.onSnapshot(snapshot => {
-        snapshot.docChanges().forEach(change => {
-            if (change.type === 'added') {
-                const messageData = change.doc.data();
-                displayMessage(messageData.uid, messageData.text, messageData.timestamp);
-            }
-        });
-    }, error => {
-        console.error("Erro ao conectar no chat global:", error);
-    });
-}
-
-function handleChatSend() {
-    const text = chatInput.value.trim();
-    if (!text || !currentUserUid) return;
-
-    chatSendBtn.disabled = true;
-
-    const messageData = {
-        uid: currentUserUid,
-        text: text,
-        timestamp: firebase.firestore.FieldValue.serverTimestamp()
-    };
-
-    db.collection('chat-global').add(messageData)
-        .then(() => {
-            chatInput.value = '';
-        })
-        .catch((error) => {
-            console.error("Erro ao enviar mensagem:", error);
-            alert("Falha ao enviar mensagem.");
-        })
-        .finally(() => {
-            chatSendBtn.disabled = false;
-        });
-}
-
-
-// =================================================================
-// 4. FUNÇÕES DE TROCA E NEGOCIAÇÃO
-// =================================================================
-
-/**
- * [ATUALIZADO] Inicia o Chat Privado e redireciona para a página dedicada.
- * @param {string} targetUid O UID do vendedor.
- */
-function startPrivateChat(targetUid) {
-    if (currentUserUid === targetUid) {
-        alert('Você não pode negociar consigo mesmo!');
-        return;
-    }
-    if (!currentUserUid) {
-        alert('Faça login para iniciar uma negociação.');
-        if (loginModal) loginModal.show();
-        return;
-    }
-    
-    // REDIRECIONAMENTO CORRETO para a nova página de chat
-    window.location.href = `chat_privado.html?vendedorId=${targetUid}`;
-}
-
-/**
- * Carrega e exibe os anúncios que aceitam trocas.
- */
-function loadExchangeListings() {
-    const exchangeListings = document.getElementById('exchange-listings');
-    exchangeListings.innerHTML = '<div class="col-12 text-center text-primary"><i class="fas fa-spinner fa-spin me-2"></i> Carregando ofertas...</div>';
-
-    db.collection('anuncios')
-      .where('aceitaTroca', '==', true) 
-      .limit(6)
-      .get()
-      .then(snapshot => {
-          exchangeListings.innerHTML = '';
-          if (snapshot.empty) {
-              exchangeListings.innerHTML = '<div class="col-12 text-center text-muted">Nenhuma oferta de troca encontrada no momento.</div>';
-              return;
-          }
-          
-          snapshot.forEach(doc => {
-              const data = doc.data();
-              // Note o uso da função startPrivateChat no botão
-              const cardHtml = `
-                  <div class="col-md-4">
-                      <div class="card product-card shadow-sm border-purple h-100">
-                          <div class="card-body">
-                              <h5 class="card-title text-truncate text-purple-vibrant">${data.titulo || 'Conta de Jogo'}</h5>
-                              <p class="card-text text-secondary fw-bold">Troca por: ${data.interesse || 'Aberto a propostas'}</p>
-                              <span class="badge bg-warning text-dark"><i class="fas fa-exchange-alt me-1"></i> ACEITA TROCA</span>
-                              <p class="card-text mt-2"><small class="text-muted">Anunciante: UID ${data.vendedorUid.substring(0, 4)}...</small></p>
-                              <button class="btn btn-sm btn-purple mt-2 w-100" onclick="startPrivateChat('${data.vendedorUid}')">
-                                  <i class="fas fa-comment-dots"></i> Negociar Troca
-                              </button>
-                          </div>
-                      </div>
-                  </div>
-              `;
-              exchangeListings.insertAdjacentHTML('beforeend', cardHtml);
-          });
-      })
-      .catch(error => {
-          console.error("Erro ao carregar ofertas de troca:", error);
-          exchangeListings.innerHTML = '<div class="col-12 text-center text-danger">Erro ao carregar ofertas de troca.</div>';
-      });
-}
-
-
-// =================================================================
-// 5. GERENCIAMENTO DO ESTADO DA APLICAÇÃO (UI/AUTH)
-// =================================================================
-// [Função updateUI Omitida para brevidade - Permanece Inalterada]
-async function updateUI(user) {
     if (user) {
         currentUserUid = user.uid;
         currentUsername = await getUsernameByUid(user.uid);
         
-        authBtn.innerHTML = '<i class="fas fa-sign-out-alt me-1"></i> Sair';
-        authBtn.classList.replace('btn-primary', 'btn-secondary');
-        authBtn.removeEventListener('click', handleLogin);
-        authBtn.addEventListener('click', handleLogout);
-
-        if (chatStatus) {
-            chatStatus.innerHTML = `Logado como: <strong>${currentUsername}</strong>. Chat Habilitado.`;
-            chatStatus.classList.replace('text-danger', 'text-success');
+        // Atualiza a UI para estado Logado
+        if (authBtn) {
+            authBtn.textContent = `Olá, ${currentUsername} (Sair)`;
+            authBtn.classList.remove('btn-primary');
+            authBtn.classList.add('btn-danger');
         }
-        if (myUidDisplay) myUidDisplay.textContent = user.uid;
-        if (chatSendBtn) chatSendBtn.disabled = false;
+        if (uidDisplay) {
+            uidDisplay.textContent = currentUserUid;
+        }
+        if (chatSendBtn) {
+            chatSendBtn.disabled = false;
+        }
+        if (chatStatus) {
+            chatStatus.textContent = 'Ativo';
+            chatStatus.classList.add('text-success');
+            chatStatus.classList.remove('text-muted');
+        }
         
+        // Inicia o Chat Global
+        startGlobalChatListener();
+
     } else {
         currentUserUid = null;
-        currentUsername = 'Anônimo';
+        currentUsername = null;
         
-        authBtn.innerHTML = '<i class="fas fa-user me-1"></i> Entrar / Cadastrar';
-        authBtn.classList.replace('btn-secondary', 'btn-primary');
-        authBtn.removeEventListener('click', handleLogout);
-        if (loginModal) authBtn.addEventListener('click', () => loginModal.show());
-
-        if (chatStatus) {
-            chatStatus.textContent = "Faça Login para enviar mensagens.";
-            chatStatus.classList.replace('text-success', 'text-danger');
+        // Atualiza a UI para estado Deslogado
+        if (authBtn) {
+            authBtn.innerHTML = '<i class="fas fa-user me-1"></i> Entrar / Cadastrar';
+            authBtn.classList.add('btn-primary');
+            authBtn.classList.remove('btn-danger');
         }
-        if (myUidDisplay) myUidDisplay.textContent = 'Aguardando Login...';
-        if (chatSendBtn) chatSendBtn.disabled = true;
-
-        if (inputEmail) inputEmail.value = '';
-        if (inputPassword) inputPassword.value = '';
-        if (inputUsername) inputUsername.value = '';
+        if (uidDisplay) {
+            uidDisplay.textContent = 'Deslogado';
+        }
+        if (chatSendBtn) {
+            chatSendBtn.disabled = true;
+        }
+        if (chatStatus) {
+            chatStatus.textContent = 'Login Necessário';
+            chatStatus.classList.remove('text-success');
+            chatStatus.classList.add('text-muted');
+        }
+        
+        // Para o Chat Global
+        if (globalChatListener) {
+            globalChatListener();
+        }
     }
-}
+});
+
 
 // =================================================================
-// 6. EVENT LISTENERS GERAIS E INICIALIZAÇÃO
+// 3. EXIBIÇÃO DE ANÚNCIOS (INDEX.HTML) - Usando Firebase Storage URLs
 // =================================================================
 
 /**
- * Lógica de Redirecionamento de Categoria
+ * Cria o HTML para um card de anúncio.
+ * @param {Object} doc Firestore Document Snapshot.
+ * @param {Object} data Dados do anúncio.
+ * @param {string} vendedorName Nome do vendedor.
+ * @returns {string} HTML do card.
  */
-function setupCategoryListeners() {
+function createListingCard(doc, data, vendedorName) {
+    const price = data.preco ? `R$ ${data.preco.toFixed(2).replace('.', ',')}` : 'A Combinar';
+    // CHAVE: Usa o primeiro elemento do array imageUrls (URL PÚBLICA)
+    const imageUrl = data.imageUrls && data.imageUrls.length > 0 
+                     ? data.imageUrls[0] 
+                     : 'https://via.placeholder.com/400x200?text=Sem+Imagem';
+    
+    // Indica se aceita troca
+    const exchangeBadge = data.aceitaTroca 
+        ? '<span class="badge bg-warning text-dark float-end">ACEITA TROCA</span>' 
+        : '';
+        
+    // Limita a descrição
+    const shortDescription = data.description ? data.description.substring(0, 80) + (data.description.length > 80 ? '...' : '') : 'Sem descrição.';
+
+    return `
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="card h-100 shadow-sm">
+                <img src="${imageUrl}" class="card-img-top" alt="Imagem do Anúncio" style="height: 200px; object-fit: cover;">
+                <div class="card-body d-flex flex-column">
+                    <h5 class="card-title text-purple-vibrant">${data.titulo} ${exchangeBadge}</h5>
+                    <p class="card-text text-muted small">${shortDescription}</p>
+                    <p class="mb-1"><strong>Preço:</strong> <span class="text-success">${price}</span></p>
+                    <p class="mb-2 small"><strong>Vendedor:</strong> ${vendedorName}</p>
+                    <a href="detalhes.html?id=${doc.id}" class="mt-auto btn btn-sm btn-purple">
+                        Ver Detalhes <i class="fas fa-arrow-right ms-1"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+/**
+ * Carrega anúncios que aceitam troca para a seção principal.
+ */
+async function loadExchangeListings() {
+    const container = document.getElementById('exchange-listings');
+    if (!container) return; // Só carrega se estiver no index.html
+
+    container.innerHTML = '<div class="col-12 text-center text-primary"><i class="fas fa-spinner fa-spin me-2"></i> Buscando ofertas de troca...</div>';
+    
+    try {
+        const snapshot = await db.collection('anuncios')
+            .where('aceitaTroca', '==', true)
+            .where('status', '==', 'ativo') // Apenas anúncios ativos
+            .orderBy('dataCriacao', 'desc')
+            .limit(6)
+            .get();
+
+        if (snapshot.empty) {
+            container.innerHTML = '<div class="col-12 text-center text-muted">Nenhuma oferta de troca disponível no momento.</div>';
+            return;
+        }
+
+        let listingsHtml = '';
+        const userCache = {}; // Cache para evitar buscas repetidas de username
+
+        for (const doc of snapshot.docs) {
+            const data = doc.data();
+            
+            // Busca o nome do vendedor (usando cache)
+            if (!userCache[data.vendedorUid]) {
+                userCache[data.vendedorUid] = await getUsernameByUid(data.vendedorUid);
+            }
+            const vendedorName = userCache[data.vendedorUid];
+
+            listingsHtml += createListingCard(doc, data, vendedorName);
+        }
+
+        container.innerHTML = listingsHtml;
+
+    } catch (error) {
+        console.error("Erro ao carregar ofertas de troca:", error);
+        container.innerHTML = '<div class="col-12 text-center text-danger">Erro ao carregar anúncios. Tente novamente.</div>';
+    }
+}
+
+// Event listener para recarregar as ofertas de troca
+document.addEventListener('DOMContentLoaded', () => {
+    const loadBtn = document.getElementById('loadExchangeBtn');
+    if (loadBtn) {
+        loadBtn.addEventListener('click', loadExchangeListings);
+        // Carrega as ofertas automaticamente na inicialização
+        loadExchangeListings(); 
+    }
+    
+    // Configura os links de categoria (redireciona para a futura pesquisa.html)
     document.querySelectorAll('.category-link').forEach(link => {
-        link.addEventListener('click', function() {
-            const category = this.getAttribute('data-category');
-            window.open(`pesquisa.html?cat=${encodeURIComponent(category)}`, '_blank');
+        link.addEventListener('click', (e) => {
+            const category = e.currentTarget.getAttribute('data-category');
+            window.location.href = `pesquisa.html?category=${encodeURIComponent(category)}`;
+        });
+    });
+});
+
+// =================================================================
+// 4. CHAT GLOBAL (FIREBASE REALTIME LISTENERS)
+// =================================================================
+
+const chatInput = document.getElementById('chat-input');
+const chatSendBtn = document.getElementById('chat-send-btn');
+const chatMessagesContainer = document.getElementById('chat-messages');
+
+function startGlobalChatListener() {
+    // Se já houver um listener, para-o primeiro
+    if (globalChatListener) globalChatListener(); 
+
+    // Ouve mensagens em tempo real
+    globalChatListener = db.collection('global_chat')
+        .orderBy('timestamp', 'desc')
+        .limit(15)
+        .onSnapshot(async (snapshot) => {
+            let messagesHtml = '';
+            const messages = snapshot.docs.map(doc => doc.data()).reverse(); // Inverte para mostrar a mais nova embaixo
+            const uidCache = {};
+            
+            for (const data of messages) {
+                // Usa cache para username
+                if (!uidCache[data.uid]) {
+                    uidCache[data.uid] = await getUsernameByUid(data.uid);
+                }
+                const senderName = uidCache[data.uid];
+                
+                // Formata a mensagem
+                const isMe = data.uid === currentUserUid;
+                const nameClass = isMe ? 'my-uid-highlight' : 'text-primary';
+                const time = data.timestamp ? data.timestamp.toDate().toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'}) : 'Agora';
+
+                messagesHtml += `
+                    <div class="chat-message">
+                        <span class="${nameClass}">${senderName}</span>
+                        <span class="text-muted small">(${time}):</span> ${data.message}
+                    </div>
+                `;
+            }
+
+            chatMessagesContainer.innerHTML = messagesHtml;
+            // Rola para o final
+            chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
+        }, (error) => {
+            console.error("Erro no listener do chat global:", error);
+            chatMessagesContainer.innerHTML = '<div class="text-danger small">Erro ao carregar o chat.</div>';
+        });
+}
+
+// Envio de mensagem
+if (chatSendBtn) {
+    chatSendBtn.addEventListener('click', sendMessage);
+    chatInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            sendMessage();
+        }
+    });
+}
+
+function sendMessage() {
+    const message = chatInput.value.trim();
+    if (!message || !currentUserUid) return;
+
+    db.collection('global_chat').add({
+        uid: currentUserUid,
+        message: message,
+        // O username será buscado pelo listener, mas salvar o timestamp é crucial
+        timestamp: firebase.firestore.FieldValue.serverTimestamp() 
+    }).then(() => {
+        chatInput.value = ''; // Limpa o input
+    }).catch(error => {
+        console.error("Erro ao enviar mensagem:", error);
+        alert("Falha ao enviar mensagem de chat.");
+    });
+}
+
+// Função placeholder para chat privado (chamada de detalhes.html)
+function startPrivateChat(targetUid) {
+    if (!currentUserUid) {
+        alert("Você deve estar logado para iniciar um chat privado.");
+        return;
+    }
+    if (currentUserUid === targetUid) {
+        alert("Você não pode iniciar um chat privado consigo mesmo.");
+        return;
+    }
+    
+    // Implementação futura: Redirecionar para a página de chat privado ou abrir modal
+    console.log(`Iniciando chat privado com UID: ${targetUid}`);
+    alert(`Funcionalidade de chat privado com o usuário ${targetUid} será implementada em breve!`);
+}
+
+// Expõe a função para uso externo (detalhes.html)
+window.startPrivateChat = startPrivateChat;
+
+
+// =================================================================
+// 5. SISTEMA DE DOAÇÃO PIX
+// =================================================================
+
+// ⚠️ SUBSTITUA PELA SUA CHAVE PIX REAL (Email, Telefone, ou Chave Aleatória) ⚠️
+const PIX_KEY = "11913429349"; 
+
+/**
+ * Função para mostrar o modal de doação apenas uma vez por sessão.
+ */
+function setupDonationModal() {
+    const modalElement = document.getElementById('donationModal');
+    if (!modalElement) return;
+
+    const hasSeenDonation = sessionStorage.getItem('ivad_donation_seen');
+    const pixKeyDisplay = document.getElementById('pixKeyDisplay');
+    const copyPixKeyBtn = document.getElementById('copyPixKeyBtn');
+    const closeAndContinueBtn = document.getElementById('closeAndContinueBtn');
+
+    // 1. Configura a Chave Pix no input
+    pixKeyDisplay.value = PIX_KEY;
+
+    // 2. Lógica de Cópia da Chave Pix
+    if (copyPixKeyBtn) {
+        copyPixKeyBtn.addEventListener('click', () => {
+            navigator.clipboard.writeText(PIX_KEY).then(() => {
+                const originalText = copyPixKeyBtn.innerHTML;
+                copyPixKeyBtn.innerHTML = '<i class="fas fa-check"></i> Copiado!';
+                
+                // Volta ao normal após 2 segundos
+                setTimeout(() => {
+                    copyPixKeyBtn.innerHTML = originalText;
+                }, 2000);
+            }).catch(err => {
+                console.error('Falha ao copiar:', err);
+                alert('Erro ao copiar a chave Pix. Por favor, copie manualmente.');
+            });
+        });
+    }
+
+    // 3. Exibição do Modal (Apenas se o usuário não o viu nesta sessão)
+    if (!hasSeenDonation) {
+        // Usa o objeto Modal do Bootstrap
+        const donationModal = new bootstrap.Modal(modalElement, {
+            backdrop: 'static', // Impede que o usuário clique fora
+            keyboard: false // Impede que o usuário use ESC
+        }); 
+        donationModal.show();
+        
+        // 4. Marca como visto ao fechar o modal
+        const setSeen = () => {
+            sessionStorage.setItem('ivad_donation_seen', 'true');
+        };
+
+        // Marca como visto se o modal for fechado (pelo 'X' ou pelo botão 'Acessar Site')
+        modalElement.addEventListener('hidden.bs.modal', setSeen);
+        
+        // Garante que, ao clicar em "Acessar Site Sem Doar", ele seja marcado como visto
+        if (closeAndContinueBtn) {
+            closeAndContinueBtn.addEventListener('click', setSeen);
+        }
+    }
+    
+    // 5. Configuração dos botões de sugestão de valor (opcional, para feedback visual)
+    document.querySelectorAll('#donationModal .btn[data-amount]').forEach(btn => {
+        btn.addEventListener('click', function() {
+            // No caso de um Pix estático (chave), apenas copia a chave
+            navigator.clipboard.writeText(PIX_KEY).then(() => {
+                 alert(`Chave Pix copiada! Sugestão de R$ ${this.getAttribute('data-amount')}. Utilize-a em seu app de banco. Obrigado!`);
+            });
         });
     });
 }
 
-// 6.1. Listener do Estado de Autenticação
-auth.onAuthStateChanged(updateUI);
 
-// 6.2. Eventos de Login/Cadastro
-if (loginBtn) loginBtn.addEventListener('click', handleLogin);
-if (registerBtn) registerBtn.addEventListener('click', handleRegister);
+// =================================================================
+// 6. SETUP FINAL: CHAMADAS AO CARREGAR O DOM
+// =================================================================
 
-// 6.3. Eventos do Chat
-if (chatSendBtn) chatSendBtn.addEventListener('click', handleChatSend);
-if (chatInput) chatInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter' && !chatSendBtn.disabled) {
-        e.preventDefault();
-        handleChatSend();
+document.addEventListener('DOMContentLoaded', () => {
+    // Configura o sistema de doação Pix
+    if (document.getElementById('donationModal')) {
+        setupDonationModal();
     }
 });
 
-// 6.4. Eventos de Troca
-const loadExchangeBtn = document.getElementById('loadExchangeBtn');
-if (loadExchangeBtn) loadExchangeBtn.addEventListener('click', loadExchangeListings);
-
-// 6.5. Inicialização de Listeners
-setupGlobalChatListener();
-setupCategoryListeners();
-
-console.log("script.js carregado: Chat Privado integrado.");
+console.log("script.js carregado: Lógica de autenticação, anúncios e chat global prontas.");

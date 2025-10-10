@@ -3,312 +3,356 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IVAD - Marketplace de Contas Digitais Seguras</title>
+    <title>IVAD - Seu Marketplace de Contas Digitais</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     
     <style>
-        /* VARIÁVEIS DE COR E TIPOGRAFIA */
+        /* VARIÁVEIS DE COR */
         :root {
-            --primary-color: #007bff;     /* Azul Brilhante */
-            --purple-vibrant: #7f00ff;   /* Roxo Vibrante */
-            --pink-vibrant: #ff007f;     /* Rosa Vibrante */
-            --success-color: #28a745;
-            --warning-color: #ffc107;
+            --purple-vibrant: #7f00ff;
+            --pink-vibrant: #ff007f;
             --background-dark: #212529;
             --font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
-        /* NOVO FUNDO IMPACTANTE E INTERATIVO (Azul, Roxo, Rosa) */
         body {
             font-family: var(--font-family);
-            background: linear-gradient(135deg, #1f005c, var(--purple-vibrant), var(--pink-vibrant));
-            background-attachment: fixed;
-            color: #333;
+            background-color: #f8f9fa;
+            padding-top: 56px; /* Espaço para a navbar fixa */
         }
         
-        /* Contêiner Principal: Garante a legibilidade do conteúdo */
-        .main-content {
-            background-color: rgba(255, 255, 255, 0.95);
-            border-radius: 1rem;
-            padding: 2rem;
-            box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
-            margin-top: 20px;
-            margin-bottom: 20px;
-        }
-
-        /* CLASSES PERSONALIZADAS */
-        .text-purple-vibrant { color: var(--purple-vibrant) !important; }
-        .btn-purple { 
-            background-color: var(--purple-vibrant);
-            border-color: var(--purple-vibrant);
+        /* HEADER PRINCIPAL */
+        .hero-section {
+            background: linear-gradient(135deg, #1f005c, var(--purple-vibrant));
             color: white;
-            transition: all 0.3s ease;
-        }
-        .btn-purple:hover {
-            background-color: #6a00cd; 
-            border-color: #6a00cd;
-            color: white;
-            transform: scale(1.02);
-        }
-        .border-purple { border: 1px solid var(--purple-vibrant) !important; }
-
-        /* NAVBAR & HERO */
-        .navbar {
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-        }
-        .hero-banner {
-            background: linear-gradient(135deg, var(--primary-color), var(--purple-vibrant));
-            color: white;
-            border-radius: 1rem;
-            padding: 6rem 3rem;
+            padding: 4rem 0;
             margin-bottom: 3rem;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        .hero-title {
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--pink-vibrant);
         }
 
-        /* CATEGORIAS (INTERATIVIDADE) */
-        .card-category {
-            border: 1px solid #ddd;
-            transition: all 0.3s ease;
-            cursor: pointer;
-            background-color: white;
+        /* SEÇÕES DE CONTEÚDO */
+        .content-section {
+            margin-bottom: 3rem;
         }
-        .card-category:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 12px 25px rgba(0, 0, 0, 0.15);
+        .section-title {
+            color: var(--purple-vibrant);
+            border-bottom: 2px solid #ddd;
+            padding-bottom: 0.5rem;
+            margin-bottom: 1.5rem;
+            font-weight: 600;
+        }
+
+        /* CARD DE CATEGORIA */
+        .category-card {
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            border: 1px solid #eee;
+        }
+        .category-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
             border-color: var(--pink-vibrant);
         }
-        .card-category i {
+        .category-card .card-body {
+            min-height: 150px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        .category-card i {
+            font-size: 2.5rem;
             color: var(--purple-vibrant);
+            margin-bottom: 10px;
         }
 
-        /* CHAT STYLES */
-        .chat-section {
-            background-color: white;
+        /* SEÇÃO DE TROCAS (CUSTOMIZADA) */
+        .exchange-section {
+            background-color: #fff3cd; /* Amarelo Bootstrap Light */
+            border-left: 5px solid #ffc107; /* Amarelo Bootstrap Dark */
+            padding: 2rem;
             border-radius: 0.5rem;
-            padding: 20px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
         }
-        .chat-container {
-            max-height: 400px;
-            overflow-y: auto;
-            border: 1px solid #e9ecef;
-            padding: 15px;
-            background-color: #f4f6f9;
-            border-radius: 0.375rem;
+        .border-purple {
+            border-color: var(--purple-vibrant) !important;
         }
-        .my-uid-highlight {
-            color: var(--pink-vibrant); 
-            font-weight: bold;
+        .text-purple-vibrant {
+            color: var(--purple-vibrant) !important;
+        }
+        .btn-purple {
+            background-color: var(--purple-vibrant);
+            color: white;
+        }
+        .btn-purple:hover {
+             background-color: var(--pink-vibrant);
+             color: white;
         }
 
         /* FOOTER */
-        footer {
-            background-color: var(--background-dark) !important;
-            color: #bbb;
+        footer { 
+            background-color: var(--background-dark) !important; 
+            color: #bbb; 
+        }
+
+        /* ESTILO DO CHAT */
+        .chat-container {
+            position: fixed;
+            bottom: 0;
+            right: 20px;
+            width: 300px;
+            z-index: 1000;
+            background: white;
+            box-shadow: 0 0 15px rgba(0,0,0,0.2);
+            border-top-left-radius: 0.5rem;
+            border-top-right-radius: 0.5rem;
+        }
+        #chat-messages {
+            height: 250px;
+            overflow-y: auto;
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            background-color: #f7f7f7;
+        }
+        .chat-message {
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+        }
+        .chat-header-bar {
+            cursor: pointer;
+            background-color: var(--purple-vibrant);
+            color: white;
+            padding: 10px;
+            border-top-left-radius: 0.5rem;
+            border-top-right-radius: 0.5rem;
+        }
+        .my-uid-highlight {
+            color: var(--pink-vibrant);
+            font-weight: bold;
         }
     </style>
 </head>
 <body>
 
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
         <div class="container">
-            <a class="navbar-brand" href="#">IVAD | Marketplace</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav" aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="mainNav">
-                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                    <li class="nav-item"><a class="nav-link active" href="#vendas"><i class="fas fa-store me-1"></i> Comprar/Vender</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#trocas"><i class="fas fa-exchange-alt me-1"></i> Trocas</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#chat"><i class="fas fa-comments me-1"></i> Chat Global</a></li>
-                </ul>
-                <div class="d-flex">
-                    <a href="anunciar.html" class="btn btn-warning me-2">
-                        <i class="fas fa-tag me-1"></i> Anunciar
-                    </a>
-                    <button class="btn btn-primary" id="authBtn" data-bs-toggle="modal" data-bs-target="#loginModal">
-                        <i class="fas fa-user me-1"></i> Entrar / Cadastrar
-                    </button>
-                </div>
+            <a class="navbar-brand" href="index.html">IVAD | Marketplace</a>
+            <div class="d-flex">
+                <a href="anunciar.html" class="btn btn-outline-warning me-2">
+                    <i class="fas fa-plus me-1"></i> Anunciar Conta
+                </a>
+                <button class="btn btn-primary" id="authBtn">
+                    <i class="fas fa-user me-1"></i> Entrar / Cadastrar
+                </button>
             </div>
         </div>
     </nav>
 
-    <div class="container main-content">
-
-        <div class="hero-banner text-center">
-            <h1 class="display-4 fw-bold">Transações Digitais 100% Seguras</h1>
-            <p class="fs-5 mt-3">Utilize nosso sistema de **Escrow** e **Chat Privado** para negociar suas contas de jogos e serviços com total confiança.</p>
-            <a href="anunciar.html" class="btn btn-warning btn-lg mt-3">
-                <i class="fas fa-plus-circle me-1"></i> Listar Minha Conta Agora
-            </a>
-        </div>
-
-        <section id="vantagens" class="mb-5">
-            <div class="row text-center">
-                <div class="col-md-4">
-                    <i class="fas fa-shield-alt fa-3x text-success mb-3"></i>
-                    <h4>Escrow (Garantia)</h4>
-                    <p class="text-muted">Seu pagamento retido até que você confirme o acesso à conta.</p>
+    <div class="modal fade" id="donationModal" tabindex="-1" aria-labelledby="donationModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-success text-white">
+                    <h5 class="modal-title" id="donationModalLabel">
+                        <i class="fas fa-hand-holding-heart me-2"></i> Ajude a Manter o IVAD Online!
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="col-md-4">
-                    <i class="fas fa-comments fa-3x text-purple-vibrant mb-3"></i>
-                    <h4>Negociação Direta</h4>
-                    <p class="text-muted">Chat privado e seguro para tirar todas as dúvidas com o vendedor.</p>
-                </div>
-                <div class="col-md-4">
-                    <i class="fas fa-star fa-3x text-warning mb-3"></i>
-                    <h4>Sistema de Reputação</h4>
-                    <p class="text-muted">Compre apenas de vendedores verificados e com alta avaliação.</p>
-                </div>
-            </div>
-        </section>
-
-        <hr>
-
-        <section id="categorias" class="mb-5">
-            <h2 class="mb-4 text-purple-vibrant"><i class="fas fa-th-list me-2"></i> Navegue por Categoria</h2>
-            <div class="row row-cols-2 row-cols-md-4 g-3">
-                <div class="col">
-                    <div class="card card-category text-center p-3 h-100 shadow-sm category-link" data-category="eFootball">
-                        <i class="fas fa-gamepad fa-2x mb-2"></i><h6 class="card-title">eFootball / FIFA</h6>
+                <div class="modal-body text-center">
+                    <p class="lead">Olá! Gostaria de nos ajudar a financiar as melhorias e a manutenção do servidor?</p>
+                    <p>Sua **doação voluntária** é vital para o crescimento da plataforma.</p>
+                    
+                    <h6 class="mt-4 mb-3">Chave Pix para Contribuição:</h6>
+                    <div class="input-group mb-3">
+                        <input type="text" class="form-control text-center" id="pixKeyDisplay" value="sua.chave.pix.aqui@provedor.com" readonly>
+                        <button class="btn btn-outline-secondary" type="button" id="copyPixKeyBtn">
+                            <i class="fas fa-copy"></i> Copiar
+                        </button>
                     </div>
-                </div>
-                <div class="col">
-                    <div class="card card-category text-center p-3 h-100 shadow-sm category-link" data-category="Roblox/Minecraft">
-                        <i class="fas fa-cubes fa-2x mb-2"></i><h6 class="card-title">Roblox / Minecraft</h6>
-                    </div>
-                </div>
-                <div class="col">
-                    <div class="card card-category text-center p-3 h-100 shadow-sm category-link" data-category="FreeFire/COD">
-                        <i class="fas fa-fire-alt fa-2x mb-2"></i><h6 class="card-title">Free Fire / COD</h6>
-                    </div>
-                </div>
-                <div class="col">
-                    <div class="card card-category text-center p-3 h-100 shadow-sm category-link" data-category="ServicosDiversos">
-                        <i class="fas fa-tools fa-2x mb-2"></i><h6 class="card-title">Outros Serviços</h6>
-                    </div>
-                </div>
-            </div>
-        </section>
 
-        <hr>
-
-        <section id="vendas" class="mb-5">
-            <h2 class="mb-4 text-primary"><i class="fas fa-store me-2"></i> Últimas Oportunidades de Venda</h2>
-            <div class="row g-4">
-                <div class="col-md-4">
-                    <div class="card product-card shadow-sm">
-                        <div class="card-body">
-                            <h5 class="card-title text-truncate">Conta Free Fire Rara - Nível 70+</h5>
-                            <p class="product-price">R$ 450,00</p>
-                            <span class="badge verified-badge"><i class="fas fa-check-circle me-1"></i> Vendedor Verificado</span>
-                            <span class="badge bg-secondary"><i class="fas fa-star"></i> 4.8</span>
-                            <p class="card-text mt-2"><small class="text-muted">Anunciado há 3 horas</small></p>
-                            <button class="btn btn-sm btn-primary mt-2 w-100">Comprar com Escrow</button>
+                    <div class="row g-2 mb-4 justify-content-center">
+                        <div class="col-4">
+                            <button class="btn btn-outline-success w-100" data-amount="1.00">R$ 1,00</button>
+                        </div>
+                        <div class="col-4">
+                            <button class="btn btn-success w-100" data-amount="5.00">R$ 5,00</button>
+                        </div>
+                        <div class="col-4">
+                            <button class="btn btn-outline-success w-100" data-amount="10.00">R$ 10,00</button>
                         </div>
                     </div>
+
+                    <p class="text-muted small">Você pode transferir qualquer valor diretamente usando sua chave Pix preferida.</p>
                 </div>
-                </div>
-        </section>
-
-        <hr>
-
-        <section id="trocas" class="mb-5 text-center p-4 bg-light rounded shadow-sm">
-            <h2 class="mb-3 text-purple-vibrant"><i class="fas fa-exchange-alt me-2"></i> Área de Trocas</h2>
-            <p class="lead">Tem uma conta e quer trocar por outra? Veja as ofertas abaixo:</p>
-            
-            <button class="btn btn-purple btn-lg" id="loadExchangeBtn"><i class="fas fa-search"></i> Ver Ofertas de Troca</button>
-            
-            <div class="row g-4 mt-4" id="exchange-listings">
-                <div class="col-12 text-muted" id="initial-exchange-message">Clique no botão roxo para carregar as listagens de troca.</div>
-            </div>
-        </section>
-
-        <hr>
-
-        <section id="chat" class="mb-5 chat-section">
-            <h2 class="mb-4 text-primary"><i class="fas fa-comments me-2"></i> Chat Global da Comunidade</h2>
-            <p class="text-muted">Conecte-se com outros traders e fique por dentro das novidades. (Seu UID: <span id="my-uid-display" class="my-uid-highlight">m3h06woQv2V7lrNu1p8fDQCZ8IWZ</span>)</p>
-
-            <div class="row">
-                <div class="col-lg-12">
-                    <div id="chat-messages" class="chat-container">
-                        <div class="chat-message text-muted"><small>Bem-vindo ao chat global! Faça login para participar da conversa.</small></div>
-                    </div>
-                    <div class="input-group mt-3">
-                        <input type="text" id="chat-input" class="form-control" placeholder="Digite sua mensagem...">
-                        <button class="btn btn-primary" id="chat-send-btn" disabled><i class="fas fa-paper-plane"></i> Enviar</button>
-                    </div>
-                    <small class="mt-1" id="chat-status">Faça Login para enviar mensagens.</small>
+                <div class="modal-footer justify-content-between">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="closeAndContinueBtn">
+                        <i class="fas fa-arrow-right"></i> Acessar Site Sem Doar
+                    </button>
+                    <button type="button" class="btn btn-success" onclick="alert('Obrigado pela sua contribuição! Seu apoio é muito importante.')">
+                        <i class="fas fa-check"></i> Fiz Minha Doação
+                    </button>
                 </div>
             </div>
-        </section>
-
-        <hr>
-
-        <section id="suporte" class="mb-5">
-            <h2 class="mb-4 text-primary"><i class="fas fa-headset me-2"></i> Suporte e Ajuda</h2>
-            <p>Em caso de dúvidas sobre transações ou necessidade de mediação:</p>
-            <p class="lead">E-mail de Suporte: <a href="mailto:ivadtrabalho@gmail.com">ivadtrabalho@gmail.com</a></p>
-            <button class="btn btn-info"><i class="fas fa-book-open me-1"></i> Ver Guia de Segurança e FAQ</button>
-        </section>
-        
-    </div> <footer class="py-4">
-        <div class="container text-center">
-            <p class="mb-0">&copy; 2024 IVAD - Marketplace. Desenvolvido com Foco em Segurança e Confiança.</p>
         </div>
-    </footer>
-
+    </div>
     <div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
-                <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title" id="loginModalLabel">Acesso ao Marketplace</h5>
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title" id="loginModalLabel">Autenticação</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <p class="text-muted">Use seu e-mail e senha para acessar ou criar sua conta.</p>
                     <div class="mb-3">
-                        <label for="inputUsername" class="form-label">Nome de Usuário (Username)</label>
-                        <input type="text" class="form-control" id="inputUsername" placeholder="Ex: trader_pro24" aria-describedby="usernameHelp">
-                        <div id="usernameHelp" class="form-text">Usado publicamente (chat). O e-mail fica privado.</div>
+                        <label for="inputUsername" class="form-label">Nome de Usuário (Registro)</label>
+                        <input type="text" class="form-control" id="inputUsername" placeholder="Seu nome público">
                     </div>
                     <div class="mb-3">
-                        <label for="inputEmail" class="form-label">E-mail</label>
-                        <input type="email" class="form-control" id="inputEmail" placeholder="seu@email.com">
+                        <label for="inputEmail" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="inputEmail" placeholder="seuemail@exemplo.com">
                     </div>
                     <div class="mb-3">
                         <label for="inputPassword" class="form-label">Senha</label>
-                        <input type="password" class="form-control" id="inputPassword">
+                        <input type="password" class="form-control" id="inputPassword" placeholder="Mínimo 6 caracteres">
                     </div>
-                    <button id="loginBtn" class="btn btn-primary w-100 mb-2">Entrar</button>
-                    <button id="registerBtn" class="btn btn-outline-success w-100">Cadastrar</button>
+                </div>
+                <div class="modal-footer justify-content-between">
+                    <button type="button" class="btn btn-secondary" id="registerBtn">
+                        <i class="fas fa-user-plus me-1"></i> Registrar
+                    </button>
+                    <button type="button" class="btn btn-primary" id="loginBtn">
+                        <i class="fas fa-sign-in-alt me-1"></i> Entrar
+                    </button>
                 </div>
             </div>
         </div>
     </div>
 
+    <div class="hero-section">
+        <div class="container text-center">
+            <h1 class="hero-title">IVAD: Venda, Troque, Negocie.</h1>
+            <p class="lead mt-3">O marketplace seguro para suas contas, itens e colecionáveis digitais.</p>
+            <a href="anunciar.html" class="btn btn-lg btn-warning mt-3">
+                <i class="fas fa-bullhorn me-2"></i> Listar Sua Conta Agora!
+            </a>
+        </div>
+    </div>
+
+    <div class="container">
+
+        <div class="content-section">
+            <h2 class="section-title">
+                <i class="fas fa-tags me-2"></i> Navegue por Categoria
+            </h2>
+            <div class="row g-4">
+                
+                <div class="col-md-3">
+                    <div class="card category-card category-link" data-category="eFootball">
+                        <div class="card-body">
+                            <i class="fas fa-futbol"></i>
+                            <h5 class="card-title">eFootball / FIFA</h5>
+                            <p class="card-text text-muted small">Contas com jogadores raros.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card category-card category-link" data-category="Roblox/Minecraft">
+                        <div class="card-body">
+                            <i class="fas fa-cube"></i>
+                            <h5 class="card-title">Roblox / Minecraft</h5>
+                            <p class="card-text text-muted small">Acessórios, mapas e itens.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card category-card category-link" data-category="FreeFire/COD">
+                        <div class="card-body">
+                            <i class="fas fa-gun"></i>
+                            <h5 class="card-title">Free Fire / Call of Duty</h5>
+                            <p class="card-text text-muted small">Skins, passes e níveis.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card category-card category-link" data-category="ServicosDiversos">
+                        <div class="card-body">
+                            <i class="fas fa-ellipsis-h"></i>
+                            <h5 class="card-title">Outros / Serviços</h5>
+                            <p class="card-text text-muted small">Contas de streaming, etc.</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="content-section exchange-section">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2 class="section-title mb-0">
+                    <i class="fas fa-exchange-alt me-2"></i> Ofertas que Aceitam Troca
+                </h2>
+                <button class="btn btn-sm btn-purple" id="loadExchangeBtn">
+                    <i class="fas fa-sync-alt"></i> Recarregar
+                </button>
+            </div>
+            
+            <div class="row g-4" id="exchange-listings">
+                <div class="col-12 text-center text-primary">
+                    <i class="fas fa-spinner fa-spin me-2"></i> Clique em Recarregar para ver as ofertas...
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="chat-container">
+        <div class="chat-header-bar" data-bs-toggle="collapse" data-bs-target="#chatBody" aria-expanded="false" aria-controls="chatBody">
+            <i class="fas fa-comments me-2"></i> Chat Global
+            <small class="float-end" id="chat-status">Aguardando...</small>
+        </div>
+        
+        <div class="collapse show" id="chatBody">
+            <div id="chat-messages">
+                </div>
+            <div class="input-group p-2">
+                <input type="text" class="form-control form-control-sm" id="chat-input" placeholder="Digite sua mensagem...">
+                <button class="btn btn-sm btn-primary" id="chat-send-btn" disabled>
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+    
+
+    <footer class="py-4">
+        <div class="container text-center">
+            <p class="mb-0">&copy; 2024 IVAD - Marketplace | Seu UID: <span id="my-uid-display">Aguardando Login...</span></p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
-
+    
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyB8-tIVUAlMWQtCbF1sGLWgW9sL2Z0ixrk",
             authDomain: "ivad-trocas-e-vendas.firebaseapp.com",
             projectId: "ivad-trocas-e-vendas",
-            storageBucket: "ivad-trocas-e-vendas.firebasestorage.app",
+            storageBucket: "ivad-trocas-e-vendas.firebasestorage.app", // Reintroduzido StorageBucket
             messagingSenderId: "447811910709",
             appId: "1:447811910709:web:a42b73819f6e6eb34c057c",
             measurementId: "G-RHVF8P3RCW"
         };
         const app = firebase.initializeApp(firebaseConfig);
     </script>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-
+    
     <script src="script.js"></script>
+
 </body>
 </html>

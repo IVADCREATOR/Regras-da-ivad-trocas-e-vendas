@@ -99,38 +99,7 @@
             background-color: var(--background-dark) !important; 
             color: #bbb; 
         }
-
-        /* ESTILO DO CHAT */
-        .chat-container {
-            position: fixed;
-            bottom: 0;
-            right: 20px;
-            width: 300px;
-            z-index: 1000;
-            background: white;
-            box-shadow: 0 0 15px rgba(0,0,0,0.2);
-            border-top-left-radius: 0.5rem;
-            border-top-right-radius: 0.5rem;
-        }
-        #chat-messages {
-            height: 250px;
-            overflow-y: auto;
-            padding: 10px;
-            border-bottom: 1px solid #eee;
-            background-color: #f7f7f7;
-        }
-        .chat-message {
-            margin-bottom: 5px;
-            font-size: 0.9rem;
-        }
-        .chat-header-bar {
-            cursor: pointer;
-            background-color: var(--purple-vibrant);
-            color: white;
-            padding: 10px;
-            border-top-left-radius: 0.5rem;
-            border-top-right-radius: 0.5rem;
-        }
+        /* Cor de destaque para o UID do usuário no footer */
         .my-uid-highlight {
             color: var(--pink-vibrant);
             font-weight: bold;
@@ -142,10 +111,22 @@
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
         <div class="container">
             <a class="navbar-brand" href="index.html">IVAD | Marketplace</a>
-            <div class="d-flex">
-                <a href="anunciar.html" class="btn btn-outline-warning me-2">
-                    <i class="fas fa-plus me-1"></i> Anunciar Conta
+            <div class="d-flex align-items-center">
+                
+                <a href="chat_global.html" class="btn btn-outline-info me-2" title="Chat Global">
+                    <i class="fas fa-comments"></i>
+                    <span class="d-none d-sm-inline ms-1">Chat</span>
                 </a>
+                
+                <a href="#" class="btn btn-outline-light me-2" title="Mensagens Privadas">
+                    <i class="fas fa-envelope"></i>
+                    <span class="badge bg-danger ms-1" id="unread-count" style="display:none;"></span> 
+                </a>
+
+                <a href="anunciar.html" class="btn btn-outline-warning me-2">
+                    <i class="fas fa-plus me-1"></i> Anunciar
+                </a>
+                
                 <button class="btn btn-primary" id="authBtn">
                     <i class="fas fa-user me-1"></i> Entrar / Cadastrar
                 </button>
@@ -168,7 +149,7 @@
                     
                     <h6 class="mt-4 mb-3">Chave Pix para Contribuição:</h6>
                     <div class="input-group mb-3">
-                        <input type="text" class="form-control text-center" id="pixKeyDisplay" value="sua.chave.pix.aqui@provedor.com" readonly>
+                        <input type="text" class="form-control text-center" id="pixKeyDisplay" value="11913429349" readonly>
                         <button class="btn btn-outline-secondary" type="button" id="copyPixKeyBtn">
                             <i class="fas fa-copy"></i> Copiar
                         </button>
@@ -309,25 +290,6 @@
 
     </div>
 
-    <div class="chat-container">
-        <div class="chat-header-bar" data-bs-toggle="collapse" data-bs-target="#chatBody" aria-expanded="false" aria-controls="chatBody">
-            <i class="fas fa-comments me-2"></i> Chat Global
-            <small class="float-end" id="chat-status">Aguardando...</small>
-        </div>
-        
-        <div class="collapse show" id="chatBody">
-            <div id="chat-messages">
-                </div>
-            <div class="input-group p-2">
-                <input type="text" class="form-control form-control-sm" id="chat-input" placeholder="Digite sua mensagem...">
-                <button class="btn btn-sm btn-primary" id="chat-send-btn" disabled>
-                    <i class="fas fa-paper-plane"></i>
-                </button>
-            </div>
-        </div>
-    </div>
-    
-
     <footer class="py-4">
         <div class="container text-center">
             <p class="mb-0">&copy; 2024 IVAD - Marketplace | Seu UID: <span id="my-uid-display">Aguardando Login...</span></p>
@@ -344,7 +306,7 @@
             apiKey: "AIzaSyB8-tIVUAlMWQtCbF1sGLWgW9sL2Z0ixrk",
             authDomain: "ivad-trocas-e-vendas.firebaseapp.com",
             projectId: "ivad-trocas-e-vendas",
-            storageBucket: "ivad-trocas-e-vendas.firebasestorage.app", // Reintroduzido StorageBucket
+            storageBucket: "ivad-trocas-e-vendas.firebasestorage.app",
             messagingSenderId: "447811910709",
             appId: "1:447811910709:web:a42b73819f6e6eb34c057c",
             measurementId: "G-RHVF8P3RCW"

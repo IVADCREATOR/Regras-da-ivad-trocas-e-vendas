@@ -4,13 +4,11 @@
 
 const auth = firebase.auth();
 const db = firebase.firestore();
-// REMOVIDO: const storage = firebase.storage(); - Não usamos mais para manter a arquitetura solicitada.
 
 // Elementos da Interface
 const authBtn = document.getElementById('authBtn'); 
 const loginBtn = document.getElementById('loginBtn');
 const registerBtn = document.getElementById('registerBtn');
-// O modal é inicializado apenas se o elemento existir
 const loginModalElement = document.getElementById('loginModal');
 const loginModal = loginModalElement ? new bootstrap.Modal(loginModalElement) : null; 
 
@@ -24,8 +22,8 @@ const chatMessages = document.getElementById('chat-messages');
 const chatStatus = document.getElementById('chat-status');
 const myUidDisplay = document.getElementById('my-uid-display');
 
-let currentUserUid = null; // Armazena o UID do usuário logado
-let currentUsername = 'Anônimo'; // Armazena o Username para uso no chat
+let currentUserUid = null; 
+let currentUsername = 'Anônimo'; 
 
 // =================================================================
 // 2. FUNÇÕES DE AUTENTICAÇÃO E PERFIL
@@ -38,7 +36,6 @@ async function getUsernameByUid(uid) {
     if (!uid) return 'Anônimo';
     try {
         const userDoc = await db.collection('users').doc(uid).get();
-        // Fallback para exibir parte do UID caso o username não seja encontrado
         const shortUid = uid.substring(0, 4) + '...'; 
         return userDoc.exists && userDoc.data().username ? userDoc.data().username : `Usuário (UID: ${shortUid})`;
     } catch (error) {
@@ -78,7 +75,7 @@ function handleLogin() {
 }
 
 /**
- * Realiza o cadastro de um novo usuário, com VERIFICAÇÃO DE UNICIDADE do Username.
+ * Realiza o cadastro de um novo usuário.
  */
 async function handleRegister() {
     const email = inputEmail.value.trim();
@@ -118,7 +115,7 @@ async function handleRegister() {
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
 
-        // 4. REGISTRO DO USERNAME (Para unicidade)
+        // 4. REGISTRO DO USERNAME
         await db.collection('usernames').doc(usernameLower).set({
             uid: user.uid
         });
@@ -153,16 +150,11 @@ function handleLogout() {
 // =================================================================
 // 3. LÓGICA DO CHAT GLOBAL EM TEMPO REAL
 // =================================================================
-
-/**
- * Adiciona uma nova mensagem à interface do chat, resolvendo o username.
- */
+// [Lógica do Chat Global Omitida para brevidade - Permanece Inalterada]
 async function displayMessage(senderUid, message, timestamp) {
-    const username = await getUsernameByUid(senderUid); // Busca o nome público
-    
+    const username = await getUsernameByUid(senderUid); 
     const newMessage = document.createElement('div');
     newMessage.className = 'chat-message';
-    
     const isMe = currentUserUid && currentUserUid === senderUid;
     const usernameClass = isMe ? 'my-uid-highlight' : '';
     
@@ -172,13 +164,8 @@ async function displayMessage(senderUid, message, timestamp) {
         timeString = date.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
     }
 
-    newMessage.innerHTML = `
-        <small class="text-muted float-end">${timeString}</small>
-        <strong class="${usernameClass} me-2">${username}:</strong> 
-        <span>${message}</span>
-    `;
+    newMessage.innerHTML = `<small class="text-muted float-end">${timeString}</small><strong class="${usernameClass} me-2">${username}:</strong><span>${message}</span>`;
     
-    // Adiciona a mensagem, mas garante que não ultrapasse um limite (ex: 50 mensagens)
     chatMessages.appendChild(newMessage);
     if (chatMessages.children.length > 50) {
         chatMessages.removeChild(chatMessages.firstChild);
@@ -186,12 +173,8 @@ async function displayMessage(senderUid, message, timestamp) {
     chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
-/**
- * Configura o listener em tempo real para o Chat Global.
- */
 function setupGlobalChatListener() {
     if (chatMessages) chatMessages.innerHTML = `<div class="chat-message text-muted"><small>Bem-vindo ao chat global! Faça login para participar da conversa.</small></div>`;
-    
     const chatRef = db.collection('chat-global').orderBy('timestamp', 'asc').limitToLast(50);
 
     chatRef.onSnapshot(snapshot => {
@@ -206,9 +189,6 @@ function setupGlobalChatListener() {
     });
 }
 
-/**
- * Envia uma nova mensagem para o Firestore.
- */
 function handleChatSend() {
     const text = chatInput.value.trim();
     if (!text || !currentUserUid) return;
@@ -234,12 +214,14 @@ function handleChatSend() {
         });
 }
 
+
 // =================================================================
-// 4. FUNÇÕES DE TROCA E ANÚNCIO (Carregamento Dinâmico)
+// 4. FUNÇÕES DE TROCA E NEGOCIAÇÃO
 // =================================================================
 
 /**
- * Função placeholder para iniciar o chat privado (Lógica de negociação futura).
+ * [ATUALIZADO] Inicia o Chat Privado e redireciona para a página dedicada.
+ * @param {string} targetUid O UID do vendedor.
  */
 function startPrivateChat(targetUid) {
     if (currentUserUid === targetUid) {
@@ -252,7 +234,8 @@ function startPrivateChat(targetUid) {
         return;
     }
     
-    alert(`Iniciando chat privado para negociação com o usuário ${targetUid}. (Funcionalidade a ser implementada)`);
+    // REDIRECIONAMENTO CORRETO para a nova página de chat
+    window.location.href = `chat_privado.html?vendedorId=${targetUid}`;
 }
 
 /**
@@ -264,7 +247,6 @@ function loadExchangeListings() {
 
     db.collection('anuncios')
       .where('aceitaTroca', '==', true) 
-      .where('status', '==', 'ativo') // Filtrar apenas ativos, se implementado o status
       .limit(6)
       .get()
       .then(snapshot => {
@@ -276,6 +258,7 @@ function loadExchangeListings() {
           
           snapshot.forEach(doc => {
               const data = doc.data();
+              // Note o uso da função startPrivateChat no botão
               const cardHtml = `
                   <div class="col-md-4">
                       <div class="card product-card shadow-sm border-purple h-100">
@@ -304,23 +287,17 @@ function loadExchangeListings() {
 // =================================================================
 // 5. GERENCIAMENTO DO ESTADO DA APLICAÇÃO (UI/AUTH)
 // =================================================================
-
-/**
- * Atualiza a interface do usuário com base no estado de autenticação.
- */
+// [Função updateUI Omitida para brevidade - Permanece Inalterada]
 async function updateUI(user) {
     if (user) {
-        // ESTADO LOGADO
         currentUserUid = user.uid;
         currentUsername = await getUsernameByUid(user.uid);
         
-        // 1. Navbar e Botão de Autenticação
         authBtn.innerHTML = '<i class="fas fa-sign-out-alt me-1"></i> Sair';
         authBtn.classList.replace('btn-primary', 'btn-secondary');
         authBtn.removeEventListener('click', handleLogin);
         authBtn.addEventListener('click', handleLogout);
 
-        // 2. Chat Status
         if (chatStatus) {
             chatStatus.innerHTML = `Logado como: <strong>${currentUsername}</strong>. Chat Habilitado.`;
             chatStatus.classList.replace('text-danger', 'text-success');
@@ -329,17 +306,14 @@ async function updateUI(user) {
         if (chatSendBtn) chatSendBtn.disabled = false;
         
     } else {
-        // ESTADO DESLOGADO
         currentUserUid = null;
         currentUsername = 'Anônimo';
         
-        // 1. Navbar e Botão de Autenticação
         authBtn.innerHTML = '<i class="fas fa-user me-1"></i> Entrar / Cadastrar';
         authBtn.classList.replace('btn-secondary', 'btn-primary');
         authBtn.removeEventListener('click', handleLogout);
         if (loginModal) authBtn.addEventListener('click', () => loginModal.show());
 
-        // 2. Chat Status
         if (chatStatus) {
             chatStatus.textContent = "Faça Login para enviar mensagens.";
             chatStatus.classList.replace('text-success', 'text-danger');
@@ -347,7 +321,6 @@ async function updateUI(user) {
         if (myUidDisplay) myUidDisplay.textContent = 'Aguardando Login...';
         if (chatSendBtn) chatSendBtn.disabled = true;
 
-        // Limpa inputs do modal
         if (inputEmail) inputEmail.value = '';
         if (inputPassword) inputPassword.value = '';
         if (inputUsername) inputUsername.value = '';
@@ -365,7 +338,6 @@ function setupCategoryListeners() {
     document.querySelectorAll('.category-link').forEach(link => {
         link.addEventListener('click', function() {
             const category = this.getAttribute('data-category');
-            // Redireciona para pesquisa.html com o parâmetro de categoria
             window.open(`pesquisa.html?cat=${encodeURIComponent(category)}`, '_blank');
         });
     });
@@ -395,4 +367,4 @@ if (loadExchangeBtn) loadExchangeBtn.addEventListener('click', loadExchangeListi
 setupGlobalChatListener();
 setupCategoryListeners();
 
-console.log("script.js carregado: Lógica da plataforma ativada (IndexedDB para mídia local).");
+console.log("script.js carregado: Chat Privado integrado.");

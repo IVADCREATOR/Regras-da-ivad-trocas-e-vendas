@@ -19,26 +19,25 @@
             --font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
-        /* NOVO FUNDO IMPACTANTE E INTERATIVO */
+        /* NOVO FUNDO IMPACTANTE E INTERATIVO (Azul, Roxo, Rosa) */
         body {
             font-family: var(--font-family);
-            /* Gradiente de fundo com as três cores solicitadas */
             background: linear-gradient(135deg, #1f005c, var(--purple-vibrant), var(--pink-vibrant));
-            background-attachment: fixed; /* Torna o fundo fixo para efeito visual */
+            background-attachment: fixed;
             color: #333;
         }
         
-        /* Contêiner Principal: Garante que o conteúdo fique legível sobre o fundo escuro */
+        /* Contêiner Principal: Garante a legibilidade do conteúdo */
         .main-content {
-            background-color: rgba(255, 255, 255, 0.95); /* Fundo branco semi-transparente */
+            background-color: rgba(255, 255, 255, 0.95);
             border-radius: 1rem;
             padding: 2rem;
-            box-shadow: 0 0 30px rgba(0, 0, 0, 0.5); /* Sombra para destaque */
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
             margin-top: 20px;
             margin-bottom: 20px;
         }
 
-        /* CLASSES ESPECÍFICAS DO NOVO ESQUEMA */
+        /* CLASSES PERSONALIZADAS */
         .text-purple-vibrant { color: var(--purple-vibrant) !important; }
         .btn-purple { 
             background-color: var(--purple-vibrant);
@@ -54,12 +53,10 @@
         }
         .border-purple { border: 1px solid var(--purple-vibrant) !important; }
 
-        /* NAVBAR & HEADER */
+        /* NAVBAR & HERO */
         .navbar {
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
         }
-
-        /* HERO SECTION (BANNER) */
         .hero-banner {
             background: linear-gradient(135deg, var(--primary-color), var(--purple-vibrant));
             color: white;
@@ -79,30 +76,10 @@
         .card-category:hover {
             transform: translateY(-8px);
             box-shadow: 0 12px 25px rgba(0, 0, 0, 0.15);
-            border-color: var(--pink-vibrant); /* Destaque na categoria com o rosa */
+            border-color: var(--pink-vibrant);
         }
         .card-category i {
             color: var(--purple-vibrant);
-        }
-
-        /* CARDS DE PRODUTOS */
-        .product-card {
-            border-radius: 0.75rem;
-            border: none;
-            transition: box-shadow 0.3s ease;
-            background-color: white;
-        }
-        .product-card:hover {
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-        }
-        .product-price {
-            font-size: 1.6rem;
-            color: var(--success-color);
-            font-weight: 800;
-        }
-        .verified-badge {
-            background-color: var(--success-color) !important;
-            font-weight: 600;
         }
 
         /* CHAT STYLES */
@@ -117,7 +94,7 @@
             overflow-y: auto;
             border: 1px solid #e9ecef;
             padding: 15px;
-            background-color: #f4f6f9; /* Fundo leve do chat */
+            background-color: #f4f6f9;
             border-radius: 0.375rem;
         }
         .my-uid-highlight {
@@ -147,9 +124,9 @@
                     <li class="nav-item"><a class="nav-link" href="#chat"><i class="fas fa-comments me-1"></i> Chat Global</a></li>
                 </ul>
                 <div class="d-flex">
-                    <button class="btn btn-warning me-2" data-bs-toggle="modal" data-bs-target="#anunciarModal">
+                    <a href="anunciar.html" class="btn btn-warning me-2">
                         <i class="fas fa-tag me-1"></i> Anunciar
-                    </button>
+                    </a>
                     <button class="btn btn-primary" id="authBtn" data-bs-toggle="modal" data-bs-target="#loginModal">
                         <i class="fas fa-user me-1"></i> Entrar / Cadastrar
                     </button>
@@ -163,9 +140,9 @@
         <div class="hero-banner text-center">
             <h1 class="display-4 fw-bold">Transações Digitais 100% Seguras</h1>
             <p class="fs-5 mt-3">Utilize nosso sistema de **Escrow** e **Chat Privado** para negociar suas contas de jogos e serviços com total confiança.</p>
-            <button class="btn btn-warning btn-lg mt-3" type="button" data-bs-toggle="modal" data-bs-target="#anunciarModal">
+            <a href="anunciar.html" class="btn btn-warning btn-lg mt-3">
                 <i class="fas fa-plus-circle me-1"></i> Listar Minha Conta Agora
-            </button>
+            </a>
         </div>
 
         <section id="vantagens" class="mb-5">
@@ -194,24 +171,24 @@
             <h2 class="mb-4 text-purple-vibrant"><i class="fas fa-th-list me-2"></i> Navegue por Categoria</h2>
             <div class="row row-cols-2 row-cols-md-4 g-3">
                 <div class="col">
-                    <a href="https://www.google.com/search?q=IVAD+categoria+eFootball" target="_blank" class="text-decoration-none">
-                        <div class="card card-category text-center p-3 h-100 shadow-sm"><i class="fas fa-gamepad fa-2x mb-2"></i><h6 class="card-title">eFootball / FIFA</h6></div>
-                    </a>
+                    <div class="card card-category text-center p-3 h-100 shadow-sm category-link" data-category="eFootball">
+                        <i class="fas fa-gamepad fa-2x mb-2"></i><h6 class="card-title">eFootball / FIFA</h6>
+                    </div>
                 </div>
                 <div class="col">
-                    <a href="https://www.google.com/search?q=IVAD+categoria+Roblox+Minecraft" target="_blank" class="text-decoration-none">
-                        <div class="card card-category text-center p-3 h-100 shadow-sm"><i class="fas fa-cubes fa-2x mb-2"></i><h6 class="card-title">Roblox / Minecraft</h6></div>
-                    </a>
+                    <div class="card card-category text-center p-3 h-100 shadow-sm category-link" data-category="Roblox/Minecraft">
+                        <i class="fas fa-cubes fa-2x mb-2"></i><h6 class="card-title">Roblox / Minecraft</h6>
+                    </div>
                 </div>
                 <div class="col">
-                    <a href="https://www.google.com/search?q=IVAD+categoria+Free+Fire+COD" target="_blank" class="text-decoration-none">
-                        <div class="card card-category text-center p-3 h-100 shadow-sm"><i class="fas fa-fire-alt fa-2x mb-2"></i><h6 class="card-title">Free Fire / COD</h6></div>
-                    </a>
+                    <div class="card card-category text-center p-3 h-100 shadow-sm category-link" data-category="FreeFire/COD">
+                        <i class="fas fa-fire-alt fa-2x mb-2"></i><h6 class="card-title">Free Fire / COD</h6>
+                    </div>
                 </div>
                 <div class="col">
-                    <a href="https://www.google.com/search?q=IVAD+categoria+Outros+Serviços" target="_blank" class="text-decoration-none">
-                        <div class="card card-category text-center p-3 h-100 shadow-sm"><i class="fas fa-tools fa-2x mb-2"></i><h6 class="card-title">Outros Serviços</h6></div>
-                    </a>
+                    <div class="card card-category text-center p-3 h-100 shadow-sm category-link" data-category="ServicosDiversos">
+                        <i class="fas fa-tools fa-2x mb-2"></i><h6 class="card-title">Outros Serviços</h6>
+                    </div>
                 </div>
             </div>
         </section>
@@ -293,6 +270,11 @@
                 </div>
                 <div class="modal-body">
                     <p class="text-muted">Use seu e-mail e senha para acessar ou criar sua conta.</p>
+                    <div class="mb-3">
+                        <label for="inputUsername" class="form-label">Nome de Usuário (Username)</label>
+                        <input type="text" class="form-control" id="inputUsername" placeholder="Ex: trader_pro24" aria-describedby="usernameHelp">
+                        <div id="usernameHelp" class="form-text">Usado publicamente (chat). O e-mail fica privado.</div>
+                    </div>
                     <div class="mb-3">
                         <label for="inputEmail" class="form-label">E-mail</label>
                         <input type="email" class="form-control" id="inputEmail" placeholder="seu@email.com">

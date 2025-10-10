@@ -21,22 +21,18 @@
         /* NOVO FUNDO 3D IMPACTANTE E INTERATIVO */
         body {
             font-family: var(--font-family);
-            /* Gradiente radial para simular profundidade 3D (ponto de luz no centro) */
             background: radial-gradient(circle at top left, #3a0099, #1f005c, var(--purple-vibrant));
             background-attachment: fixed;
             color: #333;
             padding-top: 5rem;
             padding-bottom: 5rem;
         }
-        
-        /* Contêiner Principal do Formulário (Onde o 3D é aplicado) */
         .form-container {
             background-color: var(--form-bg);
             border-radius: 1.5rem;
             padding: 3rem;
             max-width: 850px;
             margin: auto;
-            /* Sombra profunda para o EFEITO 3D */
             box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5), 0 0 0 10px rgba(255, 255, 255, 0.1); 
             transition: all 0.3s ease;
         }
@@ -44,7 +40,6 @@
             box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
         }
 
-        /* ELEMENTOS DE INTERFACE */
         .header-title {
             color: var(--pink-vibrant);
             font-weight: 700;
@@ -52,9 +47,6 @@
             padding-bottom: 0.5rem;
             margin-bottom: 1.5rem;
         }
-        .text-purple-vibrant { color: var(--purple-vibrant) !important; }
-        
-        /* Estilização dos Fieldsets (Seções) */
         .form-section {
             border: 1px solid #ddd;
             border-radius: 0.75rem;
@@ -67,11 +59,9 @@
             font-size: 1.5rem;
             font-weight: 600;
         }
-
-        /* Pré-visualização de Imagens */
         .image-preview-item {
             position: relative;
-            height: 100px; /* Altura fixa para miniaturas */
+            height: 100px;
             overflow: hidden;
             border: 1px solid #ccc;
             border-radius: 0.3rem;
@@ -81,8 +71,6 @@
             height: 100%;
             object-fit: cover;
         }
-
-        /* Botão de Publicação */
         .btn-publish {
             background-color: var(--purple-vibrant);
             border-color: var(--purple-vibrant);
@@ -96,9 +84,6 @@
             color: white;
             transform: translateY(-2px);
         }
-
-        /* Navbar e Footer (para consistência) */
-        .navbar { box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); }
         footer { background-color: var(--background-dark) !important; color: #bbb; }
     </style>
 </head>
@@ -116,7 +101,7 @@
         <h1 class="header-title mb-4">
             <i class="fas fa-bullhorn me-2"></i> Listar Sua Conta Digital
         </h1>
-        <p class="lead text-muted">Preencha os dados com precisão para atrair compradores rapidamente. Seus dados de contato ficam privados.</p>
+        <p class="lead text-muted">Preencha os dados com precisão para atrair compradores rapidamente.</p>
 
         <form id="listing-form">
             
@@ -125,9 +110,7 @@
                 
                 <div class="mb-3">
                     <label for="title" class="form-label">Título do Anúncio <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control" id="title" required 
-                           placeholder="Ex: Conta Free Fire Rara com 5 passes" maxlength="80">
-                    <div class="form-text">Seja claro e inclua palavras-chave importantes.</div>
+                    <input type="text" class="form-control" id="title" required placeholder="Ex: Conta Free Fire Rara com 5 passes" maxlength="80">
                 </div>
                 
                 <div class="mb-3">
@@ -143,10 +126,8 @@
                 
                 <div class="mb-3">
                     <label for="description" class="form-label">Descrição Detalhada <span class="text-danger">*</span></label>
-                    <textarea class="form-control" id="description" rows="5" required 
-                              placeholder="Descreva itens raros, nível, skins, motivo da venda, etc."></textarea>
+                    <textarea class="form-control" id="description" rows="5" required placeholder="Descreva itens raros, nível, skins, motivo da venda, etc."></textarea>
                 </div>
-                
             </fieldset>
 
             <fieldset class="form-section">
@@ -154,9 +135,7 @@
                 
                 <div class="mb-3">
                     <label for="price" class="form-label">Preço de Venda (R$) <span class="text-danger">*</span></label>
-                    <input type="number" step="0.01" min="0" class="form-control" id="price" required 
-                           placeholder="Ex: 450.00">
-                    <div class="form-text">Este é o valor que o comprador pagará via Escrow.</div>
+                    <input type="number" step="0.01" min="0" class="form-control" id="price" required placeholder="Ex: 450.00">
                 </div>
                 
                 <div class="form-check mb-4 p-4 border rounded">
@@ -164,43 +143,37 @@
                     <label class="form-check-label fs-5" for="acceptsExchange">
                         <i class="fas fa-exchange-alt text-warning me-2"></i> Aceito Troca por outra Conta/Item
                     </label>
-                    <div class="mt-2 text-muted">Marque se você estiver aberto a propostas de troca, além da venda direta.</div>
                 </div>
                 
                 <div class="mb-3" id="exchange-details" style="display:none;">
                     <label for="interest" class="form-label">Interesse Específico de Troca</label>
-                    <input type="text" class="form-control" id="interest" 
-                           placeholder="Ex: Contas de Genshin Impact, Console, ou R$ 200 + Troca">
+                    <input type="text" class="form-control" id="interest" placeholder="Ex: Contas de Genshin Impact, Console, ou R$ 200 + Troca">
                 </div>
             </fieldset>
             
             <fieldset class="form-section">
-                <legend class="float-none w-auto px-2">3. Imagens e Evidências</legend>
+                <legend class="float-none w-auto px-2">3. Imagens e Evidências (Armazenamento Local)</legend>
                 
-                <p class="text-muted">Anexe até **5 capturas de tela** da conta para comprovar os itens. **Fotos de alta qualidade** geram mais confiança.</p>
+                <div class="alert alert-warning" role="alert">
+                    <i class="fas fa-exclamation-triangle me-2"></i> **Atenção:** Estas imagens serão salvas **apenas no seu navegador** (IndexedDB). Elas **não serão visíveis** para compradores externos, quebrando a funcionalidade do marketplace.
+                </div>
                 
                 <div class="mb-3">
                     <label for="listing-images" class="form-label">Upload de Fotos da Conta (Máx. 5)</label>
                     <input class="form-control" type="file" id="listing-images" multiple accept="image/*">
-                    <div class="form-text">Formatos aceitos: JPG, PNG. Cada arquivo deve ter no máximo 2MB.</div>
                 </div>
 
-                <div id="image-preview" class="row g-2 mt-3">
-                    </div>
+                <div id="image-preview" class="row g-2 mt-3"></div>
                 
             </fieldset>
 
             <fieldset class="form-section">
                 <legend class="float-none w-auto px-2">4. Confirmação</legend>
                 
-                <div class="alert alert-info" role="alert">
-                    <i class="fas fa-info-circle me-2"></i> O anúncio será publicado em seu nome de usuário. O chat privado será o canal de negociação.
-                </div>
-                
                 <div class="form-check mb-4">
                     <input class="form-check-input" type="checkbox" value="" id="termsCheck" required>
                     <label class="form-check-label" for="termsCheck">
-                        Eu concordo com os <a href="#" class="text-primary">Termos de Serviço e a Política de Transação Segura (Escrow)</a> do IVAD. <span class="text-danger">*</span>
+                        Eu concordo com os Termos de Serviço e a Política. <span class="text-danger">*</span>
                     </label>
                 </div>
                 
@@ -209,12 +182,11 @@
             <button type="submit" class="btn btn-lg btn-publish w-100" id="submit-listing-btn">
                 <i class="fas fa-upload me-2"></i> Publicar Anúncio Agora
             </button>
-            <div class="text-center mt-3">
-                 <a href="index.html" class="text-muted"><small>Cancelar e Voltar ao Início</small></a>
-            </div>
         </form>
 
-    </div> <footer class="py-4 fixed-bottom">
+    </div>
+
+    <footer class="py-4 fixed-bottom">
         <div class="container text-center">
             <p class="mb-0">&copy; 2024 IVAD - Marketplace.</p>
         </div>
@@ -224,13 +196,16 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script> <script>
-        // Inicialização do Firebase (Requerido para o Storage)
+
+    <script>
+        // =================================================================
+        // CONFIGURAÇÃO FIREBASE E INDEXEDDB
+        // =================================================================
         const firebaseConfig = {
             apiKey: "AIzaSyB8-tIVUAlMWQtCbF1sGLWgW9sL2Z0ixrk",
             authDomain: "ivad-trocas-e-vendas.firebaseapp.com",
             projectId: "ivad-trocas-e-vendas",
-            storageBucket: "ivad-trocas-e-vendas.firebasestorage.app",
+            // Removido StorageBucket pois não usaremos Firebase Storage
             messagingSenderId: "447811910709",
             appId: "1:447811910709:web:a42b73819f6e6eb34c057c",
             measurementId: "G-RHVF8P3RCW"
@@ -238,35 +213,71 @@
         const app = firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.firestore();
-        const storage = firebase.storage(); // Novo serviço: Storage
 
         let currentUserUid = null;
+        
+        // Configuração do IndexedDB
+        const DB_NAME = 'IVAD_Local_Media';
+        const DB_VERSION = 1;
+        const STORE_NAME = 'anuncio_imagens';
+        let dbInstance = null;
+        
+        /**
+         * Inicializa o IndexedDB.
+         */
+        function openIndexedDB() {
+            return new Promise((resolve, reject) => {
+                if (dbInstance) {
+                    resolve(dbInstance);
+                    return;
+                }
 
-        // Monitora o estado de autenticação (Necessário para obter o UID)
+                const request = indexedDB.open(DB_NAME, DB_VERSION);
+
+                request.onerror = event => {
+                    console.error("Erro ao abrir IndexedDB:", event.target.error);
+                    reject(event.target.error);
+                };
+
+                request.onupgradeneeded = event => {
+                    // Cria ou atualiza a Object Store (Tabela)
+                    const db = event.target.result;
+                    if (!db.objectStoreNames.contains(STORE_NAME)) {
+                        // O 'keyPath' é o campo que será o ID único
+                        db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+                    }
+                };
+
+                request.onsuccess = event => {
+                    dbInstance = event.target.result;
+                    resolve(dbInstance);
+                };
+            });
+        }
+
+        // =================================================================
+        // FUNÇÕES E EVENT LISTENERS DA PÁGINA
+        // =================================================================
+        
         auth.onAuthStateChanged(user => {
             if (user) {
                 currentUserUid = user.uid;
             } else {
                 currentUserUid = null;
-                alert('Você precisa estar logado para listar uma conta. Redirecionando para o login.');
-                // Em um ambiente real, você redirecionaria para index.html e forçaria o modal de login
+                console.warn('Usuário deslogado. O anúncio não poderá ser vinculado.');
             }
         });
 
-        // Lógica de toggle para o campo de interesse de troca
+        // Toggle do campo de interesse de troca
         document.getElementById('acceptsExchange').addEventListener('change', function() {
             document.getElementById('exchange-details').style.display = this.checked ? 'block' : 'none';
         });
 
-        // Lógica de pré-visualização das imagens
+        // Pré-visualização das imagens
         document.getElementById('listing-images').addEventListener('change', function() {
             const previewContainer = document.getElementById('image-preview');
             previewContainer.innerHTML = '';
             
-            if (this.files.length > 5) {
-                alert("Máximo de 5 imagens permitido. As primeiras 5 serão consideradas.");
-            }
-
             Array.from(this.files).slice(0, 5).forEach(file => {
                 const reader = new FileReader();
                 reader.onload = function(e) {
@@ -280,13 +291,42 @@
             });
         });
 
-        // Lógica Principal de Envio (Handle Submit)
+        // =================================================================
+        // LÓGICA DE SALVAMENTO NO INDEXEDDB E FIRESTORE
+        // =================================================================
+
+        /**
+         * Salva um arquivo no IndexedDB, usando categoria e timestamp como chave.
+         * @param {File} file O arquivo de imagem.
+         * @param {string} category A categoria do anúncio para organização.
+         * @returns {Promise<string>} A chave ID (local) da imagem no IndexedDB.
+         */
+        async function saveFileLocally(file, category) {
+            const db = await openIndexedDB();
+            const transaction = db.transaction([STORE_NAME], 'readwrite');
+            const store = transaction.objectStore(STORE_NAME);
+            
+            const localId = `local_media_${category}_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+            
+            const dataToSave = {
+                id: localId,
+                category: category,
+                file: file // Armazena o objeto File/Blob
+            };
+
+            return new Promise((resolve, reject) => {
+                const request = store.add(dataToSave);
+                request.onsuccess = () => resolve(localId);
+                request.onerror = event => reject(event.target.error);
+            });
+        }
+        
+        // Lógica Principal de Envio
         const listingForm = document.getElementById('listing-form');
         if (listingForm) {
             listingForm.addEventListener('submit', handleListingSubmit);
         }
 
-        // Função de Upload e Publicação (O core da etapa)
         async function handleListingSubmit(e) {
             e.preventDefault();
 
@@ -300,13 +340,15 @@
             submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Publicando...';
 
             const files = document.getElementById('listing-images').files;
-            const uploadPromises = [];
-            const imageUrls = [];
+            const localIdPromises = [];
+            const localImageKeys = [];
+            
+            const category = document.getElementById('category').value;
             
             // 1. Coleta e Validação dos Dados
             const listingData = {
                 titulo: document.getElementById('title').value,
-                category: document.getElementById('category').value,
+                category: category,
                 description: document.getElementById('description').value,
                 preco: parseFloat(document.getElementById('price').value) || 0,
                 aceitaTroca: document.getElementById('acceptsExchange').checked,
@@ -317,50 +359,30 @@
             };
             
             try {
-                // 2. Upload de Imagens para o Firebase Storage
+                // 2. Salva Imagens Localmente (IndexedDB)
                 if (files.length > 5) {
                      throw new Error("Máximo de 5 imagens permitido.");
                 }
                 
                 for (let i = 0; i < files.length; i++) {
                     const file = files[i];
-                    if (file.size > 2 * 1024 * 1024) { // 2MB
-                        throw new Error(`O arquivo ${file.name} excede o limite de 2MB.`);
-                    }
-                    
-                    const fileName = `${currentUserUid}_${Date.now()}_${i}`;
-                    const storageRef = storage.ref(`anuncios/${listingData.category}/${fileName}`);
-                    
-                    // Cria a Promise para o upload
-                    const uploadTask = storageRef.put(file);
-                    uploadPromises.push(new Promise((resolve, reject) => {
-                        uploadTask.on('state_changed', 
-                            (snapshot) => { /* Progresso (Opcional) */ }, 
-                            (error) => {
-                                reject(`Erro no upload da imagem ${i+1}: ${error.message}`);
-                            }, 
-                            () => {
-                                storageRef.getDownloadURL().then(url => {
-                                    imageUrls.push(url);
-                                    resolve();
-                                });
-                            }
-                        );
-                    }));
+                    localIdPromises.push(saveFileLocally(file, category));
                 }
 
-                // Aguarda todos os uploads terminarem
-                await Promise.all(uploadPromises);
+                // Aguarda todos os salvamentos locais
+                const savedKeys = await Promise.all(localIdPromises);
                 
-                // 3. Salva o Anúncio no Firestore com as URLs das Imagens
-                listingData.imageUrls = imageUrls;
+                // 3. Salva o Anúncio no Firestore com as CHAVES LOCAIS (IDs do IndexedDB)
+                listingData.imageUrls = savedKeys; 
+                // ATENÇÃO: Essas chaves não funcionarão para outros usuários.
+                
                 await db.collection('anuncios').add(listingData);
 
-                alert('Anúncio publicado com sucesso! Ele passará por moderação antes de ser exibido.');
+                alert(`Anúncio publicado no Firestore. As ${savedKeys.length} imagens foram salvas localmente no seu navegador.`);
                 window.location.href = 'index.html';
 
             } catch (error) {
-                console.error("Erro completo na publicação:", error);
+                console.error("Erro na publicação:", error);
                 alert(`Falha ao publicar anúncio: ${error.message}`);
             } finally {
                 submitBtn.disabled = false;

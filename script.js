@@ -337,3 +337,142 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 console.log("script.js carregado: Correções de Username, Conexão e Modal de Doação aplicadas.");
+
+
+// =================================================================
+// 7. LÓGICA DA PÁGINA DE PESQUISA (pesquisa.html)
+// =================================================================
+
+// Variáveis para elementos de pesquisa (verificam se a página é pesquisa.html)
+const searchForm = document.getElementById('search-form');
+const searchInput = document.getElementById('searchInput');
+const categoryFilter = document.getElementById('categoryFilter');
+const listingsResultsContainer = document.getElementById('listings-results');
+const resultsCountSpan = document.getElementById('results-count');
+
+/**
+ * Configura a página de pesquisa, lendo parâmetros da URL.
+ * Esta função só é chamada se os elementos do formulário existirem.
+ */
+function setupSearchPage() {
+    if (!searchForm || !listingsResultsContainer) return; // Garante que só roda em pesquisa.html
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const categoryParam = urlParams.get('category');
+    const searchParam = urlParams.get('q');
+
+    // 1. Preenche os campos do formulário (útil ao clicar nos cards de categoria da index)
+    if (categoryParam) {
+        categoryFilter.value = categoryParam;
+    }
+    if (searchParam) {
+        searchInput.value = searchParam;
+    }
+
+    // 2. Executa a pesquisa inicial se houver parâmetros (se veio da index.html)
+    if (categoryParam || searchParam) {
+        executeSearch(searchParam, categoryParam);
+    }
+    
+    // 3. Configura o envio do formulário
+    searchForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const term = searchInput.value.trim();
+        const category = categoryFilter.value;
+        
+        // Atualiza a URL (para que o usuário possa compartilhar o link da busca)
+        const newUrl = new URL(window.location.href);
+        newUrl.searchParams.set('q', term);
+        newUrl.searchParams.set('category', category);
+        // Usa replaceState para não encher o histórico com cada busca
+        window.history.replaceState({}, '', newUrl); 
+
+        executeSearch(term, category);
+    });
+}
+
+
+/**
+ * Executa a busca no Firestore com base nos filtros fornecidos.
+ * @param {string} searchTerm Termo de busca (título/descrição).
+ * @param {string} category Categoria selecionada.
+ */
+async function executeSearch(searchTerm, category) {
+    // Exibe mensagem de carregamento
+    listingsResultsContainer.innerHTML = '<div class="col-12 text-center text-primary"><i class="fas fa-spinner fa-spin me-2"></i> Buscando anúncios...</div>';
+    resultsCountSpan.textContent = '...';
+
+    // Inicia a query base
+    let query = db.collection('anuncios')
+        .where('status', '==', 'ativo')
+        .orderBy('dataCriacao', 'desc');
+
+    // 1. Aplica o filtro de Categoria (se houver)
+    if (category) {
+        query = query.where('category', '==', category);
+    }
+    
+    try {
+        const snapshot = await query.get();
+        let resultsHtml = '';
+        let count = 0;
+        const userCache = {};
+        
+        // 2. Filtro de Texto (Realizado no lado do cliente)
+        const filteredDocs = snapshot.docs.filter(doc => {
+            const data = doc.data();
+            if (!searchTerm) return true; // Se não há termo, passa no filtro
+
+            const lowerTerm = searchTerm.toLowerCase();
+            const title = data.titulo ? data.titulo.toLowerCase() : '';
+            const description = data.description ? data.description.toLowerCase() : '';
+            
+            // Retorna verdadeiro se o termo estiver no título OU na descrição
+            return title.includes(lowerTerm) || description.includes(lowerTerm);
+        });
+        
+        // 3. Renderiza os resultados filtrados
+        for (const doc of filteredDocs) {
+            const data = doc.data();
+            
+            // Reutiliza a função de busca de username
+            if (!userCache[data.vendedorUid]) {
+                userCache[data.vendedorUid] = await getUsernameByUid(data.vendedorUid);
+            }
+            const vendedorName = userCache[data.vendedorUid];
+
+            // Reutiliza a função de criação do card (deve estar definida na seção 3 do script.js)
+            resultsHtml += createListingCard(doc, data, vendedorName);
+            count++;
+        }
+
+        if (count === 0) {
+            resultsHtml = '<div class="col-12 text-center text-muted"><i class="fas fa-box-open me-2"></i> Nenhum anúncio encontrado com os filtros aplicados.</div>';
+        }
+
+        listingsResultsContainer.innerHTML = resultsHtml;
+        resultsCountSpan.textContent = count;
+
+    } catch (error) {
+        console.error("Erro ao executar a pesquisa:", error);
+        listingsResultsContainer.innerHTML = '<div class="col-12 text-center text-danger"><i class="fas fa-exclamation-triangle me-2"></i> Erro ao buscar anúncios. Verifique as regras do Firebase.</div>';
+        resultsCountSpan.textContent = 'Erro';
+    }
+}
+
+
+// --- ATUALIZAÇÃO DA CHAMADA DOMContentLoaded EXISTENTE ---
+// Se você tem um bloco document.addEventListener('DOMContentLoaded', ...) no final,
+// certifique-se de adicionar a chamada setupSearchPage() dentro dele:
+
+/*
+document.addEventListener('DOMContentLoaded', () => {
+    // ... (outras chamadas como setupDonationModal() e loadExchangeListings()) ...
+    
+    // NOVO: Chama a configuração de pesquisa se os elementos existirem
+    if (document.getElementById('search-form')) {
+        setupSearchPage(); 
+    }
+});
+*/
+

@@ -3,123 +3,94 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IVAD - Marketplace de Contas Digitais</title>
+    <title>IVAD - Marketplace de Contas Digitais Seguras</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <style>
-        /* Estilos Customizados */
-        :root {
-            --primary-color: #0d6efd; /* Azul do Bootstrap */
-            --secondary-color: #6c757d;
-            --background-color: #f8f9fa;
-        }
-        body {
-            background-color: var(--background-color);
-        }
-        .navbar {
-            box-shadow: 0 2px 4px rgba(0,0,0,.08);
-        }
-        .card-category:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 4px 8px rgba(0,0,0,.15);
-            transition: all 0.3s ease;
-        }
-        .chat-container {
-            max-height: 500px;
-            overflow-y: auto;
-            border: 1px solid #ccc;
-            padding: 15px;
-            background-color: white;
-            border-radius: .375rem;
-        }
-        .chat-message {
-            margin-bottom: 8px;
-        }
-        /* Cor de destaque para o UID do usuário logado */
-        .my-uid-highlight {
-            color: var(--primary-color);
-            font-weight: bold;
-        }
-    </style>
+    
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary sticky-top">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
         <div class="container">
-            <a class="navbar-brand fw-bold" href="#">IVAD - Marketplace</a>
+            <a class="navbar-brand" href="#">IVAD | Marketplace</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav" aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="mainNav">
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                    <li class="nav-item"><a class="nav-link active" href="#vendas"><i class="fas fa-store me-1"></i> Vendas</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="#vendas"><i class="fas fa-store me-1"></i> Comprar/Vender</a></li>
                     <li class="nav-item"><a class="nav-link" href="#trocas"><i class="fas fa-exchange-alt me-1"></i> Trocas</a></li>
                     <li class="nav-item"><a class="nav-link" href="#chat"><i class="fas fa-comments me-1"></i> Chat Global</a></li>
-                    <li class="nav-item"><a class="nav-link" href="#suporte"><i class="fas fa-headset me-1"></i> Suporte</a></li>
                 </ul>
-                <button class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#loginModal">
-                    <i class="fas fa-user me-1"></i> Entrar / Cadastrar
-                </button>
+                <div class="d-flex">
+                    <button class="btn btn-warning me-2" data-bs-toggle="modal" data-bs-target="#anunciarModal">
+                        <i class="fas fa-tag me-1"></i> Anunciar
+                    </button>
+                    <button class="btn btn-primary" id="authBtn" data-bs-toggle="modal" data-bs-target="#loginModal">
+                        <i class="fas fa-user me-1"></i> Entrar / Cadastrar
+                    </button>
+                </div>
             </div>
         </div>
     </nav>
 
     <main class="container my-5">
 
-        <div class="p-5 mb-4 bg-light rounded-3 shadow-sm">
-            <div class="container-fluid py-5">
-                <h1 class="display-5 fw-bold text-primary">Marketplace Seguro de Contas Digitais</h1>
-                <p class="col-md-8 fs-4">Compre, venda e troque contas de jogos e serviços digitais com segurança, usando nosso **Chat Privado** e sistema de **Escrow** (a ser implementado).</p>
-                <button class="btn btn-primary btn-lg" type="button" data-bs-toggle="modal" data-bs-target="#anunciarModal">
-                    <i class="fas fa-plus-circle me-1"></i> Listar Minha Conta Agora
-                </button>
-            </div>
+        <div class="hero-banner text-center">
+            <h1 class="display-4 fw-bold">Transações Digitais 100% Seguras</h1>
+            <p class="fs-5 mt-3">Utilize nosso sistema de **Escrow** e **Chat Privado** para negociar suas contas de jogos e serviços com total confiança.</p>
+            <button class="btn btn-warning btn-lg mt-3" type="button" data-bs-toggle="modal" data-bs-target="#anunciarModal">
+                <i class="fas fa-plus-circle me-1"></i> Listar Minha Conta Agora
+            </button>
         </div>
 
-        <section id="categorias" class="mb-5">
-            <h2 class="mb-4 text-secondary">Categorias Populares</h2>
-            <div class="row row-cols-1 row-cols-md-4 g-4">
-                <div class="col">
-                    <div class="card card-category text-center p-3 h-100 shadow-sm">
-                        <i class="fas fa-gamepad fa-3x text-info mb-2"></i>
-                        <h5 class="card-title">eFootball / FIFA</h5>
-                    </div>
+        <section id="vantagens" class="mb-5">
+            <div class="row text-center">
+                <div class="col-md-4">
+                    <i class="fas fa-shield-alt fa-3x text-success mb-3"></i>
+                    <h4>Escrow (Garantia)</h4>
+                    <p class="text-muted">Seu pagamento retido até que você confirme o acesso à conta.</p>
                 </div>
-                <div class="col">
-                    <div class="card card-category text-center p-3 h-100 shadow-sm">
-                        <i class="fas fa-cubes fa-3x text-success mb-2"></i>
-                        <h5 class="card-title">Roblox / Minecraft</h5>
-                    </div>
+                <div class="col-md-4">
+                    <i class="fas fa-comments fa-3x text-primary mb-3"></i>
+                    <h4>Negociação Direta</h4>
+                    <p class="text-muted">Chat privado e seguro para tirar todas as dúvidas com o vendedor.</p>
                 </div>
-                <div class="col">
-                    <div class="card card-category text-center p-3 h-100 shadow-sm">
-                        <i class="fas fa-fire-alt fa-3x text-danger mb-2"></i>
-                        <h5 class="card-title">Free Fire / COD Mobile</h5>
-                    </div>
-                </div>
-                <div class="col">
-                    <div class="card card-category text-center p-3 h-100 shadow-sm">
-                        <i class="fas fa-tools fa-3x text-warning mb-2"></i>
-                        <h5 class="card-title">Outros Serviços</h5>
-                    </div>
+                <div class="col-md-4">
+                    <i class="fas fa-star fa-3x text-warning mb-3"></i>
+                    <h4>Sistema de Reputação</h4>
+                    <p class="text-muted">Compre apenas de vendedores verificados e com alta avaliação.</p>
                 </div>
             </div>
         </section>
 
         <hr>
 
+        <section id="categorias" class="mb-5">
+            <h2 class="mb-4 text-secondary"><i class="fas fa-th-list me-2"></i> Navegue por Categoria</h2>
+            <div class="row row-cols-2 row-cols-md-4 g-3">
+                <div class="col"><div class="card card-category text-center p-3 h-100 shadow-sm"><i class="fas fa-gamepad fa-2x text-info mb-2"></i><h6 class="card-title">eFootball / FIFA</h6></div></div>
+                <div class="col"><div class="card card-category text-center p-3 h-100 shadow-sm"><i class="fas fa-cubes fa-2x text-success mb-2"></i><h6 class="card-title">Roblox / Minecraft</h6></div></div>
+                <div class="col"><div class="card card-category text-center p-3 h-100 shadow-sm"><i class="fas fa-fire-alt fa-2x text-danger mb-2"></i><h6 class="card-title">Free Fire / COD</h6></div></div>
+                <div class="col"><div class="card card-category text-center p-3 h-100 shadow-sm"><i class="fas fa-tools fa-2x text-dark mb-2"></i><h6 class="card-title">Outros Serviços</h6></div></div>
+            </div>
+        </section>
+
+        <hr>
+
         <section id="vendas" class="mb-5">
-            <h2 class="mb-4 text-primary"><i class="fas fa-store me-2"></i> Últimas Contas para Venda</h2>
+            <h2 class="mb-4 text-primary"><i class="fas fa-store me-2"></i> Últimas Oportunidades de Venda</h2>
             <div class="row g-4">
                 <div class="col-md-4">
-                    <div class="card shadow-sm h-100">
+                    <div class="card product-card shadow-sm">
                         <div class="card-body">
-                            <h5 class="card-title text-truncate">Conta Roblox VIP com Itens Raros</h5>
-                            <p class="card-text text-success fw-bold">R$ 450,00</p>
-                            <span class="badge bg-primary">Verificado</span>
-                            <p class="card-text mt-2"><small class="text-muted">Vendedor: Vendedor123</small></p>
-                            <button class="btn btn-sm btn-primary mt-2">Ver Detalhes</button>
-                            <button class="btn btn-sm btn-outline-secondary mt-2"><i class="fas fa-comment-dots"></i> Negociar</button>
+                            <h5 class="card-title text-truncate">Conta Free Fire Rara - Nível 70+</h5>
+                            <p class="product-price">R$ 450,00</p>
+                            <span class="badge verified-badge"><i class="fas fa-check-circle me-1"></i> Vendedor Verificado</span>
+                            <span class="badge bg-secondary"><i class="fas fa-star"></i> 4.8</span>
+                            <p class="card-text mt-2"><small class="text-muted">Anunciado há 3 horas</small></p>
+                            <button class="btn btn-sm btn-primary mt-2 w-100">Comprar com Escrow</button>
                         </div>
                     </div>
                 </div>
@@ -128,28 +99,28 @@
 
         <hr>
 
-        <section id="trocas" class="mb-5">
-            <h2 class="mb-4 text-primary"><i class="fas fa-exchange-alt me-2"></i> Ofertas de Troca</h2>
-            <p>Procurando trocar sua conta? Use nosso chat para negociar diretamente!</p>
-            <button class="btn btn-secondary btn-sm"><i class="fas fa-search"></i> Ver Todas as Trocas</button>
+        <section id="trocas" class="mb-5 text-center p-4 bg-light rounded shadow-sm">
+            <h2 class="mb-3 text-primary"><i class="fas fa-exchange-alt me-2"></i> Área de Trocas</h2>
+            <p class="lead">Tem uma conta e quer trocar por outra? Liste sua oferta e negocie diretamente no nosso chat privado!</p>
+            <button class="btn btn-secondary btn-lg"><i class="fas fa-search"></i> Ver Ofertas de Troca</button>
         </section>
 
         <hr>
 
-        <section id="chat" class="mb-5">
+        <section id="chat" class="mb-5 chat-section">
             <h2 class="mb-4 text-primary"><i class="fas fa-comments me-2"></i> Chat Global da Comunidade</h2>
-            <p class="text-muted">Converse, tire dúvidas e compartilhe dicas com outros usuários. <span class="my-uid-highlight">Seu UID (para referência): m3h06woQv2V7lrNu1p8fDQCZ8IWZ</span></p>
+            <p class="text-muted">Conecte-se com outros traders e fique por dentro das novidades. (Seu UID: <span id="my-uid-display" class="my-uid-highlight">Aguardando Login...</span>)</p>
 
             <div class="row">
-                <div class="col-lg-8">
+                <div class="col-lg-12">
                     <div id="chat-messages" class="chat-container">
-                        <div class="chat-message text-muted"><small>Bem-vindo ao chat global! Mensagens em tempo real aparecerão aqui.</small></div>
+                        <div class="chat-message text-muted"><small>Bem-vindo ao chat global! Faça login para participar da conversa.</small></div>
                     </div>
                     <div class="input-group mt-3">
                         <input type="text" id="chat-input" class="form-control" placeholder="Digite sua mensagem...">
                         <button class="btn btn-primary" id="chat-send-btn" disabled><i class="fas fa-paper-plane"></i> Enviar</button>
                     </div>
-                    <small class="text-danger mt-1" id="chat-status">Faça Login para enviar mensagens.</small>
+                    <small class="mt-1" id="chat-status">Faça Login para enviar mensagens.</small>
                 </div>
             </div>
         </section>
@@ -157,29 +128,29 @@
         <hr>
 
         <section id="suporte" class="mb-5">
-            <h2 class="mb-4 text-primary"><i class="fas fa-headset me-2"></i> Suporte ao Usuário</h2>
-            <p>Para dúvidas, problemas com transações ou suporte geral, entre em contato:</p>
-            <p class="lead">E-mail de Suporte Principal: **<a href="mailto:ivadtrabalho@gmail.com">ivadtrabalho@gmail.com</a>**</p>
-            <button class="btn btn-info"><i class="fas fa-info-circle me-1"></i> Ver Seção FAQ/Dúvidas</button>
+            <h2 class="mb-4 text-primary"><i class="fas fa-headset me-2"></i> Suporte e Ajuda</h2>
+            <p>Em caso de dúvidas sobre transações ou necessidade de mediação:</p>
+            <p class="lead">E-mail de Suporte: <a href="mailto:ivadtrabalho@gmail.com">ivadtrabalho@gmail.com</a></p>
+            <button class="btn btn-info"><i class="fas fa-book-open me-1"></i> Ver Guia de Segurança e FAQ</button>
         </section>
 
     </main>
 
-    <footer class="bg-dark text-white py-4 mt-5">
+    <footer class="py-4">
         <div class="container text-center">
-            <p>&copy; 2024 IVAD - Marketplace de Contas Digitais. Segurança e Confiança.</p>
+            <p class="mb-0">&copy; 2024 IVAD - Marketplace. Desenvolvido com Foco em Segurança e Confiança.</p>
         </div>
     </footer>
 
     <div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
-                <div class="modal-header">
+                <div class="modal-header bg-primary text-white">
                     <h5 class="modal-title" id="loginModalLabel">Acesso ao Marketplace</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <p>Funcionalidade de Autenticação (Firebase Auth) a ser implementada no `app.js`.</p>
+                    <p class="text-muted">Use seu e-mail e senha para acessar ou criar sua conta.</p>
                     <div class="mb-3">
                         <label for="inputEmail" class="form-label">E-mail</label>
                         <input type="email" class="form-control" id="inputEmail" placeholder="seu@email.com">
@@ -200,7 +171,6 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
 
     <script>
-        // Configuração do Firebase
         const firebaseConfig = {
           apiKey: "AIzaSyB8-tIVUAlMWQtCbF1sGLWgW9sL2Z0ixrk",
           authDomain: "ivad-trocas-e-vendas.firebaseapp.com",
@@ -210,77 +180,11 @@
           appId: "1:447811910709:web:a42b73819f6e6eb34c057c",
           measurementId: "G-RHVF8P3RCW"
         };
-
-        // Inicializa o Firebase
         const app = firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const db = firebase.firestore(); // Usado para o Chat Privado e Global
-        
-        console.log("Firebase Inicializado com Sucesso!");
-        console.log("Projeto ID:", firebaseConfig.projectId);
-        
-        // Variável de controle para o usuário logado
-        let currentUserUid = null;
-
-        // Listener de Autenticação para Habilitar o Chat
-        auth.onAuthStateChanged(user => {
-            const chatSendBtn = document.getElementById('chat-send-btn');
-            const chatStatus = document.getElementById('chat-status');
-            
-            if (user) {
-                // Usuário logado
-                currentUserUid = user.uid;
-                chatStatus.textContent = `Logado como: ${user.email} (UID: ${user.uid}). Chat Habilitado.`;
-                chatStatus.classList.remove('text-danger');
-                chatStatus.classList.add('text-success');
-                chatSendBtn.disabled = false;
-                // Fechar o modal após o login
-                const loginModal = bootstrap.Modal.getInstance(document.getElementById('loginModal'));
-                if (loginModal) loginModal.hide();
-                console.log("Usuário autenticado:", user.uid);
-                
-                // --- INÍCIO DA FUNÇÃO DE CHAT GLOBAL SIMULADA ---
-                // Simulação de adição de mensagem ao enviar (requer Firestore e regras de segurança)
-                chatSendBtn.addEventListener('click', () => {
-                    const input = document.getElementById('chat-input');
-                    const text = input.value.trim();
-                    if (text) {
-                        // Simula o envio de dados para o Firestore 'chat-global'
-                        const chatMessages = document.getElementById('chat-messages');
-                        const newMessage = document.createElement('div');
-                        newMessage.className = 'chat-message';
-                        newMessage.innerHTML = `<strong>${user.email}:</strong> ${text}`;
-                        chatMessages.appendChild(newMessage);
-                        chatMessages.scrollTop = chatMessages.scrollHeight; // Scroll para baixo
-                        input.value = '';
-                    }
-                });
-                // --- FIM DA FUNÇÃO DE CHAT GLOBAL SIMULADA ---
-                
-            } else {
-                // Usuário deslogado
-                currentUserUid = null;
-                chatStatus.textContent = "Faça Login para enviar mensagens.";
-                chatStatus.classList.remove('text-success');
-                chatStatus.classList.add('text-danger');
-                chatSendBtn.disabled = true;
-                console.log("Nenhum usuário logado.");
-            }
-        });
-
-        // Simulação de Login/Cadastro (A LÓGICA REAL DEVE SER TRATADA AQUI)
-        document.getElementById('loginBtn').addEventListener('click', () => {
-            const email = document.getElementById('inputEmail').value;
-            const password = document.getElementById('inputPassword').value;
-            // Exemplo de login (precisa ser finalizado)
-            // auth.signInWithEmailAndPassword(email, password)
-            // .then(...)
-            // .catch(...)
-            alert('Função de Login: ' + email);
-        });
-        
     </script>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script src="script.js"></script>
 </body>
 </html>

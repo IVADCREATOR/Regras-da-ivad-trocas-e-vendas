@@ -1,63 +1,70 @@
 // =================================================================
-// 1. VARIÁVEIS DE CONFIGURAÇÃO E INICIALIZAÇÃO DO FIREBASE
+// 1. INICIALIZAÇÃO DO FIREBASE E VARIÁVEIS GLOBAIS
 // =================================================================
 
-// Supondo que 'firebaseConfig' e 'app' foram inicializados no index.html
-// e que as bibliotecas SDKs (app, auth, firestore) foram carregadas.
+// Referências aos serviços do Firebase (Assumindo que o app foi inicializado no index.html)
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-// Elementos da UI
-const loginModalElement = document.getElementById('loginModal');
-const loginModal = loginModalElement ? new bootstrap.Modal(loginModalElement) : null;
+// Elementos da Interface (IDs do index.html atualizado)
+const authBtn = document.getElementById('authBtn'); // Botão na Navbar (Entrar/Sair)
 const loginBtn = document.getElementById('loginBtn');
 const registerBtn = document.getElementById('registerBtn');
-const logoutBtn = document.getElementById('logoutBtn'); // Necessário adicionar este botão na navbar do index.html
-const inputEmail = document.getElementById('inputEmail');
-const inputPassword = document.getElementById('inputPassword');
+const loginModalElement = document.getElementById('loginModal');
+const loginModal = loginModalElement ? new bootstrap.Modal(loginModalElement) : null;
+
 const chatSendBtn = document.getElementById('chat-send-btn');
 const chatInput = document.getElementById('chat-input');
 const chatMessages = document.getElementById('chat-messages');
 const chatStatus = document.getElementById('chat-status');
-const myUidDisplay = document.getElementById('my-uid-display'); // Adicionar um elemento para mostrar o UID
+const myUidDisplay = document.getElementById('my-uid-display');
 
-let currentUserUid = null;
+const inputEmail = document.getElementById('inputEmail');
+const inputPassword = document.getElementById('inputPassword');
+
+let currentUserUid = null; // Armazena o UID do usuário logado
 
 // =================================================================
 // 2. FUNÇÕES DE AUTENTICAÇÃO
 // =================================================================
 
 /**
- * Realiza o login de um usuário com e-mail e senha.
+ * Realiza o login do usuário.
  */
 function handleLogin() {
-    const email = inputEmail.value;
+    const email = inputEmail.value.trim();
     const password = inputPassword.value;
 
     if (!email || !password) {
-        alert('Por favor, preencha E-mail e Senha.');
+        alert('Por favor, preencha todos os campos.');
         return;
     }
 
-    auth.signInWithEmailAndPassword(email, password)
-        .then((userCredential) => {
-            console.log("Login bem-sucedido:", userCredential.user.uid);
-            // O auth.onAuthStateChanged cuidará da atualização da UI
-            alert('Login realizado com sucesso!');
-            if (loginModal) loginModal.hide();
+    // Desabilita botões para evitar cliques múltiplos
+    loginBtn.disabled = true;
+    registerBtn.disabled = true;
 
+    auth.signInWithEmailAndPassword(email, password)
+        .then(() => {
+            // O auth.onAuthStateChanged cuidará da atualização da UI
+            console.log("Login bem-sucedido.");
+            if (loginModal) loginModal.hide();
         })
         .catch((error) => {
             console.error("Erro no login:", error);
-            alert(`Erro no Login: ${error.message}`);
+            alert(`Falha no Login: ${error.message}`);
+        })
+        .finally(() => {
+            loginBtn.disabled = false;
+            registerBtn.disabled = false;
         });
 }
 
 /**
- * Realiza o cadastro de um novo usuário com e-mail e senha.
+ * Realiza o cadastro de um novo usuário.
  */
 function handleRegister() {
-    const email = inputEmail.value;
+    const email = inputEmail.value.trim();
     const password = inputPassword.value;
 
     if (password.length < 6) {
@@ -65,16 +72,24 @@ function handleRegister() {
         return;
     }
 
-    auth.createUserWithEmailAndPassword(email, password)
-        .then((userCredential) => {
-            console.log("Cadastro bem-sucedido:", userCredential.user.uid);
-            alert('Cadastro e Login realizados com sucesso! Bem-vindo ao IVAD.');
-            if (loginModal) loginModal.hide();
+    // Desabilita botões
+    loginBtn.disabled = true;
+    registerBtn.disabled = true;
 
+    auth.createUserWithEmailAndPassword(email, password)
+        .then(() => {
+            // O usuário é logado automaticamente após o cadastro
+            console.log("Cadastro bem-sucedido.");
+            alert('Cadastro realizado com sucesso! Bem-vindo.');
+            if (loginModal) loginModal.hide();
         })
         .catch((error) => {
             console.error("Erro no cadastro:", error);
-            alert(`Erro no Cadastro: ${error.message}`);
+            alert(`Falha no Cadastro: ${error.message}`);
+        })
+        .finally(() => {
+            loginBtn.disabled = false;
+            registerBtn.disabled = false;
         });
 }
 
@@ -85,12 +100,10 @@ function handleLogout() {
     auth.signOut()
         .then(() => {
             console.log("Logout bem-sucedido.");
-            alert('Você foi desconectado.');
-            // O auth.onAuthStateChanged cuidará da atualização da UI
         })
         .catch((error) => {
             console.error("Erro no logout:", error);
-            alert(`Erro ao fazer Logout: ${error.message}`);
+            alert(`Erro ao desconectar: ${error.message}`);
         });
 }
 
@@ -99,46 +112,55 @@ function handleLogout() {
 // =================================================================
 
 /**
- * Renderiza uma nova mensagem na área de chat.
+ * Adiciona uma nova mensagem à interface do chat.
  * @param {string} senderEmail E-mail do remetente.
  * @param {string} message Conteúdo da mensagem.
  * @param {string} senderUid UID do remetente.
+ * @param {Date | null} timestamp Data/Hora da mensagem (pode ser null na leitura inicial).
  */
-function displayMessage(senderEmail, message, senderUid) {
+function displayMessage(senderEmail, message, senderUid, timestamp) {
     const newMessage = document.createElement('div');
     newMessage.className = 'chat-message';
     
-    // Destaca o nome se for o usuário logado
     const isMe = currentUserUid && currentUserUid === senderUid;
     const emailClass = isMe ? 'my-uid-highlight' : '';
+    
+    let timeString = '';
+    if (timestamp && timestamp.toDate) {
+        // Formata o timestamp do Firestore para exibição
+        const date = timestamp.toDate();
+        timeString = date.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
+    }
 
-    // Utiliza o UID do usuário logado na variável global para destaque
-    newMessage.innerHTML = `<strong class="${emailClass}">${senderEmail}:</strong> ${message}`;
+    newMessage.innerHTML = `
+        <small class="text-muted float-end">${timeString}</small>
+        <strong class="${emailClass} me-2">${senderEmail}:</strong> 
+        <span>${message}</span>
+    `;
     
     chatMessages.appendChild(newMessage);
-    // Rola para a mensagem mais recente
+    // Rola automaticamente para a mensagem mais recente
     chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
 /**
- * Escuta novas mensagens no Firestore e as exibe.
+ * Configura o listener em tempo real para o Chat Global.
  */
 function setupGlobalChatListener() {
-    // Referência à coleção de chat
+    // Ordena as mensagens por timestamp para exibir na ordem correta
     const chatRef = db.collection('chat-global').orderBy('timestamp', 'asc');
 
-    // Listener em tempo real
     chatRef.onSnapshot(snapshot => {
         snapshot.docChanges().forEach(change => {
             if (change.type === 'added') {
                 const messageData = change.doc.data();
-                displayMessage(messageData.email, messageData.text, messageData.uid);
+                displayMessage(messageData.email, messageData.text, messageData.uid, messageData.timestamp);
             }
         });
     }, error => {
-        console.error("Erro ao escutar o Chat Global:", error);
+        console.error("Erro ao escutar o Chat Global (Verifique as Regras de Segurança):", error);
         if (chatStatus) {
-            chatStatus.textContent = "Erro ao carregar o chat. Verifique as regras do Firestore.";
+            chatStatus.textContent = "Erro de conexão com o chat.";
             chatStatus.classList.remove('text-success');
             chatStatus.classList.add('text-danger');
         }
@@ -152,103 +174,113 @@ function handleChatSend() {
     const text = chatInput.value.trim();
     if (!text || !currentUserUid) return;
 
-    // Dados da mensagem
+    chatSendBtn.disabled = true; // Desabilita para evitar envio duplo
+
     const messageData = {
         uid: currentUserUid,
         email: auth.currentUser.email,
         text: text,
-        timestamp: firebase.firestore.FieldValue.serverTimestamp() // Para ordenação
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
     };
 
     db.collection('chat-global').add(messageData)
         .then(() => {
-            chatInput.value = ''; // Limpa o input após o envio
-            console.log("Mensagem enviada com sucesso!");
+            chatInput.value = '';
+            chatSendBtn.disabled = false;
         })
         .catch((error) => {
             console.error("Erro ao enviar mensagem:", error);
-            alert("Erro ao enviar mensagem. Tente novamente.");
+            alert("Falha ao enviar mensagem (Verifique Regras de Escrita).");
+            chatSendBtn.disabled = false;
         });
 }
-
 
 // =================================================================
 // 4. GERENCIAMENTO DO ESTADO DA APLICAÇÃO (UI/AUTH)
 // =================================================================
 
 /**
- * Listener principal do Firebase Auth. Atualiza a UI e habilita/desabilita o chat.
+ * Atualiza a interface do usuário com base no estado de autenticação.
  */
-auth.onAuthStateChanged(user => {
+function updateUI(user) {
     if (user) {
-        // Usuário logado
+        // ESTADO LOGADO
         currentUserUid = user.uid;
         
-        // 1. Atualiza o Status do Chat
+        // 1. Navbar e Botão de Autenticação
+        authBtn.innerHTML = '<i class="fas fa-sign-out-alt me-1"></i> Sair';
+        authBtn.classList.remove('btn-primary');
+        authBtn.classList.add('btn-secondary');
+
+        // Remove listener de modal e adiciona o listener de logout
+        authBtn.removeEventListener('click', () => loginModal.show());
+        authBtn.addEventListener('click', handleLogout);
+
+        // 2. Chat Status
         if (chatStatus) {
-            chatStatus.innerHTML = `Logado como: <strong>${user.email}</strong> (UID: <span class="my-uid-highlight">${user.uid}</span>). Chat Habilitado.`;
+            chatStatus.innerHTML = `Logado como: <strong>${user.email}</strong>. Chat Habilitado.`;
             chatStatus.classList.remove('text-danger');
             chatStatus.classList.add('text-success');
         }
-
-        // 2. Habilita Elementos
+        if (myUidDisplay) {
+            myUidDisplay.textContent = user.uid;
+        }
         if (chatSendBtn) chatSendBtn.disabled = false;
         
-        // 3. Atualiza Navbar para Logout
-        const loginRegisterBtn = document.querySelector('[data-bs-target="#loginModal"]');
-        if (loginRegisterBtn) {
-            loginRegisterBtn.innerHTML = '<i class="fas fa-sign-out-alt me-1"></i> Sair';
-            loginRegisterBtn.removeEventListener('click', loginModal.show);
-            loginRegisterBtn.addEventListener('click', handleLogout);
-        }
-        
     } else {
-        // Usuário deslogado
+        // ESTADO DESLOGADO
         currentUserUid = null;
         
-        // 1. Atualiza o Status do Chat
+        // 1. Navbar e Botão de Autenticação
+        authBtn.innerHTML = '<i class="fas fa-user me-1"></i> Entrar / Cadastrar';
+        authBtn.classList.remove('btn-secondary');
+        authBtn.classList.add('btn-primary');
+
+        // Remove listener de logout e adiciona o listener de modal
+        authBtn.removeEventListener('click', handleLogout);
+        if (loginModal) authBtn.addEventListener('click', () => loginModal.show());
+
+        // 2. Chat Status
         if (chatStatus) {
             chatStatus.textContent = "Faça Login para enviar mensagens.";
             chatStatus.classList.remove('text-success');
             chatStatus.classList.add('text-danger');
         }
-
-        // 2. Desabilita Elementos
+        if (myUidDisplay) {
+            myUidDisplay.textContent = 'Aguardando Login...';
+        }
         if (chatSendBtn) chatSendBtn.disabled = true;
 
-        // 3. Atualiza Navbar para Login
-        const loginRegisterBtn = document.querySelector('[data-bs-target="#loginModal"]');
-        if (loginRegisterBtn) {
-            loginRegisterBtn.innerHTML = '<i class="fas fa-user me-1"></i> Entrar / Cadastrar';
-            loginRegisterBtn.removeEventListener('click', handleLogout);
-            if (loginModal) loginRegisterBtn.addEventListener('click', () => loginModal.show());
-        }
-        
-        // Limpa o chat
-        if (chatMessages) chatMessages.innerHTML = `<div class="chat-message text-muted"><small>Bem-vindo ao chat global! Mensagens em tempo real aparecerão aqui.</small></div>`;
+        // 3. Limpa o chat e inputs
+        if (chatMessages) chatMessages.innerHTML = `<div class="chat-message text-muted"><small>Bem-vindo ao chat global! Faça login para participar da conversa.</small></div>`;
+        if (inputEmail) inputEmail.value = '';
+        if (inputPassword) inputPassword.value = '';
     }
-});
-
+}
 
 // =================================================================
-// 5. EVENT LISTENERS
+// 5. EVENT LISTENERS GERAIS E INICIALIZAÇÃO
 // =================================================================
 
-// Chama a função principal de escuta de chat assim que o script é executado
-setupGlobalChatListener();
+// 5.1. Listener do Estado de Autenticação
+auth.onAuthStateChanged(updateUI);
 
-// Eventos do Modal de Autenticação
+// 5.2. Eventos de Login/Cadastro
 if (loginBtn) loginBtn.addEventListener('click', handleLogin);
 if (registerBtn) registerBtn.addEventListener('click', handleRegister);
 
-// Eventos de Chat
+// 5.3. Eventos do Chat
 if (chatSendBtn) chatSendBtn.addEventListener('click', handleChatSend);
-// Permite enviar mensagem com a tecla Enter
+
+// Permite enviar mensagem pressionando Enter
 if (chatInput) chatInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter' && !chatSendBtn.disabled) {
+        e.preventDefault(); // Previne a quebra de linha
         handleChatSend();
     }
 });
 
-// Inicialização da aplicação
-console.log("script.js carregado e inicializado.");
+// 5.4. Inicialização do Listener do Chat Global
+setupGlobalChatListener();
+
+console.log("script.js carregado: Lógica da plataforma ativada.");

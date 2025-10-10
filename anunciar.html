@@ -4,74 +4,222 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>IVAD - Listar Nova Conta</title>
-    </head>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    
+    <style>
+        /* VARIÁVEIS DE COR */
+        :root {
+            --primary-color: #007bff;     /* Azul Brilhante */
+            --purple-vibrant: #7f00ff;   /* Roxo Vibrante */
+            --pink-vibrant: #ff007f;     /* Rosa Vibrante */
+            --background-dark: #212529;
+            --form-bg: #ffffff;
+            --font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        /* NOVO FUNDO 3D IMPACTANTE E INTERATIVO */
+        body {
+            font-family: var(--font-family);
+            /* Gradiente radial para simular profundidade 3D (ponto de luz no centro) */
+            background: radial-gradient(circle at top left, #3a0099, #1f005c, var(--purple-vibrant));
+            background-attachment: fixed;
+            color: #333;
+            padding-top: 5rem; /* Espaço para o fundo aparecer bem */
+            padding-bottom: 5rem;
+        }
+        
+        /* Contêiner Principal do Formulário (Onde o 3D é aplicado) */
+        .form-container {
+            background-color: var(--form-bg);
+            border-radius: 1.5rem; /* Borda mais suave */
+            padding: 3rem;
+            max-width: 850px;
+            margin: auto;
+            /* Sombra profunda para o EFEITO 3D */
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5), 0 0 0 10px rgba(255, 255, 255, 0.1); 
+            transition: all 0.3s ease;
+        }
+        .form-container:hover {
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7); /* Efeito de elevação sutil */
+        }
+
+        /* ELEMENTOS DE INTERFACE */
+        .header-title {
+            color: var(--pink-vibrant);
+            font-weight: 700;
+            border-bottom: 3px solid var(--purple-vibrant);
+            padding-bottom: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .text-purple-vibrant { color: var(--purple-vibrant) !important; }
+        
+        /* Estilização dos Fieldsets (Seções) */
+        .form-section {
+            border: 1px solid #ddd;
+            border-radius: 0.75rem;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            background-color: #fcfcfc;
+        }
+        .form-section legend {
+            color: var(--primary-color);
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        /* Botão de Publicação */
+        .btn-publish {
+            background-color: var(--purple-vibrant);
+            border-color: var(--purple-vibrant);
+            color: white;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+        .btn-publish:hover {
+            background-color: var(--pink-vibrant); 
+            border-color: var(--pink-vibrant);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        /* Navbar e Footer (para consistência) */
+        .navbar { box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); }
+        footer { background-color: var(--background-dark) !important; color: #bbb; }
+    </style>
+</head>
 <body>
-    <div class="container main-content">
-        <h1 class="text-purple-vibrant my-4"><i class="fas fa-tag me-2"></i> Listar Nova Conta Digital</h1>
-        <p class="lead">Preencha os detalhes da conta que você deseja vender ou trocar.</p>
+
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+        <div class="container">
+            <a class="navbar-brand" href="index.html">IVAD | Marketplace</a>
+            <span class="navbar-text text-white-50 ms-3">/ Anunciar Conta</span>
+        </div>
+    </nav>
+
+    <div class="container form-container">
+        
+        <h1 class="header-title mb-4">
+            <i class="fas fa-bullhorn me-2"></i> Listar Sua Conta Digital
+        </h1>
+        <p class="lead text-muted">Preencha os dados com precisão para atrair compradores rapidamente. Seus dados de contato ficam privados.</p>
 
         <form id="listing-form">
-            <fieldset class="mb-4 p-4 border rounded">
-                <legend class="float-none w-auto px-2 fs-5 text-primary">Informações do Anúncio</legend>
+            
+            <fieldset class="form-section">
+                <legend class="float-none w-auto px-2">1. Informações Essenciais</legend>
+                
                 <div class="mb-3">
-                    <label for="title" class="form-label">Título do Anúncio</label>
-                    <input type="text" class="form-control" id="title" required placeholder="Ex: Conta Free Fire Rara com 5 passes">
+                    <label for="title" class="form-label">Título do Anúncio <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" id="title" required 
+                           placeholder="Ex: Conta Free Fire Rara com 5 passes" maxlength="80">
+                    <div class="form-text">Seja claro e inclua palavras-chave importantes.</div>
                 </div>
+                
                 <div class="mb-3">
-                    <label for="category" class="form-label">Categoria Principal</label>
+                    <label for="category" class="form-label">Categoria Principal <span class="text-danger">*</span></label>
                     <select class="form-select" id="category" required>
-                        <option value="">Selecione a Categoria</option>
+                        <option value="" disabled selected>-- Selecione a Categoria --</option>
                         <option value="eFootball">eFootball / FIFA</option>
                         <option value="Roblox/Minecraft">Roblox / Minecraft</option>
-                        <option value="FreeFire/COD">Free Fire / COD</option>
-                        <option value="ServicosDiversos">Outros Serviços</option>
+                        <option value="FreeFire/COD">Free Fire / Call of Duty</option>
+                        <option value="ServicosDiversos">Outros Jogos / Serviços</option>
                     </select>
                 </div>
+                
                 <div class="mb-3">
-                    <label for="description" class="form-label">Descrição Detalhada</label>
-                    <textarea class="form-control" id="description" rows="5" required placeholder="Nível, itens raros, motivo da venda, etc."></textarea>
+                    <label for="description" class="form-label">Descrição Detalhada <span class="text-danger">*</span></label>
+                    <textarea class="form-control" id="description" rows="5" required 
+                              placeholder="Descreva itens raros, nível, skins, motivo da venda, etc."></textarea>
+                </div>
+                
+            </fieldset>
+
+            <fieldset class="form-section">
+                <legend class="float-none w-auto px-2">2. Preço e Negociação</legend>
+                
+                <div class="mb-3">
+                    <label for="price" class="form-label">Preço de Venda (R$) <span class="text-danger">*</span></label>
+                    <input type="number" step="0.01" min="0" class="form-control" id="price" required 
+                           placeholder="Ex: 450.00">
+                    <div class="form-text">Este é o valor que o comprador pagará via Escrow.</div>
+                </div>
+                
+                <div class="form-check mb-4 p-4 border rounded">
+                    <input class="form-check-input" type="checkbox" id="acceptsExchange">
+                    <label class="form-check-label fs-5" for="acceptsExchange">
+                        <i class="fas fa-exchange-alt text-warning me-2"></i> Aceito Troca por outra Conta/Item
+                    </label>
+                    <div class="mt-2 text-muted">Marque se você estiver aberto a propostas de troca, além da venda direta.</div>
+                </div>
+                
+                <div class="mb-3" id="exchange-details" style="display:none;">
+                    <label for="interest" class="form-label">Interesse Específico de Troca</label>
+                    <input type="text" class="form-control" id="interest" 
+                           placeholder="Ex: Contas de Genshin Impact, Console, ou R$ 200 + Troca">
                 </div>
             </fieldset>
 
-            <fieldset class="mb-4 p-4 border rounded">
-                <legend class="float-none w-auto px-2 fs-5 text-primary">Preço e Opções</legend>
-                <div class="mb-3">
-                    <label for="price" class="form-label">Preço de Venda (R$)</label>
-                    <input type="number" step="0.01" class="form-control" id="price" placeholder="0.00">
+            <fieldset class="form-section">
+                <legend class="float-none w-auto px-2">3. Confirmação</legend>
+                
+                <div class="alert alert-info" role="alert">
+                    <i class="fas fa-info-circle me-2"></i> O anúncio será publicado em seu nome de usuário. O chat privado será o canal de negociação.
                 </div>
-                <div class="form-check mb-3">
-                    <input class="form-check-input" type="checkbox" id="acceptsExchange">
-                    <label class="form-check-label" for="acceptsExchange">
-                        Aceito Troca por outra Conta/Item
+                
+                <div class="form-check mb-4">
+                    <input class="form-check-input" type="checkbox" value="" id="termsCheck" required>
+                    <label class="form-check-label" for="termsCheck">
+                        Eu concordo com os <a href="#" class="text-primary">Termos de Serviço e a Política de Transação Segura (Escrow)</a> do IVAD. <span class="text-danger">*</span>
                     </label>
                 </div>
-                <div class="mb-3" id="exchange-details" style="display:none;">
-                    <label for="interest" class="form-label">Interesse de Troca</label>
-                    <input type="text" class="form-control" id="interest" placeholder="Ex: Contas de Genshin Impact ou Dinheiro">
-                </div>
+                
             </fieldset>
 
-            <button type="submit" class="btn btn-lg btn-purple w-100" id="submit-listing-btn">
-                <i class="fas fa-bullhorn me-2"></i> Publicar Anúncio
+            <button type="submit" class="btn btn-lg btn-publish w-100" id="submit-listing-btn">
+                <i class="fas fa-upload me-2"></i> Publicar Anúncio Agora
             </button>
+            <div class="text-center mt-3">
+                 <a href="index.html" class="text-muted"><small>Cancelar e Voltar ao Início</small></a>
+            </div>
         </form>
 
-    </div>
+    </div> <footer class="py-4 fixed-bottom">
+        <div class="container text-center">
+            <p class="mb-0">&copy; 2024 IVAD - Marketplace.</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
         // Lógica de toggle para o campo de interesse de troca
         document.getElementById('acceptsExchange').addEventListener('change', function() {
             document.getElementById('exchange-details').style.display = this.checked ? 'block' : 'none';
         });
-        
-        // Redirecionamento da Navbar 'Anunciar'
-        document.querySelector('[data-bs-target="#anunciarModal"]').addEventListener('click', function(e) {
-             e.preventDefault();
-             window.location.href = 'anunciar.html';
-        });
-        
-        // Lógica de envio (deve ser implementada no script.js)
-        document.getElementById('listing-form').addEventListener('submit', handleListingSubmit);
+
+        // Lógica de envio (DEVE SER IMPLEMENTADA no script.js ou um novo 'anunciar.js')
+        const listingForm = document.getElementById('listing-form');
+        if (listingForm) {
+            listingForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                alert('Funcionalidade de envio para o Firebase precisa ser implementada no arquivo JavaScript (ex: enviarAnuncio()).');
+                // Substituir o alert pela chamada da função real de envio (e.g., enviarAnuncio(data))
+                
+                // Exemplo de como coletar os dados
+                const data = {
+                    title: document.getElementById('title').value,
+                    category: document.getElementById('category').value,
+                    description: document.getElementById('description').value,
+                    price: parseFloat(document.getElementById('price').value),
+                    acceptsExchange: document.getElementById('acceptsExchange').checked,
+                    interest: document.getElementById('interest').value,
+                    // TODO: Adicionar campos de imagem/upload aqui
+                    // TODO: Adicionar o UID do Vendedor aqui (vindo da autenticação)
+                };
+                console.log("Dados prontos para envio:", data);
+            });
+        }
     </script>
 </body>
 </html>

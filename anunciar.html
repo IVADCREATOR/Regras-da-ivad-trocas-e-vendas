@@ -10,9 +10,9 @@
     <style>
         /* VARIÁVEIS DE COR */
         :root {
-            --primary-color: #007bff;     /* Azul Brilhante */
-            --purple-vibrant: #7f00ff;   /* Roxo Vibrante */
-            --pink-vibrant: #ff007f;     /* Rosa Vibrante */
+            --primary-color: #007bff;
+            --purple-vibrant: #7f00ff;
+            --pink-vibrant: #ff007f;
             --background-dark: #212529;
             --form-bg: #ffffff;
             --font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -25,14 +25,14 @@
             background: radial-gradient(circle at top left, #3a0099, #1f005c, var(--purple-vibrant));
             background-attachment: fixed;
             color: #333;
-            padding-top: 5rem; /* Espaço para o fundo aparecer bem */
+            padding-top: 5rem;
             padding-bottom: 5rem;
         }
         
         /* Contêiner Principal do Formulário (Onde o 3D é aplicado) */
         .form-container {
             background-color: var(--form-bg);
-            border-radius: 1.5rem; /* Borda mais suave */
+            border-radius: 1.5rem;
             padding: 3rem;
             max-width: 850px;
             margin: auto;
@@ -41,7 +41,7 @@
             transition: all 0.3s ease;
         }
         .form-container:hover {
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7); /* Efeito de elevação sutil */
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
         }
 
         /* ELEMENTOS DE INTERFACE */
@@ -66,6 +66,20 @@
             color: var(--primary-color);
             font-size: 1.5rem;
             font-weight: 600;
+        }
+
+        /* Pré-visualização de Imagens */
+        .image-preview-item {
+            position: relative;
+            height: 100px; /* Altura fixa para miniaturas */
+            overflow: hidden;
+            border: 1px solid #ccc;
+            border-radius: 0.3rem;
+        }
+        .image-preview-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
 
         /* Botão de Publicação */
@@ -159,9 +173,25 @@
                            placeholder="Ex: Contas de Genshin Impact, Console, ou R$ 200 + Troca">
                 </div>
             </fieldset>
+            
+            <fieldset class="form-section">
+                <legend class="float-none w-auto px-2">3. Imagens e Evidências</legend>
+                
+                <p class="text-muted">Anexe até **5 capturas de tela** da conta para comprovar os itens. **Fotos de alta qualidade** geram mais confiança.</p>
+                
+                <div class="mb-3">
+                    <label for="listing-images" class="form-label">Upload de Fotos da Conta (Máx. 5)</label>
+                    <input class="form-control" type="file" id="listing-images" multiple accept="image/*">
+                    <div class="form-text">Formatos aceitos: JPG, PNG. Cada arquivo deve ter no máximo 2MB.</div>
+                </div>
+
+                <div id="image-preview" class="row g-2 mt-3">
+                    </div>
+                
+            </fieldset>
 
             <fieldset class="form-section">
-                <legend class="float-none w-auto px-2">3. Confirmação</legend>
+                <legend class="float-none w-auto px-2">4. Confirmação</legend>
                 
                 <div class="alert alert-info" role="alert">
                     <i class="fas fa-info-circle me-2"></i> O anúncio será publicado em seu nome de usuário. O chat privado será o canal de negociação.
@@ -191,34 +221,151 @@
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script> <script>
+        // Inicialização do Firebase (Requerido para o Storage)
+        const firebaseConfig = {
+            apiKey: "AIzaSyB8-tIVUAlMWQtCbF1sGLWgW9sL2Z0ixrk",
+            authDomain: "ivad-trocas-e-vendas.firebaseapp.com",
+            projectId: "ivad-trocas-e-vendas",
+            storageBucket: "ivad-trocas-e-vendas.firebasestorage.app",
+            messagingSenderId: "447811910709",
+            appId: "1:447811910709:web:a42b73819f6e6eb34c057c",
+            measurementId: "G-RHVF8P3RCW"
+        };
+        const app = firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        const storage = firebase.storage(); // Novo serviço: Storage
 
-    <script>
+        let currentUserUid = null;
+
+        // Monitora o estado de autenticação (Necessário para obter o UID)
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                currentUserUid = user.uid;
+            } else {
+                currentUserUid = null;
+                alert('Você precisa estar logado para listar uma conta. Redirecionando para o login.');
+                // Em um ambiente real, você redirecionaria para index.html e forçaria o modal de login
+            }
+        });
+
         // Lógica de toggle para o campo de interesse de troca
         document.getElementById('acceptsExchange').addEventListener('change', function() {
             document.getElementById('exchange-details').style.display = this.checked ? 'block' : 'none';
         });
 
-        // Lógica de envio (DEVE SER IMPLEMENTADA no script.js ou um novo 'anunciar.js')
+        // Lógica de pré-visualização das imagens
+        document.getElementById('listing-images').addEventListener('change', function() {
+            const previewContainer = document.getElementById('image-preview');
+            previewContainer.innerHTML = '';
+            
+            if (this.files.length > 5) {
+                alert("Máximo de 5 imagens permitido. As primeiras 5 serão consideradas.");
+            }
+
+            Array.from(this.files).slice(0, 5).forEach(file => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    previewContainer.innerHTML += `
+                        <div class="col-4 col-md-3 image-preview-item">
+                            <img src="${e.target.result}" alt="Preview da Imagem">
+                        </div>
+                    `;
+                };
+                reader.readAsDataURL(file);
+            });
+        });
+
+        // Lógica Principal de Envio (Handle Submit)
         const listingForm = document.getElementById('listing-form');
         if (listingForm) {
-            listingForm.addEventListener('submit', function(e) {
-                e.preventDefault();
-                alert('Funcionalidade de envio para o Firebase precisa ser implementada no arquivo JavaScript (ex: enviarAnuncio()).');
-                // Substituir o alert pela chamada da função real de envio (e.g., enviarAnuncio(data))
+            listingForm.addEventListener('submit', handleListingSubmit);
+        }
+
+        // Função de Upload e Publicação (O core da etapa)
+        async function handleListingSubmit(e) {
+            e.preventDefault();
+
+            if (!currentUserUid) {
+                alert("Você precisa estar logado para listar uma conta.");
+                return;
+            }
+            
+            const submitBtn = document.getElementById('submit-listing-btn');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Publicando...';
+
+            const files = document.getElementById('listing-images').files;
+            const uploadPromises = [];
+            const imageUrls = [];
+            
+            // 1. Coleta e Validação dos Dados
+            const listingData = {
+                titulo: document.getElementById('title').value,
+                category: document.getElementById('category').value,
+                description: document.getElementById('description').value,
+                preco: parseFloat(document.getElementById('price').value) || 0,
+                aceitaTroca: document.getElementById('acceptsExchange').checked,
+                interesse: document.getElementById('interest').value || '',
+                vendedorUid: currentUserUid,
+                status: 'pendente',
+                dataCriacao: firebase.firestore.FieldValue.serverTimestamp()
+            };
+            
+            try {
+                // 2. Upload de Imagens para o Firebase Storage
+                if (files.length > 5) {
+                     throw new Error("Máximo de 5 imagens permitido.");
+                }
                 
-                // Exemplo de como coletar os dados
-                const data = {
-                    title: document.getElementById('title').value,
-                    category: document.getElementById('category').value,
-                    description: document.getElementById('description').value,
-                    price: parseFloat(document.getElementById('price').value),
-                    acceptsExchange: document.getElementById('acceptsExchange').checked,
-                    interest: document.getElementById('interest').value,
-                    // TODO: Adicionar campos de imagem/upload aqui
-                    // TODO: Adicionar o UID do Vendedor aqui (vindo da autenticação)
-                };
-                console.log("Dados prontos para envio:", data);
-            });
+                for (let i = 0; i < files.length; i++) {
+                    const file = files[i];
+                    if (file.size > 2 * 1024 * 1024) { // 2MB
+                        throw new Error(`O arquivo ${file.name} excede o limite de 2MB.`);
+                    }
+                    
+                    const fileName = `${currentUserUid}_${Date.now()}_${i}`;
+                    const storageRef = storage.ref(`anuncios/${listingData.category}/${fileName}`);
+                    
+                    // Cria a Promise para o upload
+                    const uploadTask = storageRef.put(file);
+                    uploadPromises.push(new Promise((resolve, reject) => {
+                        uploadTask.on('state_changed', 
+                            (snapshot) => { /* Progresso (Opcional) */ }, 
+                            (error) => {
+                                reject(`Erro no upload da imagem ${i+1}: ${error.message}`);
+                            }, 
+                            () => {
+                                storageRef.getDownloadURL().then(url => {
+                                    imageUrls.push(url);
+                                    resolve();
+                                });
+                            }
+                        );
+                    }));
+                }
+
+                // Aguarda todos os uploads terminarem
+                await Promise.all(uploadPromises);
+                
+                // 3. Salva o Anúncio no Firestore com as URLs das Imagens
+                listingData.imageUrls = imageUrls;
+                await db.collection('anuncios').add(listingData);
+
+                alert('Anúncio publicado com sucesso! Ele passará por moderação antes de ser exibido.');
+                window.location.href = 'index.html';
+
+            } catch (error) {
+                console.error("Erro completo na publicação:", error);
+                alert(`Falha ao publicar anúncio: ${error.message}`);
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-upload me-2"></i> Publicar Anúncio Agora';
+            }
         }
     </script>
 </body>

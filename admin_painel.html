@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IVAD - Painel Administrativo</title>
+    </head>
+<body>
+    <div class="container main-content my-5">
+        <h1 class="text-danger my-4"><i class="fas fa-lock me-2"></i> Painel de Gerenciamento</h1>
+        <p class="lead" id="admin-status">Verificando permissões de acesso...</p>
+
+        <div id="admin-content" style="display:none;">
+            <section class="mb-5 p-4 border rounded">
+                <h3 class="text-primary">Gerenciar Usuários (Sub-owner/ADM)</h3>
+                <div class="mb-3">
+                    <label for="targetUid" class="form-label">UID do Usuário Alvo</label>
+                    <input type="text" class="form-control" id="targetUid" placeholder="Insira o UID do usuário (m3h06...)">
+                </div>
+                <div class="mb-3">
+                    <label for="targetRole" class="form-label">Conceder Nível de Permissão</label>
+                    <select class="form-select" id="targetRole">
+                        <option value="owner">Proprietário (Apenas Você)</option>
+                        <option value="subowner">Sub-owner</option>
+                        <option value="admin">Administrador (ADM)</option>
+                        <option value="user">Usuário Padrão (Remover Permissão)</option>
+                    </select>
+                </div>
+                <button class="btn btn-warning" onclick="updateUserRole()"><i class="fas fa-user-shield me-2"></i> Atualizar Permissão</button>
+                <p class="mt-2 text-success" id="role-message"></p>
+            </section>
+            
+            <section class="mb-5 p-4 border rounded">
+                <h3 class="text-primary">Anúncios Pendentes</h3>
+                <div id="pending-listings">Nenhum anúncio pendente de moderação.</div>
+            </section>
+        </div>
+        
+        <button class="btn btn-danger mt-4" onclick="firebase.auth().signOut()"><i class="fas fa-sign-out-alt me-2"></i> Sair do Painel</button>
+    </div>
+
+    <script src="admin.js"></script> </body>
+</html>

@@ -1,18 +1,16 @@
 // =========================================================================
 // 1. CONSTANTES E REFERÊNCIAS
-//    (Depende das referências 'auth' e 'db' inicializadas em script.js/HTML)
+//    (Depende das referências 'db' e da função 'createListingCard' de script.js)
 // =========================================================================
-
-// O Firestore (db) e a função createListingCard são assumidos como globais 
-// e definidos em script.js, que carrega antes deste módulo.
-// const db = firebase.firestore(); 
-// function createListingCard(listing) { ... }
 
 const LISTINGS_PER_PAGE = 12; // Número de resultados por página
 
+// As dependências globais (db, createListingCard) são assumidas do script.js
+// para evitar repetição de código e garantir a modularidade.
+
 // =========================================================================
 // 2. LÓGICA DE CATEGORIAS (index.html)
-//    CRÍTICO: Resolve o problema de clique e redirecionamento
+//    CRÍTICO: Fluxo de Redirecionamento de Categoria Reativado
 // =========================================================================
 
 /**
@@ -20,7 +18,7 @@ const LISTINGS_PER_PAGE = 12; // Número de resultados por página
  * Esta função deve ser chamada APENAS em index.html.
  */
 function setupCategoryListeners() {
-    console.log("DIAGNÓSTICO: Tentando anexar listeners de categoria.");
+    console.log("DIAGNÓSTICO: Tentando anexar listeners de categoria (Módulo funcional).");
     
     // Seleciona todos os elementos com a classe category-link
     const categoryLinks = document.querySelectorAll('.category-link');
@@ -31,16 +29,18 @@ function setupCategoryListeners() {
             
             if (categoryName) {
                 // Adiciona o listener de clique
-                card.addEventListener('click', () => {
-                    // CRÍTICO: Redireciona para pesquisa.html com o parâmetro de URL
-                    console.log(`CLIQUE DETECTADO: Redirecionando para categoria: ${categoryName}`);
+                card.addEventListener('click', (e) => {
+                    // Previne o comportamento padrão (necessário se o card for um link)
+                    e.preventDefault(); 
+                    
+                    console.log(`CLIQUE CAPTURADO: Redirecionando para categoria: ${categoryName}`);
+                    
+                    // CRÍTICO: Redirecionamento funcional para a página de pesquisa
                     window.location.href = `pesquisa.html?category=${encodeURIComponent(categoryName)}`;
                 });
-                // Diagnóstico para confirmar o anexo
-                // console.log(`Listener anexado ao card para: ${categoryName}`);
             }
         });
-        console.log(`DIAGNÓSTICO: ${categoryLinks.length} listeners de categoria anexados com sucesso.`);
+        console.log(`DIAGNÓSTICO: ${categoryLinks.length} listeners de categoria reativados com sucesso.`);
     } else {
         console.log("DIAGNÓSTICO: Nenhum card com classe .category-link encontrado (OK se não for index.html).");
     }
@@ -65,26 +65,25 @@ function getUrlFilters() {
  * Executa a consulta de listagens no Firestore com base nos filtros fornecidos.
  */
 async function fetchListings(filters) {
+    // Assume que 'db' é uma variável global definida em script.js/HTML
+    if (typeof db === 'undefined') {
+         console.error("ERRO: O objeto 'db' do Firebase Firestore não está definido.");
+         return [];
+    }
+
     const { category, query } = filters;
     let queryRef = db.collection('listings')
                       .where('status', '==', 'active');
     
-    // Filtro por CATEGORIA (Prioridade alta vinda do index.html)
+    // Filtro por CATEGORIA
     if (category) {
         queryRef = queryRef.where('category', '==', category);
     }
 
-    // Filtro por BUSCA (Palavra-chave - Nota: Firestore não faz busca de texto completo)
-    // Para simplificar, faremos uma busca parcial por prefixo no título.
+    // Filtro por BUSCA (palavra-chave) - Apenas para demonstração, mantendo o aviso
     if (query) {
-        const lowerCaseQuery = query.toLowerCase();
-        // NOTA: Para buscas de texto completo no Firestore, seria necessário usar uma solução como Algolia ou ElasticSearch.
-        // Aqui, faremos uma busca simples onde o título 'começa com' a palavra-chave (limitado pelo Firestore).
-        // A melhor prática para o Firestore é que o cliente filtre os resultados se a lista não for muito grande, ou usar um campo de metadados.
-        // Vamos manter o filtro de categoria para evitar coleções não indexadas.
-        console.warn("A busca por palavra-chave no Firestore é limitada. Usando apenas filtro de categoria/status.");
-        // Se a busca por palavra-chave fosse necessária, você teria que estruturar o DB de forma diferente (ex: campo "title_keywords").
-        // Por ora, focamos no filtro de categoria, que é o que está quebrando o fluxo.
+        console.warn("Busca por palavra-chave no Firestore é limitada (sem full-text search).");
+        // Em um ambiente de produção, esta busca deve ser feita em um campo indexado ou com uma ferramenta externa.
     }
     
     // Ordem e Limite
@@ -107,6 +106,13 @@ function renderSearchResults(listings, filters) {
     const resultsContainer = document.getElementById('listings-results');
     const countDisplay = document.getElementById('results-count');
     const filterDisplay = document.getElementById('current-filter-display');
+    
+    // Assume que 'createListingCard' é uma função global definida em script.js
+    if (typeof createListingCard === 'undefined') {
+        console.error("ERRO: A função 'createListingCard' não está definida. Verifique script.js.");
+        if (resultsContainer) resultsContainer.innerHTML = `<div class="col-12 text-center text-danger py-5">Erro de renderização: Funções ausentes.</div>`;
+        return;
+    }
 
     if (!resultsContainer || !countDisplay || !filterDisplay) {
         console.error("Elementos de resultados de busca não encontrados na página.");
@@ -119,19 +125,27 @@ function renderSearchResults(listings, filters) {
             <div class="col-12 text-center py-5">
                 <i class="fas fa-box-open fa-3x mb-3 text-muted"></i>
                 <h4 class="text-white-50">Nenhum anúncio encontrado com os filtros atuais.</h4>
-                <p>Tente refinar sua pesquisa ou buscar por outra categoria.</p>
+                <p class="text-muted">Tente refinar sua pesquisa ou buscar por outra categoria.</p>
             </div>
         `;
     } else {
-        // Assume que createListingCard está definido em script.js
         resultsContainer.innerHTML = listings.map(listing => createListingCard(listing)).join('');
     }
     
     // 2. Atualiza os Displays de Feedback
-    const currentFilter = filters.category || filters.query || 'Todas as Listagens';
-    
+    let currentFilterText = '';
+    if (filters.category && filters.query) {
+         currentFilterText = `${filters.category} + "${filters.query}"`;
+    } else if (filters.category) {
+         currentFilterText = `Categoria: ${filters.category}`;
+    } else if (filters.query) {
+         currentFilterText = `Busca: "${filters.query}"`;
+    } else {
+         currentFilterText = 'Todas as Listagens';
+    }
+
     countDisplay.textContent = listings.length;
-    filterDisplay.textContent = currentFilter;
+    filterDisplay.textContent = currentFilterText;
     
     // 3. Preenche a barra de filtro com os valores atuais da URL
     const searchInput = document.getElementById('searchInput');
@@ -157,7 +171,7 @@ async function handleSearchPageLoad() {
     const listings = await fetchListings(filters);
     renderSearchResults(listings, filters);
     
-    console.log("DIAGNÓSTICO: Pesquisa inicial concluída. Filtros:", filters);
+    console.log("DIAGNÓSTICO: Pesquisa inicial concluída. Filtros aplicados:", filters);
 }
 
 /**
@@ -175,8 +189,9 @@ function handleFilterSubmit(e) {
     // Constrói a nova URL
     const newUrlParams = new URLSearchParams();
     if (newCategory) newUrlParams.set('category', newCategory);
-    if (newQuery) newUrlParams.set('query', newQuery); // Mantido o query para futuros updates
+    if (newQuery) newUrlParams.set('query', newQuery); 
 
+    // Redireciona para a nova URL de busca
     window.location.href = `pesquisa.html?${newUrlParams.toString()}`;
 }
 
@@ -201,9 +216,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     // 2. Lógica da PÁGINA INICIAL (index.html)
-    // O setupCategoryListeners é chamado em script.js, mas definido aqui.
-    // Garante que o listener seja anexado se o index.html carregar primeiro.
-    // (A chamada está no final do script.js, mas a definição está aqui para modularização)
-    // console.log("Pesquisa.js carregado. A função setupCategoryListeners está disponível.");
-
+    // A função setupCategoryListeners é chamada pelo script.js no DOMContentLoaded.
+    // Ela é definida aqui para modularidade.
 });

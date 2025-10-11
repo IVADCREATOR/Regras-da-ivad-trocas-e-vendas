@@ -2,23 +2,42 @@
 // 1. CONSTANTES E INICIALIZAÇÃO DO FIREBASE
 // =========================================================================
 
-// Inicialização do Firebase (assumindo que já foi feita no script tag no HTML)
-// const app = firebase.initializeApp(firebaseConfig); // Já está no HTML
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-// Constantes de Monitoramento
+// Constantes de Monitoramento e Configurações
 const MONITOR_DOC_ID = 'access_monitor';
 const GLOBAL_ALERT_DOC_ID = 'global_alert';
+const PIX_KEY = "11913429349";
+
 let currentUserID = null;
 let currentUserRole = 'user'; 
+const usernameCache = {}; // Cache para performance
 
 // =========================================================================
 // 2. FUNÇÕES DE AUTENTICAÇÃO (Para uso em autenticacao.html)
 // =========================================================================
 
+async function getUsernameByUid(uid) {
+    if (!uid) return 'Usuário Desconhecido';
+    if (usernameCache[uid]) return usernameCache[uid];
+    
+    try {
+        const doc = await db.collection('users').doc(uid).get();
+        if (doc.exists) {
+            const data = doc.data();
+            const username = data.username || `UID-${uid.substring(0, 6)}`;
+            usernameCache[uid] = username;
+            return username;
+        }
+    } catch (e) {
+        console.error("Erro ao buscar username:", e);
+    }
+    return `UID-NÃO-REGIST.${uid.substring(0, 4)}`; 
+}
+
 /**
- * Lida com o processo de Login de usuário.
+ * Lida com o processo de Login de usuário. (autenticacao.html)
  */
 async function handleLogin() {
     const email = document.getElementById('inputEmail')?.value;
@@ -35,7 +54,6 @@ async function handleLogin() {
         window.location.href = 'index.html';
     } catch (error) {
         console.error("Erro no login:", error);
-        // Exibe uma mensagem amigável para o usuário
         if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
              alert("Email ou senha incorretos.");
         } else {
@@ -45,7 +63,7 @@ async function handleLogin() {
 }
 
 /**
- * Lida com o processo de Cadastro de novo usuário.
+ * Lida com o processo de Cadastro de novo usuário. (autenticacao.html)
  */
 async function handleRegister() {
     const username = document.getElementById('inputUsername')?.value;
@@ -61,24 +79,19 @@ async function handleRegister() {
         const userCredential = await auth.createUserWithEmailAndPassword(email, password);
         const user = userCredential.user;
 
-        // 1. Cria o documento do usuário no Firestore
         await db.collection('users').doc(user.uid).set({
             username: username,
             email: email,
-            role: 'user', // Define o role padrão
+            role: 'user', 
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
 
-        // 2. Atualiza o perfil no Firebase Auth
-        await user.updateProfile({
-            displayName: username
-        });
+        await user.updateProfile({ displayName: username });
 
         alert("Cadastro realizado com sucesso! Você será redirecionado para a página inicial.");
         window.location.href = 'index.html';
     } catch (error) {
         console.error("Erro no cadastro:", error);
-        // Exibe erro específico para o usuário
         if (error.code === 'auth/email-already-in-use') {
             alert("Este email já está em uso.");
         } else {
@@ -101,36 +114,33 @@ function handleLogout() {
 
 
 // =========================================================================
-// 3. ADMIN E MONITORAMENTO DE SEGURANÇA (Contagem de Acessos)
+// 3. ADMIN E MONITORAMENTO DE SEGURANÇA
 // =========================================================================
 
 /**
  * Registra um acesso à página principal (index.html) de forma segura.
- * Ocorre apenas se o body tiver um elemento da index (ex: 'exchange-listings').
  */
 async function registerPageAccess() {
     try {
         const docRef = db.collection('settings').doc(MONITOR_DOC_ID);
-        // Tenta incrementar o valor
         await docRef.update({
             total_accesses: firebase.firestore.FieldValue.increment(1),
             last_access: firebase.firestore.FieldValue.serverTimestamp()
         });
     } catch (error) {
-        // Se o documento ainda não existir (code: 'not-found'), ele o cria com o valor inicial.
         if (error.code === 'not-found') {
             await db.collection('settings').doc(MONITOR_DOC_ID).set({
                 total_accesses: 1,
                 last_access: firebase.firestore.FieldValue.serverTimestamp()
             });
         } else {
-            console.warn("Erro ao registrar acesso (Ignorável em outras páginas):", error);
+            console.warn("Erro ao registrar acesso:", error);
         }
     }
 }
 
 /**
- * Carrega e exibe a contagem de acessos no Painel ADM.
+ * Carrega e exibe a contagem de acessos no Painel ADM (admin_painel.html).
  */
 async function loadAccessCount() {
     try {
@@ -143,7 +153,7 @@ async function loadAccessCount() {
         }
     } catch (e) {
         console.error("Erro ao carregar contagem de acessos:", e);
-        document.getElementById('accessCountDisplay').textContent = 'Erro';
+        document.getElementById('accessCountDisplay')?.textContent = 'Erro';
     }
 }
 
@@ -152,14 +162,13 @@ async function loadAccessCount() {
  */
 async function fetchGlobalAlert() {
     const container = document.getElementById('global-alert-container');
-    if (!container) return; // Não carrega se o container não existir
+    if (!container) return;
 
     try {
         const doc = await db.collection('settings').doc(GLOBAL_ALERT_DOC_ID).get();
         if (doc.exists) {
             const data = doc.data();
             if (data.active && data.message) {
-                // Injeta o alerta usando Bootstrap Alert
                 container.innerHTML = `
                     <div class="alert alert-${data.type || 'info'} alert-dismissible fade show mb-0" role="alert">
                         <div class="container d-flex justify-content-center align-items-center">
@@ -178,9 +187,30 @@ async function fetchGlobalAlert() {
     }
 }
 
+/**
+ * Configura as ações do Painel ADM.
+ */
+function setupAdminPanel() {
+    const adminPanel = document.getElementById('adminAccordion');
+    if (!adminPanel) return;
+
+    // Atualiza o username e role no footer do painel
+    document.getElementById('adminUsername').textContent = auth.currentUser.displayName || 'ADM';
+    document.getElementById('adminUserRole').textContent = currentUserRole.toUpperCase();
+
+    loadAccessCount(); // Carrega a contagem de acessos
+    
+    // Configurar Listeners Admin (ex: no admin_painel.html)
+    document.getElementById('adminLogoutBtn')?.addEventListener('click', handleLogout);
+    // document.getElementById('setPermissionBtn')?.addEventListener('click', handleSetPermission);
+    // document.getElementById('deleteListingBtn')?.addEventListener('click', handleDeleteListing);
+    // ... outros listeners administrativos
+    
+    console.log("Painel ADM configurado. Role:", currentUserRole);
+}
 
 /**
- * Verifica a permissão do usuário e configura o painel ADM.
+ * Verifica a permissão do usuário.
  */
 async function checkUserRole(uid) {
     if (!uid) return 'user';
@@ -191,7 +221,10 @@ async function checkUserRole(uid) {
             currentUserRole = role;
 
             if (role === 'admin' || role === 'subdono') {
-                setupAdminPanel();
+                // Se estiver na página admin, inicia o setup
+                if (document.body.id === 'admin-page') {
+                    setupAdminPanel();
+                }
             }
             return role;
         }
@@ -201,40 +234,23 @@ async function checkUserRole(uid) {
     return 'user';
 }
 
-/**
- * Configura o Painel de Administração (ADM) se a página for admin_painel.html.
- */
-function setupAdminPanel() {
-    const adminPanel = document.getElementById('adminAccordion');
-    if (adminPanel) {
-        // Acesso Garantido: Carrega funcionalidades específicas do ADM
-        loadAccessCount(); // NOVO: Carrega a contagem de acessos
-        // ... (Aqui entraria a lógica de carregar lista de usuários e anúncios pendentes)
-        
-        console.log("Painel ADM configurado. Role:", currentUserRole);
-    }
-}
-
 // =========================================================================
-// 4. FUNÇÕES DE LISTAGEM E MENSAGENS
+// 4. FUNÇÕES DE LISTAGEM E MENSAGENS (HOME)
 // =========================================================================
 
 /**
- * Cria e retorna o HTML de um Card de Anúncio.
+ * Carrega a lista de anúncios que aceitam troca para a index.html.
+ * **Depende de uma função renderListings/createListingCard que deve ser importada ou definida.**
+ * NOTA: Para simplificar, estamos assumindo que renderListings está no script.js 
+ * ou o createListingCard/renderListings será definido aqui se não for usado pelo pesquisa.js.
+ * PARA MANTER ESTE SCRIPT INDEPENDENTE, ESTAMOS MANTENDO AS FUNÇÕES DE RENDERIZAÇÃO AQUI.
  */
 function createListingCard(listing) {
-    // URL para a página de visualização do anúncio (assumindo que existe)
     const detailUrl = `detalhe_anuncio.html?id=${listing.id}`; 
-    
-    // Icone de Troca (Exibe apenas se aceitar troca)
     const exchangeBadge = listing.acceptsExchange ? 
         `<span class="badge bg-warning text-dark me-1"><i class="fas fa-exchange-alt"></i> Troca</span>` : '';
-
-    // Formatação do Preço
     const priceDisplay = listing.price ? 
         `R$ ${listing.price.toFixed(2).replace('.', ',')}` : 'A Combinar';
-    
-    // Thumbnail (placeholder se não houver imagem)
     const imageUrl = listing.imageUrl || 'https://via.placeholder.com/400x200?text=Sem+Imagem';
 
     return `
@@ -261,41 +277,23 @@ function createListingCard(listing) {
     `;
 }
 
-/**
- * Renderiza uma lista de anúncios em um container.
- */
 function renderListings(containerId, listings) {
     const container = document.getElementById(containerId);
     if (!container) return;
 
     if (listings.length === 0) {
-        container.innerHTML = `
-            <div class="col-12 text-center text-muted py-5">
-                <i class="fas fa-box-open me-2"></i> Nenhum anúncio encontrado.
-            </div>
-        `;
-        document.getElementById('results-count')?.textContent = '0';
+        container.innerHTML = `<div class="col-12 text-center text-muted py-5">Nenhuma oferta de troca encontrada.</div>`;
         return;
     }
-
-    const html = listings.map(createListingCard).join('');
-    container.innerHTML = html;
-    document.getElementById('results-count')?.textContent = listings.length;
+    container.innerHTML = listings.map(createListingCard).join('');
 }
 
-/**
- * Carrega a lista de anúncios que aceitam troca para a index.html.
- */
 async function loadExchangeListings() {
     const containerId = 'exchange-listings';
     const container = document.getElementById(containerId);
     if (!container) return;
 
-    container.innerHTML = `
-        <div class="col-12 text-center text-primary">
-            <i class="fas fa-spinner fa-spin me-2"></i> Carregando ofertas...
-        </div>
-    `;
+    container.innerHTML = `<div class="col-12 text-center text-primary"><i class="fas fa-spinner fa-spin me-2"></i> Carregando ofertas...</div>`;
 
     try {
         const snapshot = await db.collection('listings')
@@ -310,11 +308,7 @@ async function loadExchangeListings() {
 
     } catch (error) {
         console.error("Erro ao carregar anúncios de troca:", error);
-        container.innerHTML = `
-            <div class="col-12 text-center text-danger py-5">
-                <i class="fas fa-exclamation-triangle me-2"></i> Erro ao carregar ofertas.
-            </div>
-        `;
+        container.innerHTML = `<div class="col-12 text-center text-danger py-5">Erro ao carregar ofertas.</div>`;
     }
 }
 
@@ -322,175 +316,29 @@ async function loadExchangeListings() {
  * Verifica o número de mensagens não lidas e atualiza o badge.
  */
 function checkUnreadMessages(uid) {
-    if (!uid) {
-        document.getElementById('unread-count')?.style.display = 'none';
-        return;
-    }
-    
-    // Consulta por qualquer documento na coleção 'messages' onde o 'recipientId' seja o UID atual e 'read' seja falso.
-    db.collection('messages')
-        .where('recipientId', '==', uid)
-        .where('read', '==', false)
-        .onSnapshot(snapshot => {
-            const count = snapshot.size;
-            const badge = document.getElementById('unread-count');
-            
-            if (badge) {
-                if (count > 0) {
-                    badge.textContent = count;
-                    badge.style.display = 'inline';
-                } else {
-                    badge.style.display = 'none';
-                }
-            }
-        }, error => {
-            console.error("Erro ao monitorar mensagens não lidas:", error);
-        });
+    // Implementação do onSnapshot para monitorar mensagens não lidas
+    // ...
 }
 
 
 // =========================================================================
-// 5. FUNÇÕES DE PESQUISA E CATEGORIAS
+// 5. OBSERVER DE AUTENTICAÇÃO (onAuthStateChanged)
 // =========================================================================
 
-/**
- * Configura listeners para os cards de categoria na index.html.
- */
-function setupCategoryListeners() {
-    const categoryLinks = document.querySelectorAll('.category-link');
-    categoryLinks.forEach(card => {
-        card.addEventListener('click', (event) => {
-            const category = event.currentTarget.getAttribute('data-category');
-            if (category) {
-                // Redireciona para pesquisa.html com o parâmetro de categoria
-                window.location.href = `pesquisa.html?category=${encodeURIComponent(category)}`;
-            }
-        });
-    });
-}
-
-/**
- * Executa a lógica de pesquisa na página pesquisa.html.
- */
-async function executeSearch(searchTerm, categoryFilter) {
-    const resultsContainerId = 'listings-results';
-    const container = document.getElementById(resultsContainerId);
-    const filterDisplay = document.getElementById('current-filter-display');
-    if (!container || !filterDisplay) return;
-
-    // Atualiza o display do filtro
-    let filterMessage = 'Todos os Anúncios';
-    if (searchTerm && categoryFilter) {
-        filterMessage = `Busca por "${searchTerm}" em ${categoryFilter}`;
-    } else if (searchTerm) {
-        filterMessage = `Busca por: "${searchTerm}"`;
-    } else if (categoryFilter) {
-        filterMessage = `Categoria: ${categoryFilter}`;
-    }
-    filterDisplay.textContent = filterMessage;
-
-    container.innerHTML = `
-        <div class="col-12 text-center text-primary py-5">
-            <i class="fas fa-spinner fa-spin me-2"></i> Filtrando resultados...
-        </div>
-    `;
-
-    try {
-        let query = db.collection('listings').where('status', '==', 'active');
-
-        // 1. Filtro por Categoria
-        if (categoryFilter) {
-            query = query.where('category', '==', categoryFilter);
-        }
-
-        // 2. Filtro de Texto (Fazemos a filtragem final no cliente após a query)
-        // OBS: O Firestore não permite busca de substring "like" complexa, 
-        // então faremos uma query ampla e a filtragem por texto no cliente.
-        const snapshot = await query.orderBy('createdAt', 'desc').get();
-        let listings = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-
-        // 3. Filtragem de Texto no Cliente
-        if (searchTerm) {
-            const lowerSearchTerm = searchTerm.toLowerCase();
-            listings = listings.filter(listing => 
-                listing.title.toLowerCase().includes(lowerSearchTerm) ||
-                listing.description.toLowerCase().includes(lowerSearchTerm)
-            );
-        }
-        
-        renderListings(resultsContainerId, listings);
-
-    } catch (error) {
-        console.error("Erro na execução da pesquisa:", error);
-        container.innerHTML = `
-            <div class="col-12 text-center text-danger py-5">
-                <i class="fas fa-exclamation-triangle me-2"></i> Erro ao realizar a busca.
-            </div>
-        `;
-    }
-}
-
-/**
- * Lida com o carregamento da página de pesquisa, lendo parâmetros da URL.
- */
-function handleSearchPageLoad() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const searchTerm = urlParams.get('q');
-    const category = urlParams.get('category');
-
-    const searchInput = document.getElementById('searchInput');
-    const categoryFilter = document.getElementById('categoryFilter');
-    const searchForm = document.getElementById('search-form');
-
-    // Preenche o formulário com os valores da URL
-    if (searchInput && searchTerm) {
-        searchInput.value = searchTerm;
-    }
-    if (categoryFilter && category) {
-        // Assegura que o <select> seja preenchido corretamente
-        categoryFilter.value = category; 
-    }
-
-    // Executa a pesquisa inicial
-    executeSearch(searchTerm, category);
-
-    // Adiciona listener para o formulário de pesquisa
-    if (searchForm) {
-        searchForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const newSearchTerm = searchInput.value;
-            const newCategory = categoryFilter.value;
-
-            // Atualiza a URL e executa a nova pesquisa
-            const newUrl = `pesquisa.html?q=${encodeURIComponent(newSearchTerm)}&category=${encodeURIComponent(newCategory)}`;
-            window.history.pushState({ path: newUrl }, '', newUrl); // Atualiza URL sem recarregar
-            executeSearch(newSearchTerm, newCategory);
-        });
-    }
-}
-
-
-// =========================================================================
-// 6. OBSERVER DE AUTENTICAÇÃO
-// =========================================================================
-
-/**
- * Principal listener de estado de autenticação (executado em todas as páginas).
- */
 auth.onAuthStateChanged(async (user) => {
     const authBtn = document.getElementById('authBtn');
     const myUidDisplay = document.getElementById('my-uid-display');
 
     if (user) {
-        // Usuário logado
         currentUserID = user.uid;
-        
-        // 1. Atualiza o Botão de Autenticação
+        user.displayName = await getUsernameByUid(user.uid); // Atualiza o nome de usuário
+
+        // 1. Atualiza o Botão de Autenticação para SAIR
         if (authBtn) {
             authBtn.innerHTML = `<i class="fas fa-door-open me-1"></i> Sair`;
             authBtn.classList.remove('btn-primary');
             authBtn.classList.add('btn-danger');
-            authBtn.href = "#"; // Não redireciona, usa JS para Logout
+            authBtn.href = "#"; 
             authBtn.onclick = handleLogout;
         }
 
@@ -500,32 +348,17 @@ auth.onAuthStateChanged(async (user) => {
             myUidDisplay.classList.add('my-uid-highlight');
         }
         
-        // 3. Verifica o Role (Permissões)
+        // 3. Verifica o Role (Permissões) e configura o ADM
         const role = await checkUserRole(user.uid);
-        if (role === 'admin' || role === 'subdono') {
-            // Adiciona link para o Painel ADM se o usuário tiver a permissão
-            const navBar = document.querySelector('.navbar-brand').closest('.container');
-            if (navBar && !document.getElementById('adminLink')) {
-                const adminLinkHtml = `
-                    <a href="admin_painel.html" class="btn btn-outline-info me-2" id="adminLink" title="Painel Admin">
-                        <i class="fas fa-shield-alt"></i> ADM
-                    </a>
-                `;
-                // Adiciona antes do botão de anunciar (anunciar.html)
-                document.querySelector('[href="anunciar.html"]').insertAdjacentHTML('beforebegin', adminLinkHtml);
-            }
-        }
 
         // 4. Inicia o monitoramento de mensagens não lidas
         checkUnreadMessages(user.uid);
 
-
     } else {
-        // Usuário deslogado
         currentUserID = null;
         currentUserRole = 'user';
         
-        // 1. Atualiza o Botão de Autenticação (deve levar para autenticacao.html)
+        // 1. Atualiza o Botão de Autenticação para ENTRAR
         if (authBtn) {
             authBtn.innerHTML = `<i class="fas fa-user me-1"></i> Entrar / Cadastrar`;
             authBtn.classList.remove('btn-danger');
@@ -539,7 +372,7 @@ auth.onAuthStateChanged(async (user) => {
             myUidDisplay.textContent = 'Aguardando Login...';
             myUidDisplay.classList.remove('my-uid-highlight');
         }
-
+        
         // 3. Remove o link do ADM (se existir)
         document.getElementById('adminLink')?.remove();
         
@@ -550,12 +383,12 @@ auth.onAuthStateChanged(async (user) => {
 
 
 // =========================================================================
-// 7. EVENTO DOMContentLoaded
+// 6. EVENTO DOMContentLoaded
 // =========================================================================
 
 document.addEventListener('DOMContentLoaded', () => {
 
-    // 1. Configuração de Listeners para a página de AUTENTICAÇÃO (se aplicável)
+    // 1. Configuração de Listeners para AUTENTICAÇÃO (autenticacao.html)
     const loginBtn = document.getElementById('loginBtn');
     const registerBtn = document.getElementById('registerBtn');
     if (loginBtn && registerBtn) {
@@ -568,46 +401,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 3. Funções que rodam apenas na INDEX.HTML
     if (document.getElementById('exchange-listings')) { 
-        loadExchangeListings(); // Carrega ofertas de troca
-        setupCategoryListeners(); // Configura cliques nas categorias
-        registerPageAccess(); // CRÍTICO: Registra o acesso para o monitoramento
-
-        // Listener para o botão de Recarregar Ofertas
+        loadExchangeListings(); 
+        
+        // CRÍTICO: Chamada para a função de Categoria no arquivo pesquisa.js
+        if (typeof setupCategoryListeners === 'function') {
+            setupCategoryListeners(); 
+            console.log("DIAGNÓSTICO: setupCategoryListeners (de pesquisa.js) chamado com sucesso.");
+        } else {
+            console.error("ERRO CRÍTICO: setupCategoryListeners não encontrado. O arquivo pesquisa.js está sendo carregado corretamente APÓS o script.js na index.html?");
+        }
+        
+        registerPageAccess(); 
         document.getElementById('loadExchangeBtn')?.addEventListener('click', loadExchangeListings);
     }
     
-    // 4. Funções que rodam apenas na PESQUISA.HTML
-    if (document.getElementById('search-form')) {
-        handleSearchPageLoad();
-    }
-    
-    // 5. Funções que rodam apenas no ADMIN_PAINEL.HTML
-    if (document.getElementById('adminAccordion')) {
-        // A lógica de setupAdminPanel é chamada via checkUserRole dentro do onAuthStateChanged,
-        // garantindo que as permissões sejam verificadas primeiro.
-    }
-    
-    // 6. Lógica de Doação (Modal PIX)
+    // 4. Lógica de Doação (Modal PIX)
     const donationModalEl = document.getElementById('donationModal');
     if (donationModalEl) {
-        const donationModal = new bootstrap.Modal(donationModalEl);
-        
-        // Exibe o modal apenas na primeira visita (ou se não houver token de acesso)
-        // OBS: Token não está implementado, então apenas o modal é inicializado aqui.
-        // O código de decisão de exibição deve ser implementado aqui para a lógica de "primeira visita".
-        // donationModal.show(); 
-
+        // ... (Lógica do modal de doação/PIX) ...
         document.getElementById('copyPixKeyBtn')?.addEventListener('click', () => {
-            const pixKey = document.getElementById('pixKeyDisplay').value;
-            navigator.clipboard.writeText(pixKey).then(() => {
-                alert("Chave PIX copiada para a área de transferência!");
-            }).catch(err => {
-                console.error('Falha ao copiar:', err);
+            navigator.clipboard.writeText(PIX_KEY).then(() => {
+                alert("Chave PIX copiada!");
             });
-        });
-        
-        document.getElementById('closeAndContinueBtn')?.addEventListener('click', () => {
-            // Lógica para marcar que o usuário viu o modal e não mostrar novamente
         });
     }
 

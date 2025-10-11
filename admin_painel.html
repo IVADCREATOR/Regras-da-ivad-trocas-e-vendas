@@ -3,41 +3,210 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IVAD - Painel Administrativo</title>
-    </head>
+    <title>IVAD - Painel de Administração</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    
+    <style>
+        :root {
+            --purple-vibrant: #7f00ff;
+            --pink-vibrant: #ff007f;
+            --background-dark: #212529;
+        }
+        body { 
+            padding-top: 56px; 
+            background-color: #f1f1f5; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        /* Header Focado no Mobile */
+        .admin-header {
+            background: linear-gradient(90deg, #343a40, var(--purple-vibrant));
+            color: white;
+            padding: 1.5rem 0;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        .admin-header h1 {
+            font-size: 1.8rem; /* Reduzido para mobile */
+            font-weight: 700;
+        }
+        /* Estilo dos Cards/Acordeão */
+        .accordion-item {
+            border: 1px solid #ddd;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+        .accordion-button {
+            font-weight: 600;
+            background-color: white;
+            color: var(--background-dark);
+        }
+        .btn-action-primary {
+            background-color: var(--purple-vibrant);
+            color: white;
+        }
+        .btn-action-primary:hover {
+            background-color: var(--pink-vibrant);
+            color: white;
+        }
+    </style>
+</head>
 <body>
-    <div class="container main-content my-5">
-        <h1 class="text-danger my-4"><i class="fas fa-lock me-2"></i> Painel de Gerenciamento</h1>
-        <p class="lead" id="admin-status">Verificando permissões de acesso...</p>
 
-        <div id="admin-content" style="display:none;">
-            <section class="mb-5 p-4 border rounded">
-                <h3 class="text-primary">Gerenciar Usuários (Sub-owner/ADM)</h3>
-                <div class="mb-3">
-                    <label for="targetUid" class="form-label">UID do Usuário Alvo</label>
-                    <input type="text" class="form-control" id="targetUid" placeholder="Insira o UID do usuário (m3h06...)">
-                </div>
-                <div class="mb-3">
-                    <label for="targetRole" class="form-label">Conceder Nível de Permissão</label>
-                    <select class="form-select" id="targetRole">
-                        <option value="owner">Proprietário (Apenas Você)</option>
-                        <option value="subowner">Sub-owner</option>
-                        <option value="admin">Administrador (ADM)</option>
-                        <option value="user">Usuário Padrão (Remover Permissão)</option>
-                    </select>
-                </div>
-                <button class="btn btn-warning" onclick="updateUserRole()"><i class="fas fa-user-shield me-2"></i> Atualizar Permissão</button>
-                <p class="mt-2 text-success" id="role-message"></p>
-            </section>
-            
-            <section class="mb-5 p-4 border rounded">
-                <h3 class="text-primary">Anúncios Pendentes</h3>
-                <div id="pending-listings">Nenhum anúncio pendente de moderação.</div>
-            </section>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="index.html">
+                <i class="fas fa-home me-2"></i> IVAD | Admin
+            </a>
+            <button class="btn btn-sm btn-danger" id="adminLogoutBtn">
+                <i class="fas fa-sign-out-alt"></i> Sair
+            </button>
         </div>
-        
-        <button class="btn btn-danger mt-4" onclick="firebase.auth().signOut()"><i class="fas fa-sign-out-alt me-2"></i> Sair do Painel</button>
+    </nav>
+
+    <div class="admin-header">
+        <div class="container">
+            <h1 class="text-center">
+                <i class="fas fa-user-shield me-2"></i> Controle de ADM
+            </h1>
+            <p class="text-center lead small text-white-50">Gerencie a plataforma via celular.</p>
+        </div>
     </div>
 
-    <script src="admin.js"></script> </body>
+    <div class="container">
+        
+        <div class="alert alert-warning d-flex align-items-center mb-4" role="alert">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            <div>
+                Atenção: Acesso restrito. Suas ações aqui são permanentes.
+            </div>
+        </div>
+
+        <div class="accordion" id="adminAccordion">
+
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingOne">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                        <i class="fas fa-users-cog me-2"></i> Permissões de Usuários
+                    </button>
+                </h2>
+                <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#adminAccordion">
+                    <div class="accordion-body">
+                        <p class="small text-muted">Use o UID do usuário para alterar seu nível de acesso.</p>
+                        <div class="mb-3">
+                            <label for="uidInput" class="form-label">UID do Usuário:</label>
+                            <input type="text" class="form-control" id="uidInput" placeholder="Ex: XXXXXXXXXXX">
+                        </div>
+                        <div class="mb-3">
+                            <label for="permissionSelect" class="form-label">Nível de Acesso:</label>
+                            <select class="form-select" id="permissionSelect">
+                                <option value="user" selected>0 - Usuário Padrão</option>
+                                <option value="subdono">1 - Subdono (Moderação)</option>
+                                <option value="admin">2 - Administrador (Controle Total)</option>
+                                <option value="ban">99 - BANIMENTO PERMANENTE</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-action-primary w-100" id="setPermissionBtn">
+                            <i class="fas fa-check-circle me-1"></i> Aplicar Permissão
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingTwo">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                        <i class="fas fa-list-alt me-2"></i> Gerenciar Anúncios
+                    </button>
+                </h2>
+                <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#adminAccordion">
+                    <div class="accordion-body">
+                        <p class="small text-muted">Ações rápidas para moderação de conteúdo.</p>
+                        
+                        <ul class="list-group mb-3" id="pendingListings">
+                             <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Carregando anúncios...
+                                <i class="fas fa-spinner fa-spin"></i>
+                             </li>
+                        </ul>
+                        
+                        <div class="mb-3">
+                            <label for="listingIdInput" class="form-label">ID do Anúncio (Manual):</label>
+                            <input type="text" class="form-control" id="listingIdInput" placeholder="ID do Doc no Firestore">
+                        </div>
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-sm btn-success" id="approveListingBtn">
+                                <i class="fas fa-check me-1"></i> Aprovar/Reativar
+                            </button>
+                            <button class="btn btn-sm btn-danger" id="deleteListingBtn">
+                                <i class="fas fa-trash me-1"></i> Excluir Permanentemente
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingThree">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                        <i class="fas fa-bullhorn me-2"></i> Alerta Global do Site
+                    </button>
+                </h2>
+                <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#adminAccordion">
+                    <div class="accordion-body">
+                        <p class="small text-muted">Configure uma mensagem de alerta exibida no topo do site.</p>
+                        <div class="mb-3">
+                            <label for="globalAlertText" class="form-label">Mensagem de Alerta:</label>
+                            <textarea class="form-control" id="globalAlertText" rows="2" placeholder="Ex: O site estará em manutenção amanhã..."></textarea>
+                        </div>
+                        <div class="mb-3">
+                             <label for="alertTypeSelect" class="form-label">Cor/Tipo:</label>
+                            <select class="form-select" id="alertTypeSelect">
+                                <option value="info" selected>Azul (Informação)</option>
+                                <option value="warning">Amarelo (Aviso)</option>
+                                <option value="danger">Vermelho (Urgente)</option>
+                                <option value="success">Verde (Sucesso)</option>
+                            </select>
+                        </div>
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-sm btn-action-primary" id="saveAlertBtn">
+                                <i class="fas fa-save me-1"></i> Salvar Alerta
+                            </button>
+                            <button class="btn btn-sm btn-secondary" id="removeAlertBtn">
+                                <i class="fas fa-times me-1"></i> Remover Alerta
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div> </div>
+
+    <footer class="py-3 bg-dark mt-4">
+        <div class="container text-center">
+            <p class="mb-0 text-white-50 small">IVAD Admin - Logado como: <span id="adminUsername">...</span></p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyB8-tIVUAlMWQtCbF1sGLWgW9sL2Z0ixrk",
+            authDomain: "ivad-trocas-e-vendas.firebaseapp.com",
+            projectId: "ivad-trocas-e-vendas",
+            storageBucket: "ivad-trocas-e-vendas.firebasestorage.app",
+            messagingSenderId: "447811910709",
+            appId: "1:447811910709:web:a42b73819f6e6eb34c057c",
+            measurementId: "G-RHVF8P3RCW"
+        };
+        const app = firebase.initializeApp(firebaseConfig);
+    </script>
+    
+    <script src="script.js"></script>
+
+</body>
 </html>

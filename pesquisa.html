@@ -18,35 +18,32 @@
     </style>
 </head>
 <body>
-
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
         <div class="container">
             <a class="navbar-brand" href="index.html">IVAD | Marketplace</a>
             <div class="d-flex align-items-center">
-                <a href="chat_global.html" class="btn btn-outline-info me-2" title="Chat Global"><i class="fas fa-comments"></i></a>
-                <a href="caixa_de_entrada.html" class="btn btn-outline-light me-2" title="Mensagens Privadas"><i class="fas fa-envelope"></i></a>
-                <a href="anunciar.html" class="btn btn-outline-warning me-2"><i class="fas fa-plus me-1"></i> Anunciar</a>
-                <button class="btn btn-primary" id="authBtn">
+                <a href="autenticacao.html" class="btn btn-primary" id="authBtn">
                     <i class="fas fa-user me-1"></i> Entrar / Cadastrar
-                </button>
+                </a>
             </div>
         </div>
     </nav>
+    
     <div class="header-bg">
         <div class="container">
-            <h1><i class="fas fa-search me-2"></i> Pesquisa no Marketplace</h1>
-            <p class="lead">Encontre contas e itens digitais rapidamente.</p>
+            <h1><i class="fas fa-search me-2"></i> Resultados da Busca</h1>
+            <p class="lead">Listagem de produtos filtrados por termo ou categoria.</p>
         </div>
     </div>
 
     <div class="container">
         <form id="search-form" class="mb-4 p-4 shadow-sm bg-white rounded">
             <div class="row g-3 align-items-end">
-                <div class="col-md-6">
-                    <label for="searchInput" class="form-label">Termo de Busca (Ex: "Conta Free Fire Nível 80")</label>
+                <div class="col-md-5 col-12">
+                    <label for="searchInput" class="form-label">Termo de Busca</label>
                     <input type="text" class="form-control" id="searchInput" placeholder="Digite sua pesquisa">
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-4 col-12">
                     <label for="categoryFilter" class="form-label">Filtrar por Categoria</label>
                     <select id="categoryFilter" class="form-select">
                         <option value="">Todas as Categorias</option>
@@ -56,29 +53,30 @@
                         <option value="ServicosDiversos">Outros / Serviços</option>
                     </select>
                 </div>
-                <div class="col-md-2">
+                <div class="col-md-3 col-12">
                     <button type="submit" class="btn btn-purple w-100">
-                        <i class="fas fa-filter me-1"></i> Filtrar
+                        <i class="fas fa-filter me-1"></i> Pesquisar
                     </button>
                 </div>
             </div>
         </form>
 
         <div class="d-flex justify-content-between align-items-center mb-3">
-            <h4 class="mb-0">Resultados Encontrados:</h4>
+            <h4 class="mb-0">
+                <span id="current-filter-display">Todos os Anúncios</span>
+            </h4>
             <span class="badge bg-secondary fs-6">
-                <span id="results-count">0</span> Anúncios
+                <span id="results-count">0</span> Resultados
             </span>
         </div>
 
         <div class="row g-4" id="listings-results">
             <div class="col-12 text-center text-muted py-5">
-                <i class="fas fa-info-circle me-2"></i> Realize uma busca ou navegue por categorias.
+                <i class="fas fa-info-circle me-2"></i> Carregando resultados ou realize uma busca.
             </div>
         </div>
-        
     </div>
-
+    
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
@@ -98,6 +96,5 @@
     </script>
     
     <script src="script.js"></script>
-
 </body>
 </html>

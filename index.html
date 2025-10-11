@@ -79,9 +79,6 @@
             padding: 2rem;
             border-radius: 0.5rem;
         }
-        .border-purple {
-            border-color: var(--purple-vibrant) !important;
-        }
         .text-purple-vibrant {
             color: var(--purple-vibrant) !important;
         }
@@ -108,6 +105,8 @@
 </head>
 <body>
 
+    <div id="global-alert-container"></div> 
+
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
         <div class="container">
             <a class="navbar-brand" href="index.html">IVAD | Marketplace</a>
@@ -127,9 +126,9 @@
                     <i class="fas fa-plus me-1"></i> Anunciar
                 </a>
                 
-                <button class="btn btn-primary" id="authBtn">
+                <a href="autenticacao.html" class="btn btn-primary" id="authBtn">
                     <i class="fas fa-user me-1"></i> Entrar / Cadastrar
-                </button>
+                </a>
             </div>
         </div>
     </nav>
@@ -145,8 +144,6 @@
                 </div>
                 <div class="modal-body text-center">
                     <p class="lead">Olá! Gostaria de nos ajudar a financiar as melhorias e a manutenção do servidor?</p>
-                    <p>Sua **doação voluntária** é vital para o crescimento da plataforma.</p>
-                    
                     <h6 class="mt-4 mb-3">Chave Pix para Contribuição:</h6>
                     <div class="input-group mb-3">
                         <input type="text" class="form-control text-center" id="pixKeyDisplay" value="11913429349" readonly>
@@ -154,21 +151,7 @@
                             <i class="fas fa-copy"></i> Copiar
                         </button>
                     </div>
-
-                    <div class="row g-2 mb-4 justify-content-center">
-                        <div class="col-4">
-                            <button class="btn btn-outline-success w-100" data-amount="1.00">R$ 1,00</button>
-                        </div>
-                        <div class="col-4">
-                            <button class="btn btn-success w-100" data-amount="5.00">R$ 5,00</button>
-                        </div>
-                        <div class="col-4">
-                            <button class="btn btn-outline-success w-100" data-amount="10.00">R$ 10,00</button>
-                        </div>
                     </div>
-
-                    <p class="text-muted small">Você pode transferir qualquer valor diretamente usando sua chave Pix preferida.</p>
-                </div>
                 <div class="modal-footer justify-content-between">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="closeAndContinueBtn">
                         <i class="fas fa-arrow-right"></i> Acessar Site Sem Doar
@@ -180,39 +163,6 @@
             </div>
         </div>
     </div>
-    <div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header bg-dark text-white">
-                    <h5 class="modal-title" id="loginModalLabel">Autenticação</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="inputUsername" class="form-label">Nome de Usuário (Registro)</label>
-                        <input type="text" class="form-control" id="inputUsername" placeholder="Seu nome público">
-                    </div>
-                    <div class="mb-3">
-                        <label for="inputEmail" class="form-label">Email</label>
-                        <input type="email" class="form-control" id="inputEmail" placeholder="seuemail@exemplo.com">
-                    </div>
-                    <div class="mb-3">
-                        <label for="inputPassword" class="form-label">Senha</label>
-                        <input type="password" class="form-control" id="inputPassword" placeholder="Mínimo 6 caracteres">
-                    </div>
-                </div>
-                <div class="modal-footer justify-content-between">
-                    <button type="button" class="btn btn-secondary" id="registerBtn">
-                        <i class="fas fa-user-plus me-1"></i> Registrar
-                    </button>
-                    <button type="button" class="btn btn-primary" id="loginBtn">
-                        <i class="fas fa-sign-in-alt me-1"></i> Entrar
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <div class="hero-section">
         <div class="container text-center">
             <h1 class="hero-title">IVAD: Venda, Troque, Negocie.</h1>

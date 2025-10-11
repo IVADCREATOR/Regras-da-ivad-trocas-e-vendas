@@ -2,22 +2,26 @@
 // 1. CONSTANTES E INICIALIZAÇÃO DO FIREBASE
 // =========================================================================
 
+// As dependências do Firebase (app, auth, db) são definidas globalmente pelo HTML
 const auth = firebase.auth();
 const db = firebase.firestore();
 
 // Constantes de Monitoramento e Configurações
 const MONITOR_DOC_ID = 'access_monitor';
 const GLOBAL_ALERT_DOC_ID = 'global_alert';
-const PIX_KEY = "11913429349";
+const PIX_KEY = "11913429349"; // Chave PIX constante
 
 let currentUserID = null;
 let currentUserRole = 'user'; 
-const usernameCache = {}; // Cache para performance
+const usernameCache = {}; // Cache para nomes de usuário (performance)
 
 // =========================================================================
-// 2. FUNÇÕES DE AUTENTICAÇÃO (Para uso em autenticacao.html)
+// 2. FUNÇÕES DE AUTENTICAÇÃO E PERFIL
 // =========================================================================
 
+/**
+ * Busca o nome de usuário (username) no Firestore, usando cache.
+ */
 async function getUsernameByUid(uid) {
     if (!uid) return 'Usuário Desconhecido';
     if (usernameCache[uid]) return usernameCache[uid];
@@ -51,7 +55,7 @@ async function handleLogin() {
     try {
         await auth.signInWithEmailAndPassword(email, password);
         alert("Login realizado com sucesso! Redirecionando...");
-        window.location.href = 'index.html';
+        window.location.href = 'index.html'; // Redirecionamento após sucesso
     } catch (error) {
         console.error("Erro no login:", error);
         if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
@@ -64,6 +68,7 @@ async function handleLogin() {
 
 /**
  * Lida com o processo de Cadastro de novo usuário. (autenticacao.html)
+ * Inclui criação de conta, login automático e redirecionamento.
  */
 async function handleRegister() {
     const username = document.getElementById('inputUsername')?.value;
@@ -79,6 +84,7 @@ async function handleRegister() {
         const userCredential = await auth.createUserWithEmailAndPassword(email, password);
         const user = userCredential.user;
 
+        // 1. Cria o documento do usuário no Firestore
         await db.collection('users').doc(user.uid).set({
             username: username,
             email: email,
@@ -86,10 +92,15 @@ async function handleRegister() {
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
 
-        await user.updateProfile({ displayName: username });
+        // 2. Atualiza o perfil no Firebase Auth
+        await user.updateProfile({
+            displayName: username
+        });
+        
+        // Login Automático e Redirecionamento
+        alert("Cadastro realizado com sucesso! Redirecionando para a página inicial.");
+        window.location.href = 'index.html'; 
 
-        alert("Cadastro realizado com sucesso! Você será redirecionado para a página inicial.");
-        window.location.href = 'index.html';
     } catch (error) {
         console.error("Erro no cadastro:", error);
         if (error.code === 'auth/email-already-in-use') {
@@ -118,7 +129,7 @@ function handleLogout() {
 // =========================================================================
 
 /**
- * Registra um acesso à página principal (index.html) de forma segura.
+ * Registra um acesso à página principal (index.html).
  */
 async function registerPageAccess() {
     try {
@@ -188,7 +199,7 @@ async function fetchGlobalAlert() {
 }
 
 /**
- * Configura as ações do Painel ADM.
+ * Configura as ações do Painel ADM. (admin_painel.html)
  */
 function setupAdminPanel() {
     const adminPanel = document.getElementById('adminAccordion');
@@ -198,19 +209,15 @@ function setupAdminPanel() {
     document.getElementById('adminUsername').textContent = auth.currentUser.displayName || 'ADM';
     document.getElementById('adminUserRole').textContent = currentUserRole.toUpperCase();
 
-    loadAccessCount(); // Carrega a contagem de acessos
+    loadAccessCount(); 
     
-    // Configurar Listeners Admin (ex: no admin_painel.html)
     document.getElementById('adminLogoutBtn')?.addEventListener('click', handleLogout);
-    // document.getElementById('setPermissionBtn')?.addEventListener('click', handleSetPermission);
-    // document.getElementById('deleteListingBtn')?.addEventListener('click', handleDeleteListing);
-    // ... outros listeners administrativos
     
     console.log("Painel ADM configurado. Role:", currentUserRole);
 }
 
 /**
- * Verifica a permissão do usuário.
+ * Verifica a permissão do usuário e configura links de ADM.
  */
 async function checkUserRole(uid) {
     if (!uid) return 'user';
@@ -225,6 +232,13 @@ async function checkUserRole(uid) {
                 if (document.body.id === 'admin-page') {
                     setupAdminPanel();
                 }
+                
+                // Adiciona link do ADM na NavBar (se não existir)
+                const anunciarmenu = document.querySelector('[href="anunciar.html"]');
+                if (anunciarmenu && !document.getElementById('adminLink')) {
+                    const adminLinkHtml = `<a href="admin_painel.html" class="btn btn-outline-info me-2 d-none d-sm-inline" id="adminLink" title="Painel Admin"><i class="fas fa-shield-alt"></i> ADM</a>`;
+                    anunciarmenu.insertAdjacentHTML('beforebegin', adminLinkHtml);
+                }
             }
             return role;
         }
@@ -238,14 +252,11 @@ async function checkUserRole(uid) {
 // 4. FUNÇÕES DE LISTAGEM E MENSAGENS (HOME)
 // =========================================================================
 
-/**
- * Carrega a lista de anúncios que aceitam troca para a index.html.
- * **Depende de uma função renderListings/createListingCard que deve ser importada ou definida.**
- * NOTA: Para simplificar, estamos assumindo que renderListings está no script.js 
- * ou o createListingCard/renderListings será definido aqui se não for usado pelo pesquisa.js.
- * PARA MANTER ESTE SCRIPT INDEPENDENTE, ESTAMOS MANTENDO AS FUNÇÕES DE RENDERIZAÇÃO AQUI.
- */
+// As funções de renderização (createListingCard, renderListings) são mantidas aqui
+// para o carregamento das ofertas de troca na index.html.
+
 function createListingCard(listing) {
+    // ... (HTML do Card de Anúncio - MANTIDO AQUI) ...
     const detailUrl = `detalhe_anuncio.html?id=${listing.id}`; 
     const exchangeBadge = listing.acceptsExchange ? 
         `<span class="badge bg-warning text-dark me-1"><i class="fas fa-exchange-alt"></i> Troca</span>` : '';
@@ -288,6 +299,10 @@ function renderListings(containerId, listings) {
     container.innerHTML = listings.map(createListingCard).join('');
 }
 
+
+/**
+ * Carrega a lista de anúncios que aceitam troca para a index.html.
+ */
 async function loadExchangeListings() {
     const containerId = 'exchange-listings';
     const container = document.getElementById(containerId);
@@ -313,11 +328,33 @@ async function loadExchangeListings() {
 }
 
 /**
- * Verifica o número de mensagens não lidas e atualiza o badge.
+ * Verifica o número de mensagens não lidas e atualiza o badge. (Monitoramento em tempo real)
  */
 function checkUnreadMessages(uid) {
-    // Implementação do onSnapshot para monitorar mensagens não lidas
-    // ...
+    if (!uid) {
+        document.getElementById('unread-count')?.style.display = 'none';
+        return;
+    }
+    
+    // Inicia um listener em tempo real para mensagens não lidas
+    db.collection('messages')
+        .where('recipientId', '==', uid)
+        .where('read', '==', false)
+        .onSnapshot(snapshot => {
+            const count = snapshot.size;
+            const badge = document.getElementById('unread-count');
+            
+            if (badge) {
+                if (count > 0) {
+                    badge.textContent = count;
+                    badge.style.display = 'inline';
+                } else {
+                    badge.style.display = 'none';
+                }
+            }
+        }, error => {
+            console.error("Erro ao monitorar mensagens não lidas:", error);
+        });
 }
 
 
@@ -330,8 +367,9 @@ auth.onAuthStateChanged(async (user) => {
     const myUidDisplay = document.getElementById('my-uid-display');
 
     if (user) {
+        // Usuário Logado
         currentUserID = user.uid;
-        user.displayName = await getUsernameByUid(user.uid); // Atualiza o nome de usuário
+        user.displayName = await getUsernameByUid(user.uid); 
 
         // 1. Atualiza o Botão de Autenticação para SAIR
         if (authBtn) {
@@ -342,19 +380,21 @@ auth.onAuthStateChanged(async (user) => {
             authBtn.onclick = handleLogout;
         }
 
-        // 2. Exibe o UID
+        // 2. Exibe o UID no Footer
         if (myUidDisplay) {
             myUidDisplay.textContent = user.uid.substring(0, 10) + '...';
             myUidDisplay.classList.add('my-uid-highlight');
         }
         
-        // 3. Verifica o Role (Permissões) e configura o ADM
-        const role = await checkUserRole(user.uid);
+        // 3. Verifica o Role (Permissões) e configura o ADM/Links
+        await checkUserRole(user.uid);
 
         // 4. Inicia o monitoramento de mensagens não lidas
         checkUnreadMessages(user.uid);
 
+
     } else {
+        // Usuário Deslogado
         currentUserID = null;
         currentUserRole = 'user';
         
@@ -383,7 +423,7 @@ auth.onAuthStateChanged(async (user) => {
 
 
 // =========================================================================
-// 6. EVENTO DOMContentLoaded
+// 6. EVENTO DOMContentLoaded (Configura listeners após o carregamento da página)
 // =========================================================================
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -391,8 +431,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // 1. Configuração de Listeners para AUTENTICAÇÃO (autenticacao.html)
     const loginBtn = document.getElementById('loginBtn');
     const registerBtn = document.getElementById('registerBtn');
-    if (loginBtn && registerBtn) {
+    if (loginBtn) {
         loginBtn.addEventListener('click', handleLogin);
+    }
+    if (registerBtn) {
         registerBtn.addEventListener('click', handleRegister);
     }
 
@@ -403,12 +445,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (document.getElementById('exchange-listings')) { 
         loadExchangeListings(); 
         
-        // CRÍTICO: Chamada para a função de Categoria no arquivo pesquisa.js
+        // CRÍTICO: Chama a função de Categoria no arquivo pesquisa.js
         if (typeof setupCategoryListeners === 'function') {
             setupCategoryListeners(); 
-            console.log("DIAGNÓSTICO: setupCategoryListeners (de pesquisa.js) chamado com sucesso.");
         } else {
-            console.error("ERRO CRÍTICO: setupCategoryListeners não encontrado. O arquivo pesquisa.js está sendo carregado corretamente APÓS o script.js na index.html?");
+            console.warn("setupCategoryListeners não encontrado. Verifique se pesquisa.js está carregando após script.js.");
         }
         
         registerPageAccess(); 
@@ -418,10 +459,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // 4. Lógica de Doação (Modal PIX)
     const donationModalEl = document.getElementById('donationModal');
     if (donationModalEl) {
-        // ... (Lógica do modal de doação/PIX) ...
+        document.getElementById('pixKeyDisplay').value = PIX_KEY;
         document.getElementById('copyPixKeyBtn')?.addEventListener('click', () => {
             navigator.clipboard.writeText(PIX_KEY).then(() => {
-                alert("Chave PIX copiada!");
+                alert("Chave PIX copiada para a área de transferência!");
+            }).catch(err => {
+                console.error('Falha ao copiar:', err);
             });
         });
     }

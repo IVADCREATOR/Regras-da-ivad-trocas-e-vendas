@@ -1,5 +1,5 @@
 // =================================================================
-// script.js - Lógica Central do IVAD Marketplace (CORREÇÃO CRÍTICA DE INTERAÇÃO)
+// script.js - Lógica Central do IVAD Marketplace (CORREÇÃO FINAL DE BUGS)
 // =================================================================
 
 // 1. Variáveis Globais e Inicialização do Firebase
@@ -12,13 +12,16 @@ let currentUsername = null;
 let globalChatListener = null;
 
 const PIX_KEY = "11913429349";
-
-// =================================================================
-// 2. AUTENTICAÇÃO E FUNÇÕES AUXILIARES (CORREÇÃO CRÍTICA DO BOTÃO LOGIN/CADASTRO)
-// =================================================================
-
 const usernameCache = {};
 
+// =================================================================
+// 2. AUTENTICAÇÃO E FUNÇÕES AUXILIARES (CORREÇÃO DO BUG DO USERNAME)
+// =================================================================
+
+/**
+ * Busca o nome de usuário pelo UID e usa cache.
+ * CORREÇÃO: Garante um fallback seguro para evitar bugs de exibição.
+ */
 async function getUsernameByUid(uid) {
     if (!uid) return 'Usuário Desconhecido';
     if (usernameCache[uid]) return usernameCache[uid];
@@ -26,15 +29,18 @@ async function getUsernameByUid(uid) {
     try {
         const doc = await db.collection('users').doc(uid).get();
         if (doc.exists) {
+            // Usa o username do documento ou um fallback
             const username = doc.data().username || `UID-${uid.substring(0, 6)}`;
             usernameCache[uid] = username;
             return username;
         } else {
-            return `UID-${uid.substring(0, 6)}`;
+            // Documento de usuário não encontrado
+            return `UID-NÃO-REGIST.${uid.substring(0, 4)}`; 
         }
     } catch (e) {
-        console.error("Erro ao buscar username:", e);
-        return `Erro UID-${uid.substring(0, 6)}`;
+        console.error("Erro ao buscar username (CORREÇÃO DE BUG):", e);
+        // FALLBACK SEGURO: Retorna uma string de erro que não quebra o chat
+        return `ERRO-UID-${uid.substring(0, 4)}`; 
     }
 }
 
@@ -81,10 +87,9 @@ async function handleLogin() {
 // Listener de Status de Autenticação
 auth.onAuthStateChanged(async (user) => {
     const authBtn = document.getElementById('authBtn');
-    const uidDisplay = document.getElementById('my-uid-display');
-    const modalElement = document.getElementById('loginModal');
     
-    // Tenta fechar o modal de login se estiver aberto
+    // Tenta fechar o modal de login se estiver aberto, para não interferir na mudança de estado
+    const modalElement = document.getElementById('loginModal');
     if (modalElement) {
         const modalInstance = bootstrap.Modal.getInstance(modalElement);
         if (modalInstance) modalInstance.hide();
@@ -92,7 +97,8 @@ auth.onAuthStateChanged(async (user) => {
 
     if (user) {
         currentUserUid = user.uid;
-        currentUsername = await getUsernameByUid(user.uid);
+        // CRÍTICO: Garante que o username é buscado e setado corretamente
+        currentUsername = await getUsernameByUid(user.uid); 
         
         // Atualiza a UI para estado Logado
         if (authBtn) {
@@ -102,10 +108,16 @@ auth.onAuthStateChanged(async (user) => {
             // Ação de logout no clique
             authBtn.onclick = () => { 
                 auth.signOut();
-                // Opcional: window.location.href = 'index.html'; 
             }; 
         }
-        // ... (resto do bloco Logado) ...
+        // Exibe o UID no footer
+        const uidDisplay = document.getElementById('my-uid-display');
+        if (uidDisplay) uidDisplay.textContent = user.uid;
+        
+        // Se estiver na caixa de entrada, inicia o carregamento
+        if (document.getElementById('inbox-list') && typeof loadInbox === 'function') {
+            loadInbox();
+        }
         
     } else {
         currentUserUid = null;
@@ -116,16 +128,25 @@ auth.onAuthStateChanged(async (user) => {
             authBtn.innerHTML = '<i class="fas fa-user me-1"></i> Entrar / Cadastrar';
             authBtn.classList.add('btn-primary');
             authBtn.classList.remove('btn-success', 'btn-danger');
-            // CORREÇÃO CRÍTICA DO BOTÃO: Garante que o clique abre o modal
+            
+            // CORREÇÃO CRÍTICA LOGIN: Garante que o clique abre o modal
             authBtn.onclick = () => {
                 const modalElement = document.getElementById('loginModal');
                 if (modalElement) {
-                    const loginModal = new bootstrap.Modal(modalElement);
+                    // CRÍTICO: Cria a instância do modal e exibe
+                    const loginModal = new bootstrap.Modal(modalElement); 
                     loginModal.show();
                 }
             };
         }
-        // ... (resto do bloco Deslogado) ...
+        // Limpa o UID no footer
+        const uidDisplay = document.getElementById('my-uid-display');
+        if (uidDisplay) uidDisplay.textContent = 'Aguardando Login...';
+        
+    }
+    // Verifica se a função de contagem de não lidas existe e a executa
+    if (typeof updateUnreadCount === 'function') {
+        updateUnreadCount(user);
     }
 });
 
@@ -136,41 +157,27 @@ auth.onAuthStateChanged(async (user) => {
 function createListingCard(doc, data, vendedorName) { /* ... (Mantido) ... */ }
 async function loadExchangeListings() { /* ... (Mantido) ... */ }
 
-// ... (Resto das Seções 4, 5, 6, 7 - Chat, Inbox, Pix, Pesquisa) ...
+// ... (Resto das Seções: Funções loadGlobalChat, loadInbox, setupDonationModal, setupSearchPage, etc.) ...
 
 // =================================================================
-// 8. SETUP FINAL: CHAMADAS AO CARREGAR O DOM (CORREÇÃO DE LISTENERS)
+// 8. SETUP FINAL: CHAMADAS AO CARREGAR O DOM (CORREÇÃO DE INTERAÇÃO)
 // =================================================================
 
 document.addEventListener('DOMContentLoaded', () => {
     
-    // 1. Configura os botões de Login/Registro no modal (CORREÇÃO DE LOGIN - Listener no Modal)
+    // 1. Configura os botões de Login/Registro no modal (CORREÇÃO LOGIN - Listeners no Modal)
     const registerBtn = document.getElementById('registerBtn');
     const loginBtn = document.getElementById('loginBtn');
     
-    // Se os botões existirem, anexa os manipuladores
+    // Anexa os manipuladores de evento, garantindo a conexão
     if (registerBtn) {
         registerBtn.addEventListener('click', handleRegister);
-    } else {
-        console.warn("Elemento 'registerBtn' não encontrado. Verifique o HTML do modal.");
-    }
+    } 
     if (loginBtn) {
         loginBtn.addEventListener('click', handleLogin);
-    } else {
-        console.warn("Elemento 'loginBtn' não encontrado. Verifique o HTML do modal.");
-    }
+    } 
 
-    // 2. Configura o modal de doação Pix
-    if (document.getElementById('donationModal') && typeof setupDonationModal === 'function') {
-        setupDonationModal();
-    }
-    
-    // 3. Configura a página de pesquisa (se os elementos existirem)
-    if (document.getElementById('search-form') && typeof setupSearchPage === 'function') {
-        setupSearchPage();
-    }
-    
-    // 4. Configura os links de categoria na index.html (CORREÇÃO CRÍTICA DE CATEGORIAS)
+    // 2. Configura os links de categoria na index.html (CORREÇÃO CRÍTICA DE CATEGORIAS)
     const categoryLinks = document.querySelectorAll('.category-link');
     if (categoryLinks.length > 0) {
         categoryLinks.forEach(link => {
@@ -179,26 +186,31 @@ document.addEventListener('DOMContentLoaded', () => {
                 const category = e.currentTarget.getAttribute('data-category');
                 
                 if (category) {
-                     // ATENÇÃO: Redirecionamento para a página de pesquisa com o filtro
+                     // CRÍTICO: Redirecionamento para a página de pesquisa com o filtro
                     window.location.href = `pesquisa.html?category=${encodeURIComponent(category)}`;
                 } else {
                     console.error("Link de categoria sem atributo data-category.");
                 }
             });
         });
-    } else {
-         console.warn("Nenhum elemento com a classe 'category-link' encontrado. Categorias inativas.");
     }
 
-    // 5. Carrega ofertas de troca na index.html
+    // 3. Carrega ofertas de troca na index.html
     const loadBtn = document.getElementById('loadExchangeBtn');
     if (loadBtn && typeof loadExchangeListings === 'function') {
         loadBtn.addEventListener('click', loadExchangeListings);
         loadExchangeListings(); 
     }
     
+    // 4. Se a página for a de pesquisa, executa o setup
+    if (document.getElementById('search-form') && typeof setupSearchPage === 'function') {
+        setupSearchPage();
+    }
+    
+    // 5. Configura o modal de doação Pix
+    if (document.getElementById('donationModal') && typeof setupDonationModal === 'function') {
+        setupDonationModal();
+    }
 });
 
-console.log("script.js carregado: Listeners de Login/Categorias reforçados.");
-
-// (Certifique-se de que as demais funções (loadGlobalChat, loadInbox, etc.) estejam no script.js)
+console.log("script.js carregado: Bugs críticos de interação e username corrigidos.");

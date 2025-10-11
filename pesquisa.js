@@ -5,9 +5,6 @@
 
 const LISTINGS_PER_PAGE = 12; // Número de resultados por página
 
-// As dependências globais (db, createListingCard) são assumidas do script.js
-// para evitar repetição de código e garantir a modularidade.
-
 // =========================================================================
 // 2. LÓGICA DE CATEGORIAS (index.html)
 //    CRÍTICO: Fluxo de Redirecionamento de Categoria Reativado
@@ -15,7 +12,7 @@ const LISTINGS_PER_PAGE = 12; // Número de resultados por página
 
 /**
  * Anexa listeners de evento aos cards de categoria na página index.html.
- * Esta função deve ser chamada APENAS em index.html.
+ * Esta função deve ser chamada APENHAS em index.html.
  */
 function setupCategoryListeners() {
     console.log("DIAGNÓSTICO: Tentando anexar listeners de categoria (Módulo funcional).");
@@ -30,7 +27,7 @@ function setupCategoryListeners() {
             if (categoryName) {
                 // Adiciona o listener de clique
                 card.addEventListener('click', (e) => {
-                    // Previne o comportamento padrão (necessário se o card for um link)
+                    // Previne o comportamento padrão (necessário se o card for um link, o que não é, mas previne problemas)
                     e.preventDefault(); 
                     
                     console.log(`CLIQUE CAPTURADO: Redirecionando para categoria: ${categoryName}`);
@@ -80,10 +77,9 @@ async function fetchListings(filters) {
         queryRef = queryRef.where('category', '==', category);
     }
 
-    // Filtro por BUSCA (palavra-chave) - Apenas para demonstração, mantendo o aviso
+    // Filtro por BUSCA (palavra-chave) - Mantido apenas para o fluxo de URL
     if (query) {
         console.warn("Busca por palavra-chave no Firestore é limitada (sem full-text search).");
-        // Em um ambiente de produção, esta busca deve ser feita em um campo indexado ou com uma ferramenta externa.
     }
     
     // Ordem e Limite
